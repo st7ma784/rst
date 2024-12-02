@@ -92,7 +92,7 @@ double noise_acf(double mnpwr,struct FitPrm *ptr, double *pwr,
 
   for (i=0; i< ptr->mplgs; i++) {
 	if (np[i] > 2) {
-	  n_acf[i] = n_acf[i])/np[i];
+	  n_acf[i] = n_acf[i]/np[i];
 	} else {
 	  n_acf[i] = 0.0 + 0.0 * I;
 	}
