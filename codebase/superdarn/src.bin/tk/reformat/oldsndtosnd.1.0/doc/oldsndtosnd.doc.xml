@@ -26,8 +26,8 @@
 <p>The <code>snd</code> format data is written to standard output</code></description>
 
 <example>
-<command>oldsndtosnd 1999041006gbr.snd &gt; 19990410.06.gbr.snd</command>
-<description>Convert the binary file "<code>1999041006gbr.snd</code>" to produce the dmap <code>snd</code> format file "<code>19990410.06.gbr.snd</code>".</description>
+<command>oldsndtosnd 2005080518gbr.snd &gt; 20050805.18.gbr.snd</command>
+<description>Convert the binary file "<code>20050805gbr.snd</code>" to produce the dmap <code>snd</code> format file "<code>20050805.18.gbr.snd</code>".</description>
 </example>
 
 </binary>
