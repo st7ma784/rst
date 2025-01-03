@@ -341,8 +341,13 @@ int load_all_models(char *path, int imod, int ecdip)
     case TS18_Kp:  /********************************************************/
       for (i=0; i<TS18_Kp_nlev; i++) {
         for (j=0; j<TS18_Kp_nang; j++) {
-          sprintf(fname,"%s/ts18_kp/mod_%s_%s.spx",path,TS18_Kp_mod_lev[i],
-                         TS18_Kp_mod_ang[j]);
+          if (ecdip) {
+            sprintf(fname,"%s/ecdip/ts18_kp/mod_%s_%s.spx",path,TS18_Kp_mod_lev[i],
+                           TS18_Kp_mod_ang[j]);
+          } else {
+            sprintf(fname,"%s/ts18_kp/mod_%s_%s.spx",path,TS18_Kp_mod_lev[i],
+                           TS18_Kp_mod_ang[j]);
+          }
           fp = fopen(fname,"r");
           if (fp == NULL) continue;
           model[0][0][i][j] = load_model(fp,-1,i,j,-1,imod);
@@ -559,7 +564,6 @@ struct model *interp_coeffs(int ih, float tilt, float mag, float cang, int imod)
         ptr->aoeff_p[k] =
                 Ap[k]*afp*mgp*dtp + Bp[k]*afn*mgp*dtp + Cp[k]*afp*mgn*dtp + Dp[k]*afn*mgn*dtp +
                 Ep[k]*afp*mgp*dtn + Fp[k]*afn*mgp*dtn + Gp[k]*afp*mgn*dtn + Hp[k]*afn*mgn*dtn;
-
 
       }
     }
@@ -852,6 +856,7 @@ void slv_ylm_mod(float theta, float phi, int order, double complex *ylm_p,
               Pmm*anorm[l*(order+1)+m]*sin(m*phi) * I;
       ylm_n[l*(order+1)+m] = pow(-1,m)*creal(ylm_p[l*(order+1)+m]) +
               (-pow(-1,m)*cimag(ylm_p[l*(order+1)+m])) * I;
+
     }
   }
 }
