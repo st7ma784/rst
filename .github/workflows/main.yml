@@ -25,7 +25,7 @@ jobs:
         cat build/.requirements.ubuntu | xargs sudo apt-get install
         echo "Get and install NASA CDF"
         sudo apt-get install wget
-        wget https://spdf.gsfc.nasa.gov/pub/software/cdf/dist/latest/linux/cdf${{ matrix.cdf }}-dist-cdf.tar.gz
+        wget https://spdf.gsfc.nasa.gov/pub/software/cdf/dist/cdf${{ matrix.cdf }}/linux/cdf${{ matrix.cdf }}-dist-cdf.tar.gz
         tar -xzvf cdf${{ matrix.cdf }}-dist-cdf.tar.gz
         cd cdf${{ matrix.cdf }}-dist
         make OS=linux ENV=gnu all
@@ -39,7 +39,7 @@ jobs:
         xargs brew install < build/.requirements.darwin
         echo "Get and install NASA CDF"
         brew install wget
-        wget https://spdf.gsfc.nasa.gov/pub/software/cdf/dist/latest/linux/cdf${{ matrix.cdf }}-dist-cdf.tar.gz
+        wget https://spdf.gsfc.nasa.gov/pub/software/cdf/dist/cdf${{ matrix.cdf }}/linux/cdf${{ matrix.cdf }}-dist-cdf.tar.gz
         tar -xzvf cdf${{ matrix.cdf }}-dist-cdf.tar.gz
         cd cdf${{ matrix.cdf }}-dist
         make OS=macosx ENV=arm all
