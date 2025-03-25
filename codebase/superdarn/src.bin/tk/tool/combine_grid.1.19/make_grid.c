@@ -30,7 +30,7 @@ Modifications:
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <omp.h>
+// #include <omp.h>
 #include <unistd.h>
 #include "rtypes.h"
 #include "rfile.h"
@@ -145,7 +145,7 @@ int make_grid(struct GridData *out,
   }
 
   tpnt=0;
-  #pragma omp parallel for reduction(+:tpnt)
+  // #pragma omp parallel for reduction(+:tpnt)
   for (i=0;i<l;i++){
     tpnt+=out->sdata[i].npnt;
   }
@@ -156,7 +156,7 @@ int make_grid(struct GridData *out,
   else out->data=malloc(sizeof(struct GridGVec)*tpnt);
 
   k=0;
-  #pragma omp parallel for reduction(+:k)
+  // #pragma omp parallel for reduction(+:k)
   for (i=0;i<l;i++) {
     for (j=0;j<cnt[i];j++) {
       if (data[i][j].st_id !=out->sdata[i].st_id) continue;

@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "fitacf.h": "c",
-        "griddata.h": "c"
+        "griddata.h": "c",
+        "random": "c"
     }
 }
