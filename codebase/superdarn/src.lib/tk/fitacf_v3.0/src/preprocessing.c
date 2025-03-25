@@ -1412,20 +1412,21 @@ void Filter_TX_Overlap(llist ranges, llist lags, FITPRMS *fit_prms){
  * that are used for those pulses.
  */
 void Determine_Lags(llist lags,FITPRMS *fit_prms){
-  int i, j;
   //Step 1, make an array of new nodes, of size fit_prms->mplgs. 
+
+  
   //Step 2, fill all with the lag values from the lag table
   //Step 3, fill in the pulses and sample bases for each lag
   //Step 4, add the node to the list
 
+  LAGNODE* temp;
 
   /***Find lags from the lag table****/
-  for(i=0;i<fit_prms->mplgs;i++){
-    LAGNODE* temp;
+  for(int i=0;i<fit_prms->mplgs;i++){
     temp = malloc(sizeof(*temp));
     memset(temp, 0, sizeof(*temp));
     temp->lag_num = fit_prms->lag[1][i] - fit_prms->lag[0][i];
-    for(j=0;j<fit_prms->mppul;j++){
+    for(int j=0;j<fit_prms->mppul;j++){
       if(fit_prms->pulse[j] == fit_prms->lag[1][i]){
         temp->pulses[1] = j;
       }
@@ -1440,7 +1441,7 @@ void Determine_Lags(llist lags,FITPRMS *fit_prms){
   }
 
   llist_reset_iter(lags);
-  i=0;
+  int i=0;
   do{
     llist_get_iter(lags,(void**)&temp);
     temp->lag_idx = i++;
