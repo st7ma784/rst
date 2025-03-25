@@ -6,7 +6,7 @@
 # Linux (GCC)
 #
 
-CFLAGS += -fPIC -Wall -pedantic -O3 -march=native -mtune=native -fopenmp \
+CFLAGS += -fPIC -fopenmp -Wall -pedantic -O3 -march=native -mtune=native  \
          -D_GNU_SOURCE -D_LINUX $(INCLUDE)
 
 LFLAGS += -shared -lm -lz -fopenmp
