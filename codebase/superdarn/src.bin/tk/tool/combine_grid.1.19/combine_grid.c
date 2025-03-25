@@ -42,7 +42,7 @@ Modifications:
 #include "errstr.h"
 #include "hlpstr.h"
 #include "make_grid.h"
-// #include <omp.h>
+#include <omp.h>
 
 
 char *fname[64];
@@ -159,7 +159,7 @@ int main(int argc,char *argv[]) {
     exit(-1);
   }
   fnum=argc-arg;
-  // #pragma omp parallel for reduction(+:c)
+  #pragma omp parallel for reduction(+:c)
   for (i=0;i<fnum;i++) {
     in_rcd[i]=GridMake();
     dflg[i]=0;
