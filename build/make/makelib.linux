@@ -9,7 +9,7 @@
 CFLAGS += -fPIC -Wall -pedantic -O3 -march=native -mtune=native -fopenmp \
          -D_GNU_SOURCE -D_LINUX $(INCLUDE)
 
-LFLAGS += -shared -lm -lz 
+LFLAGS += -shared -lm -lz -march=native -mtune=native -fopenmp
 SUF=so
   
 VSTR=$(shell get.version ${CURDIR}/..)
