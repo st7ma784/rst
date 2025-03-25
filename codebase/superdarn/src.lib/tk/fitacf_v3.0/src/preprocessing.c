@@ -1225,7 +1225,7 @@ void ACF_Phase_Unwrap(llist_node range, FITPRMS* fit_prms){
 
   piecewise_slope_est = slope_num / slope_denom;
 
-  #pragma omp parallel for
+  // #pragma omp parallel for
   for (int i=0; i<num_local_phases; i++) {
     phase_correction(&local_copy[i], &piecewise_slope_est, total_2pi_corrections);
   }
@@ -1237,7 +1237,7 @@ void ACF_Phase_Unwrap(llist_node range, FITPRMS* fit_prms){
     /*Quickly fit unwrapped phase for slope and err. Needed to compare error*/
     S_xx = 0.0;
     S_xy = 0.0;
-    #pragma omp parallel for reduction(+:S_xx,S_xy)
+    // #pragma omp parallel for reduction(+:S_xx,S_xy)
     for (int i=0; i<num_local_phases; i++){
       if (local_copy[i].sigma >0){
         S_xy += (local_copy[i].phi * local_copy[i].t) / (local_copy[i].sigma * local_copy[i].sigma);
@@ -1246,7 +1246,7 @@ void ACF_Phase_Unwrap(llist_node range, FITPRMS* fit_prms){
     }
 
     corr_slope_est = S_xy / S_xx;
-    #pragma omp parallel for reduction(+:corr_slope_err)
+    // #pragma omp parallel for reduction(+:corr_slope_err)
     for (int i=0; i<num_local_phases; i++){
       if (local_copy[i].sigma > 0) {
         corr_slope_err += ((corr_slope_est * local_copy[i].t - local_copy[i].phi) *
