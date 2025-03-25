@@ -43,7 +43,7 @@ Modifications:
 #include "errstr.h"
 #include "hlpstr.h"
 #include "make_grid.h"
-
+#include <omp.h>
 
 
 char *fname[64];
