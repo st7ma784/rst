@@ -1102,7 +1102,7 @@ void Find_CRI(llist_node range,FITPRMS *fit_prms){
     fprintf( stderr, "r_overlap: WARNING, using txpl instead of smsep...\n");
     tau = fit_prms->mpinc / fit_prms->txpl;
   }
-  #pragma omp parallel for
+  // #pragma omp parallel for
   for (int pulse_to_check = 0;  pulse_to_check < fit_prms->mppul; ++pulse_to_check) {
     double total_cri;
     total_cri = 0.0;
@@ -1208,7 +1208,7 @@ void ACF_Phase_Unwrap(llist_node range, FITPRMS* fit_prms){
         local_copy[num_local_phases++] = *phase_curr;
   }while(llist_go_next(range_node->phases) != LLIST_END_OF_LIST);
 
-  #pragma omp parallel for
+  // #pragma omp parallel for
   for (int i=0; i<num_local_phases - 1; i++) {
     double d_phi;
     d_phi = local_copy[i+1].phi - local_copy[i].phi;
