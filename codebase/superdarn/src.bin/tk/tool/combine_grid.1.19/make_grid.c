@@ -156,6 +156,7 @@ int make_grid(struct GridData *out,
   else out->data=malloc(sizeof(struct GridGVec)*tpnt);
 
   k=0;
+  // #pragma omp parallel for reduction(+:k)
   for (i=0;i<l;i++) {
     for (j=0;j<cnt[i];j++) {
       if (data[i][j].st_id !=out->sdata[i].st_id) continue;
