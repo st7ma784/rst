@@ -7,7 +7,7 @@
 # Linux (GCC)
 #
 
-CFLAGS+=-fPIC -Wall -pedantic -O3 -fopenmp -march=native -mtune=native  -D_GNU_SOURCE -D_LINUX 
+CFLAGS+=-fPIC -fopenmp -Wall -pedantic -O3  -march=native -mtune=native  -D_GNU_SOURCE -D_LINUX 
 
 ifdef XPATH
   ifdef XLIB
@@ -26,7 +26,7 @@ endif
 
 CFLAGS += $(INCLUDE)
 
-LFLAGS += -L$(LIBPATH)
+LFLAGS += -L$(LIBPATH) -fopenmp
 
 # Library identifier letters
 

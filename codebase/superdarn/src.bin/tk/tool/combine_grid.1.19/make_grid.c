@@ -34,7 +34,7 @@ Modifications:
 #include "rtypes.h"
 #include "rfile.h"
 #include "griddata.h"
-#include <omp.h>
+// #include <omp.h>
 
 /**
  * @brief Combines multiple GridData structures into a single GridData structure.
@@ -145,7 +145,7 @@ int make_grid(struct GridData *out,
   }
 
   tpnt=0;
-  #pragma omp parallel for reduction(+:tpnt)
+  // #pragma omp parallel for reduction(+:tpnt)
   for (i=0;i<l;i++){
     tpnt+=out->sdata[i].npnt;
   }

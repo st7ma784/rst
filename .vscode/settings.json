@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "fitacf.h": "c"
+        "fitacf.h": "c",
+        "griddata.h": "c"
     }
 }
