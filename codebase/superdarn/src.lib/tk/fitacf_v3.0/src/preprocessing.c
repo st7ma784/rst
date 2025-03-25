@@ -1437,15 +1437,16 @@ void Determine_Lags(llist lags,FITPRMS *fit_prms){
     }
     temp->sample_base1 = fit_prms->lag[0][i] * (fit_prms->mpinc/fit_prms->smsep);
     temp->sample_base2 = fit_prms->lag[1][i] * (fit_prms->mpinc/fit_prms->smsep);
+    temp->lag_idx = i;
     llist_add_node(lags,(llist_node)temp,0);
   }
-
-  llist_reset_iter(lags);
-  int i=0;
-  do{
-    llist_get_iter(lags,(void**)&temp);
-    temp->lag_idx = i++;
-  }while(llist_go_next(lags) != LLIST_END_OF_LIST);
+  
+  // llist_reset_iter(lags);
+  // int i=0;
+  // do{
+  //   llist_get_iter(lags,(void**)&temp);
+  //   temp->lag_idx = i++;
+  // }while(llist_go_next(lags) != LLIST_END_OF_LIST);
 
 }
 
