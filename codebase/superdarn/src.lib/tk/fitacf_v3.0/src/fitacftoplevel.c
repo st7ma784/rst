@@ -205,22 +205,25 @@ void Copy_Fitting_Prms(struct RadarSite *radar_site, struct RadarParm *radar_prm
   fit_prms->time.sc = radar_prms->time.sc;
   fit_prms->time.us = radar_prms->time.us;
 
+  #pragma omp parallel for
   for (i=0;i<fit_prms->mppul;i++){
     fit_prms->pulse[i]=radar_prms->pulse[i];
   }
 
+  #pragma omp parallel for collapse(2)
   for (n=0;n<2;n++) {
     for (i=0;i<=fit_prms->mplgs;i++){
       fit_prms->lag[n][i]=radar_prms->lag[n][i];
     }
   }
-
+  #pragma omp parallel for
   for (i=0;i<fit_prms->nrang;i++) {
     fit_prms->pwr0[i]=raw_data->pwr0[i];
   }
 
   if (raw_data->acfd != NULL){
     if (*(raw_data->acfd) != NULL){
+      #pragma omp parallel for collapse(2)
       for (i=0;i<fit_prms->nrang;i++) {
         for (j=0;j<fit_prms->mplgs;j++) {
           fit_prms->acfd[i*fit_prms->mplgs+j][0]=raw_data->acfd[0][i*fit_prms->mplgs+j];
@@ -229,6 +232,7 @@ void Copy_Fitting_Prms(struct RadarSite *radar_site, struct RadarParm *radar_prm
       }
     }
     else{/*If second pointer is NULL then fill with zeros*/
+      #pragma omp parallel for collapse(2)
       for (i=0;i<fit_prms->nrang;i++) {
         for (j=0;j<fit_prms->mplgs;j++) {
           fit_prms->acfd[i*fit_prms->mplgs+j][0]=0;
@@ -238,6 +242,7 @@ void Copy_Fitting_Prms(struct RadarSite *radar_site, struct RadarParm *radar_prm
     }
   }
   else{ /*If first pointer is NULL then fill with zeros*/
+    #pragma omp parallel for collapse(2)
     for (i=0;i<fit_prms->nrang;i++) {
       for (j=0;j<fit_prms->mplgs;j++) {
         fit_prms->acfd[i*fit_prms->mplgs+j][0]=0;
@@ -249,6 +254,7 @@ void Copy_Fitting_Prms(struct RadarSite *radar_site, struct RadarParm *radar_prm
 
   if (raw_data->xcfd != NULL){
     if(*(raw_data->xcfd) != NULL){
+      #pragma omp parallel for collapse(2)
       for (i=0;i<fit_prms->nrang;i++) {
         for (j=0;j<fit_prms->mplgs;j++) {
           fit_prms->xcfd[i*fit_prms->mplgs+j][0]=raw_data->xcfd[0][i*fit_prms->mplgs+j];
@@ -257,6 +263,7 @@ void Copy_Fitting_Prms(struct RadarSite *radar_site, struct RadarParm *radar_prm
       }
     }
     else{/*If second pointer is NULL then fill with zeros*/
+      #pragma omp parallel for collapse(2)
       for (i=0;i<fit_prms->nrang;i++) {
         for (j=0;j<fit_prms->mplgs;j++) {
           fit_prms->xcfd[i*fit_prms->mplgs+j][0]=0;
@@ -266,6 +273,7 @@ void Copy_Fitting_Prms(struct RadarSite *radar_site, struct RadarParm *radar_prm
     }
   }
   else{ /*If first pointer is NULL then fill with zeros*/
+    #pragma omp parallel for collapse(2)
     for (i=0;i<fit_prms->nrang;i++) {
       for (j=0;j<fit_prms->mplgs;j++) {
         fit_prms->xcfd[i*fit_prms->mplgs+j][0]=0;

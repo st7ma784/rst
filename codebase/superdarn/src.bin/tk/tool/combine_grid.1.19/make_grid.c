@@ -34,7 +34,34 @@ Modifications:
 #include "rtypes.h"
 #include "rfile.h"
 #include "griddata.h"
+#include <omp.h>
 
+/**
+ * @brief Combines multiple GridData structures into a single GridData structure.
+ *
+ * This function takes multiple input GridData structures and merges their data
+ * into a single output GridData structure. It filters and processes the input
+ * data based on the specified time range, flags, and other parameters.
+ *
+ * @param out Pointer to the output GridData structure where the combined data will be stored.
+ * @param in Array of pointers to input GridData structures to be combined.
+ * @param fnum Number of input GridData structures in the array.
+ * @param rflg Flag indicating whether to replace existing station data in the output.
+ * @param dflg Array of flags indicating whether each input GridData structure should be processed.
+ *
+ * @return The number of unique stations (stnum) in the combined output GridData structure.
+ *
+ * @details
+ * - The function checks the time range of each input GridData structure to determine
+ *   if it overlaps with the time range of the output GridData structure.
+ * - If the `rflg` flag is set, existing station data in the output is replaced with
+ *   data from the input GridData structures.
+ * - The function dynamically allocates memory for the output GridData structure's
+ *   station data (`sdata`) and grid vectors (`data`) as needed.
+ * - OpenMP is used to parallelize the computation of the total number of points (`tpnt`).
+ * - The function ensures that only data matching the station ID and channel of the
+ *   output GridData structure is copied.
+ */
 
 
 int make_grid(struct GridData *out,
@@ -118,7 +145,10 @@ int make_grid(struct GridData *out,
   }
 
   tpnt=0;
-  for (i=0;i<l;i++) tpnt+=out->sdata[i].npnt;
+  #pragma omp parallel for reduction(+:tpnt)
+  for (i=0;i<l;i++){
+    tpnt+=out->sdata[i].npnt;
+  }
   out->stnum=l;
   out->vcnum=tpnt;
   if (out->data !=NULL)

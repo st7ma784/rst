@@ -1091,12 +1091,7 @@ void Filter_Low_Pwr_Lags(llist_node range, FITPRMS* fit_prms){
  * pulse sequence.
  */
 void Find_CRI(llist_node range,FITPRMS *fit_prms){
-  int pulse_to_check;
-  int pulse;
-  int range_to_check;
-  double total_cri;
   int tau;
-  int diff_pulse;
 
   RANGENODE* range_node = (RANGENODE*)range;
 
@@ -1106,19 +1101,21 @@ void Find_CRI(llist_node range,FITPRMS *fit_prms){
     fprintf( stderr, "r_overlap: WARNING, using txpl instead of smsep...\n");
     tau = fit_prms->mpinc / fit_prms->txpl;
   }
-
-  for (pulse_to_check = 0;  pulse_to_check < fit_prms->mppul; ++pulse_to_check) {
+  #pragma omp parallel for
+  for (int pulse_to_check = 0;  pulse_to_check < fit_prms->mppul; ++pulse_to_check) {
+    double total_cri;
     total_cri = 0.0;
+    for (int pulse = 0; pulse < fit_prms->mppul; ++pulse) {
+        int diff_pulse;
+        int range_to_check;
+        diff_pulse = fit_prms->pulse[pulse_to_check] - fit_prms->pulse[pulse];
+        range_to_check = diff_pulse * tau + range_node->range;
 
-    for (pulse = 0; pulse < fit_prms->mppul; ++pulse) {
-          diff_pulse = fit_prms->pulse[pulse_to_check] - fit_prms->pulse[pulse];
-      range_to_check = diff_pulse * tau + range_node->range;
-
-      if ((pulse != pulse_to_check) &&
-        (0 <= range_to_check) &&
-        (range_to_check < fit_prms->nrang)) {
-          total_cri += fit_prms->pwr0[range_to_check];
-      }
+        if ((pulse != pulse_to_check) &&
+          (0 <= range_to_check) &&
+          (range_to_check < fit_prms->nrang)) {
+            total_cri += fit_prms->pwr0[range_to_check];
+        }
     }
 
     range_node->CRI[pulse_to_check] = total_cri;
@@ -1184,7 +1181,6 @@ void ACF_Phase_Unwrap(llist_node range, FITPRMS* fit_prms){
   PHASENODE* local_copy;
 
   int i=0;
-  double d_phi,sigma_bar,d_tau;
   double corr_slope_est = 0.0 ,slope_denom = 0.0,slope_num = 0.0, corr_slope_err = 0.0;
   double orig_slope_est = 0.0, orig_slope_err= 0.0;
   double piecewise_slope_est = 0.0;
@@ -1211,13 +1207,15 @@ void ACF_Phase_Unwrap(llist_node range, FITPRMS* fit_prms){
         local_copy[num_local_phases++] = *phase_curr;
   }while(llist_go_next(range_node->phases) != LLIST_END_OF_LIST);
 
-
+  #pragma omp parallel for
   for (int i=0; i<num_local_phases - 1; i++) {
+    double d_phi;
     d_phi = local_copy[i+1].phi - local_copy[i].phi;
-    sigma_bar = (local_copy[i+1].sigma + local_copy[i].sigma)/2;
-    d_tau = local_copy[i+1].t - local_copy[i].t;
 
     if(fabs(d_phi) < PI){
+      double sigma_bar,d_tau;
+      sigma_bar = (local_copy[i+1].sigma + local_copy[i].sigma)/2;
+      d_tau = local_copy[i+1].t - local_copy[i].t;
       slope_num += d_phi/(sigma_bar * sigma_bar)/d_tau;
       slope_denom += 1/(sigma_bar * sigma_bar);
     }
@@ -1226,7 +1224,7 @@ void ACF_Phase_Unwrap(llist_node range, FITPRMS* fit_prms){
 
   piecewise_slope_est = slope_num / slope_denom;
 
-
+  #pragma omp parallel for
   for (int i=0; i<num_local_phases; i++) {
     phase_correction(&local_copy[i], &piecewise_slope_est, total_2pi_corrections);
   }
@@ -1238,6 +1236,7 @@ void ACF_Phase_Unwrap(llist_node range, FITPRMS* fit_prms){
     /*Quickly fit unwrapped phase for slope and err. Needed to compare error*/
     S_xx = 0.0;
     S_xy = 0.0;
+    #pragma omp parallel for reduction(+:S_xx,S_xy)
     for (int i=0; i<num_local_phases; i++){
       if (local_copy[i].sigma >0){
         S_xy += (local_copy[i].phi * local_copy[i].t) / (local_copy[i].sigma * local_copy[i].sigma);
@@ -1246,6 +1245,7 @@ void ACF_Phase_Unwrap(llist_node range, FITPRMS* fit_prms){
     }
 
     corr_slope_est = S_xy / S_xx;
+    #pragma omp parallel for reduction(+:corr_slope_err)
     for (int i=0; i<num_local_phases; i++){
       if (local_copy[i].sigma > 0) {
         corr_slope_err += ((corr_slope_est * local_copy[i].t - local_copy[i].phi) *

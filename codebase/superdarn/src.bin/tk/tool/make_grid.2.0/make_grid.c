@@ -73,7 +73,7 @@ Modifications:
 
 #include "aacgm.h"
 #include "aacgmlib_v2.h"
-
+#include <omp.h>
 
 struct RadarParm *prm;
 struct FitData *fit;
@@ -111,11 +111,12 @@ void exclude_range(struct RadarScan *ptr,int minrng,int maxrng,
 
     int bm,rng;
     int frang,rsep,rxrise,nrang;
-    double r;
     double range_edge=0;
 
     /* Loop over number of beams in RadarScan structure */
+    #pragma omp parallel for
     for (bm=0;bm<ptr->num;bm++) {
+        double r;
 
         /* If RadarBeam structure not set then continue */
         if (ptr->bm[bm].bm==-1) continue;

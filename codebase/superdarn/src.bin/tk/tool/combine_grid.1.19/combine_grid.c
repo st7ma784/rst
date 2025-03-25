@@ -160,7 +160,7 @@ int main(int argc,char *argv[]) {
     exit(-1);
   }
   fnum=argc-arg;
- 
+  #pragma omp parallel for reduction(+:c)
   for (i=0;i<fnum;i++) {
     in_rcd[i]=GridMake();
     dflg[i]=0;
