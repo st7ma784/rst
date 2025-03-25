@@ -7,7 +7,7 @@
 # Linux (GCC)
 #
 
-CFLAGS+=-fPIC -Wall -pedantic -O3 -march=native -mtune=native -fopenmp -D_GNU_SOURCE -D_LINUX 
+CFLAGS+=-fPIC -Wall -pedantic -O3 -fopenmp -march=native -mtune=native  -D_GNU_SOURCE -D_LINUX 
 
 ifdef XPATH
   ifdef XLIB
