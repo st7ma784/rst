@@ -42,7 +42,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <math.h>
-
+#include <omp.h>
 /**
  * @brief      Frees raw record data.
  *

@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <omp.h>
 
 /********************LIST NODE STUFF*********************/
 
