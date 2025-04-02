@@ -47,14 +47,3 @@ version:
 
 clean:
 	rm -f *.o
-
-
-
-
-
- 
-
-
-
-
-
