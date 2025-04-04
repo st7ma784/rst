@@ -232,7 +232,6 @@ void next(void)
     scanf("%c", &ch);
   } while (ch != '\n');
 
-//  printf("\n\n");
   printf("\f");
 }
 
