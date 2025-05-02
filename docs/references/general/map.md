@@ -101,8 +101,8 @@ A map file will not necessarily contain a complete set of all the variables list
 | *major.revision* | **None** | *[numstid]* | ***short*** | Major `make_grid` version number |
 | *minor.revision* | **None** | *[numstid]* | ***short*** | Minor `make_grid` version number |
 | *program.id*     | **None** | *[numstid]* | ***short*** | Control program ID | 
-| *noise.mean*      | **None** | *[numstid]* | ***float*** | Mean noise |
-| *noise.sd*        | **None** | *[numstid]* | ***float*** | Noise Standard deviation |
+| *noise.mean*      | **None** | *[numstid]* | ***float*** | Mean sky noise |
+| *noise.sd*        | **None** | *[numstid]* | ***float*** | Sky noise standard deviation |
 | *gsct*            | **None** | *[numstid]* | ***short*** | Groundscatter flag |
 | *v.min*           | *m/s* | *[numstid]* | ***float*** | Minimum velocity threshold |
 | *v.max*           | *m/s* | *[numstid]* | ***float*** | Maximum velocity threshold |
@@ -115,6 +115,7 @@ A map file will not necessarily contain a complete set of all the variables list
 | *vector.mlat*     | *degrees* | *[numv]* | ***float*** | Magnetic Latitude |
 | *vector.mlon*     | *degrees* | *[numv]* | ***float*** | Magnetic Longitude |
 | *vector.kvect*    | *degrees* | *[numv]*   | ***float*** | Magnetic Azimuth |
+| *vector.srng*     | *km*      | *[numv]*   | ***float*** | Slant range |
 | *vector.stid*     | **None**  | *[numv]*   | ***short*** | Station identifier |
 | *vector.channel*  | **None**  | *[numv]*   | ***short*** | Channel number |
 | *vector.index*    | **None**  | *[numv]*   | ***int***   | Grid cell index |
@@ -123,7 +124,7 @@ A map file will not necessarily contain a complete set of all the variables list
 | *vector.pwr.median* | *dB*  | *[numv]*   | ***float*** | Weighted mean power |
 | *vector.pwr.sd*     | *dB*  | *[numv]*   | ***float*** | Power standard deviation |
 | *vector.wdt.median* | *m/s* | *[numv]*   | ***float*** | Weighted mean spectral width |
-| *vector.wdt.sd      | *m/s* | *[numv]*   | ***float*** | Standard deviation of spectral width |
+| *vector.wdt.sd*     | *m/s* | *[numv]*   | ***float*** | Standard deviation of spectral width |
 | *N*               | **None** | *[numft]* | ***double*** | L value of the expansion between 0 and Lmax |
 | *N+1*             | **None** | *[numft]* | ***double*** | M value of the expansion between -L and +L, negative values indicating the sin(M*phi) term |
 | *N+2*             | **None** | *[numft]* | ***double*** | Value of the coefficient  |

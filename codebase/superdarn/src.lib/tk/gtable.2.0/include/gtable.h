@@ -36,6 +36,7 @@ struct GridBm {
     int rxrise;
     int nrang;
     double *azm;
+    double *srng;
     double *ival;
     int *inx;
 };
@@ -46,7 +47,8 @@ struct GridPnt {
     int ref;
     double mlat;
     double mlon;
-    double azm; 
+    double azm;
+    double srng;
     struct {
         double median;
         double median_n;
@@ -91,6 +93,6 @@ void GridTableFree(struct GridTable *ptr);
 int GridTableTest(struct GridTable *ptr,struct RadarScan *scan);
 int GridTableMap(struct GridTable *ptr,struct RadarScan *scan,
                  struct RadarSite *pos,int tlen,int iflg,double alt,
-                 int chisham,int old_aacgm);
+                 int chisham,int magflg);
 
 #endif
