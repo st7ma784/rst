@@ -52,8 +52,8 @@
 #include "fitdata.h"
 #include "fitread.h"
 #include "fitwrite.h"
-#include "errstr.h"
-#include "hlpstr.h"
+// #include "errstr.h"
+// #include "hlpstr.h"
 
 // Enhanced constants for optimization
 #define TMAX_INITIAL 2000       
