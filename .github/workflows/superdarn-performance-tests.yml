@@ -1,0 +1,415 @@
+name: SuperDARN Performance Tests & Benchmarks
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    # Run daily at 2 AM UTC for continuous performance monitoring
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of test to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - fitacf-only
+        - speck-removal-only
+      thread_count:
+        description: 'Maximum number of threads to test'
+        required: false
+        default: '8'
+        type: string
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/superdarn-testing
+
+jobs:
+  build-test-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./dockerfile.fitacf
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  fitacf-array-tests:
+    needs: build-test-image
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'fitacf-only' || github.event.inputs.test_type == null
+    strategy:
+      matrix:
+        thread_count: [1, 2, 4, 8]
+        data_size: [small, medium, large]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run FitACF Array vs LinkedList Tests
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -e OMP_NUM_THREADS=${{ matrix.thread_count }} \
+            -e DATA_SIZE=${{ matrix.data_size }} \
+            ${{ needs.build-test-image.outputs.image-tag }} \
+            /bin/bash -c "
+              cd /workspace/codebase/superdarn/src.lib/tk/fitacf_v3.0/src
+              make -f makefile_standalone clean
+              make -f makefile_standalone tests
+              echo '=== FitACF Array Implementation Performance Test ==='
+              echo 'Threads: ${{ matrix.thread_count }}, Data Size: ${{ matrix.data_size }}'
+              ./test_array_vs_llist | tee /workspace/fitacf_results_${{ matrix.thread_count }}_${{ matrix.data_size }}.txt
+            "
+
+      - name: Upload FitACF test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: fitacf-results-${{ matrix.thread_count }}-threads-${{ matrix.data_size }}-data
+          path: fitacf_results_${{ matrix.thread_count }}_${{ matrix.data_size }}.txt
+
+  speck-removal-tests:
+    needs: build-test-image
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'speck-removal-only' || github.event.inputs.test_type == null
+    strategy:
+      matrix:
+        file_size: [small, medium, large]
+        optimization_level: [O2, O3, Ofast]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run fit_speck_removal Performance Tests
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -e OPT_LEVEL=${{ matrix.optimization_level }} \
+            ${{ needs.build-test-image.outputs.image-tag }} \
+            /bin/bash -c "
+              cd /workspace/codebase/superdarn/src.bin/tk/tool/fit_speck_removal.1.0
+              echo '=== Building fit_speck_removal with ${{ matrix.optimization_level }} ==='
+              
+              # Backup original makefile
+              cp makefile makefile.orig
+              
+              # Modify makefile for optimization testing
+              sed -i 's/-O2/-${{ matrix.optimization_level }}/g' makefile
+              
+              # Build optimized version
+              make clean && make
+              
+              echo '=== Generating test data (${{ matrix.file_size }}) ==='
+              cd /workspace
+              ./scripts/generate_test_fitacf_data.sh ${{ matrix.file_size }}
+              
+              echo '=== Running performance test ==='
+              time ./codebase/superdarn/src.bin/tk/tool/fit_speck_removal.1.0/fit_speck_removal \
+                test_data_${{ matrix.file_size }}.fitacf > \
+                speck_results_${{ matrix.file_size }}_${{ matrix.optimization_level }}.fitacf 2>&1 | \
+                tee speck_timing_${{ matrix.file_size }}_${{ matrix.optimization_level }}.txt
+            "
+
+      - name: Upload speck removal test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: speck-removal-results-${{ matrix.file_size }}-${{ matrix.optimization_level }}
+          path: |
+            speck_timing_${{ matrix.file_size }}_${{ matrix.optimization_level }}.txt
+            speck_results_${{ matrix.file_size }}_${{ matrix.optimization_level }}.fitacf
+
+  # Comprehensive SuperDARN component testing
+  comprehensive-tests:
+    needs: build-test-image
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test_scope: ['libraries', 'binaries', 'fitacf_detailed']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Create results directory
+        run: |
+          mkdir -p test-results/{libs,bins,fitacf_detailed,dashboards}
+      
+      - name: Run comprehensive tests
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/test-results:/workspace/results \
+            -e OMP_NUM_THREADS=4 \
+            ${{ needs.build-test-image.outputs.image-tag }} \
+            /bin/bash -c "
+              if [ '${{ matrix.test_scope }}' = 'libraries' ]; then
+                echo '📚 Testing SuperDARN Libraries...'
+                ./scripts/superdarn_test_suite.sh 2>&1 | grep -A 1000 'Testing SuperDARN Libraries'
+              elif [ '${{ matrix.test_scope }}' = 'binaries' ]; then
+                echo '🔧 Testing SuperDARN Binaries...'
+                ./scripts/superdarn_test_suite.sh 2>&1 | grep -A 1000 'Testing SuperDARN Binaries'
+              elif [ '${{ matrix.test_scope }}' = 'fitacf_detailed' ]; then
+                echo '🔬 Running detailed FitACF analysis...'
+                ./scripts/test_fitacf_comprehensive.sh
+              fi
+            "
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.test_scope }}
+          path: test-results/
+          retention-days: 30
+
+  generate-performance-report:
+    needs: [fitacf-array-tests, speck-removal-tests]
+    runs-on: ubuntu-latest
+    if: always() && (needs.fitacf-array-tests.result == 'success' || needs.speck-removal-tests.result == 'success')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install matplotlib pandas numpy seaborn jinja2
+
+      - name: Generate performance dashboard
+        run: |
+          python scripts/generate_performance_dashboard.py \
+            --results-dir test-results \
+            --output-dir dashboard \
+            --commit-sha ${{ github.sha }} \
+            --branch ${{ github.ref_name }}
+
+      - name: Upload performance dashboard
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-dashboard-${{ github.sha }}
+          path: dashboard/
+
+      - name: Deploy to GitHub Pages (main branch only)
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dashboard
+          destination_dir: performance/${{ github.sha }}
+
+  performance-comparison:
+    needs: [generate-performance-report]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for comparison
+
+      - name: Download current results
+        uses: actions/download-artifact@v4
+        with:
+          name: performance-dashboard-${{ github.sha }}
+          path: current-results
+
+      - name: Download baseline results
+        run: |
+          # Download results from main branch for comparison
+          mkdir -p baseline-results
+          # This would download from GitHub Pages or artifact storage
+          echo "Baseline comparison would be implemented here"
+
+      - name: Generate performance comparison
+        run: |
+          python scripts/compare_performance.py \
+            --current current-results \
+            --baseline baseline-results \
+            --output comparison.md
+
+      - name: Comment PR with performance results
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const comparison = fs.readFileSync('comparison.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comparison
+            });
+
+  benchmark-regression-check:
+    needs: [fitacf-array-tests, speck-removal-tests]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results
+
+      - name: Check for performance regressions
+        run: |
+          python scripts/regression_check.py \
+            --results-dir test-results \
+            --threshold 10  # Fail if performance degrades by more than 10%
+        continue-on-error: true
+        id: regression-check
+
+      - name: Fail build on significant regression
+        if: steps.regression-check.outcome == 'failure'
+        run: |
+          echo "::error::Significant performance regression detected!"
+          exit 1
+
+  # Generate integrated performance dashboard
+  generate-comprehensive-dashboard:
+    needs: [fitacf-array-tests, speck-removal-tests, comprehensive-tests]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          merge-multiple: true
+          path: test-results/
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install Python dependencies
+        run: |
+          pip install matplotlib pandas numpy seaborn jinja2
+      
+      - name: Generate comprehensive dashboard
+        run: |
+          python scripts/generate_comprehensive_dashboard.py \
+            --results-dir test-results \
+            --output test-results/dashboards/superdarn_comprehensive_dashboard.html
+      
+      - name: Generate GitHub Pages index
+        run: |
+          mkdir -p docs
+          cat > docs/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>SuperDARN Performance Dashboards</title>
+              <style>
+                  body { font-family: 'Segoe UI', sans-serif; margin: 40px; }
+                  .dashboard-link { 
+                      display: block; 
+                      margin: 20px 0; 
+                      padding: 15px; 
+                      background: #f0f8ff; 
+                      border-radius: 8px; 
+                      text-decoration: none; 
+                      color: #333;
+                  }
+              </style>
+          </head>
+          <body>
+              <h1>🚀 SuperDARN Performance Dashboards</h1>
+              <p>Generated on $(date)</p>
+              
+              <a href="test-results/dashboards/superdarn_comprehensive_dashboard.html" class="dashboard-link">
+                  📊 Comprehensive Component Performance Dashboard
+              </a>
+              
+              <a href="test-results/fitacf_detailed/fitacf_performance_dashboard.html" class="dashboard-link">
+                  🔬 FitACF v3.0 Array vs LinkedList Analysis
+              </a>
+              
+              <a href="test-results/performance_dashboard.html" class="dashboard-link">
+                  ⚡ Quick Performance Overview
+              </a>
+          </body>
+          </html>
+          EOF
+          
+          # Copy dashboards to docs for GitHub Pages
+          cp -r test-results docs/
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+      
+      - name: Upload dashboard artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-dashboards
+          path: test-results/dashboards/
+          retention-days: 90

@@ -3,7 +3,7 @@
 # This makefile builds both the original linked list implementation
 # and the new array-based implementation with OpenMP parallelization
 #
-include $(MAKECFG).$(SYSTEM)
+
 
 # Compiler flags for parallel processing
 OPENMP_FLAGS = -fopenmp
@@ -65,7 +65,7 @@ fitacf_array: $(OBJS_ARRAY)
 	@echo "Built array implementation: lib$(OUTPUT)_array.a"
 
 # Test suite
-tests: test_baseline test_comparison
+tests: test_baseline test_comparison test_performance
 
 # Baseline test for linked list implementation
 test_baseline: test_fitacf_comprehensive.o $(OBJS_LLIST)
@@ -78,6 +78,13 @@ test_comparison: test_array_vs_llist.o $(OBJS_LLIST) $(OBJS_ARRAY)
 	$(CC) $(CFLAGS) $(OPENMP_FLAGS) -o test_comparison test_array_vs_llist.o \
 		$(OBJS_LLIST) $(OBJS_ARRAY) $(LIBS)
 	@echo "Built comparison test: test_comparison"
+
+# Performance test for comprehensive benchmarking
+test_performance: CFLAGS += $(OPENMP_FLAGS) $(OPTIMIZATION_FLAGS) $(ARRAY_FLAGS)
+test_performance: test_fitacf_performance_comprehensive.o $(OBJS_LLIST) $(OBJS_ARRAY)
+	$(CC) $(CFLAGS) $(OPENMP_FLAGS) -o test_performance test_fitacf_performance_comprehensive.o \
+		$(OBJS_LLIST) $(OBJS_ARRAY) $(LIBS)
+	@echo "Built performance test: test_performance"
 
 # Debug version with additional debugging symbols
 debug: CFLAGS += $(DEBUG_FLAGS) $(OPENMP_FLAGS)
@@ -118,6 +125,10 @@ test_array_vs_llist.o: ../test/test_array_vs_llist.c
 	$(CC) $(CFLAGS) $(OPENMP_FLAGS) $(ARRAY_FLAGS) $(INCLUDE) \
 		-c ../test/test_array_vs_llist.c
 
+test_fitacf_performance_comprehensive.o: ../test/test_fitacf_performance_comprehensive.c
+	$(CC) $(CFLAGS) $(OPENMP_FLAGS) $(ARRAY_FLAGS) $(INCLUDE) \
+		-c ../test/test_fitacf_performance_comprehensive.c
+
 # Install targets
 install: install_llist install_array
 
@@ -131,7 +142,7 @@ install_array: fitacf_array
 
 # Clean targets
 clean:
-	rm -f *.o *.a test_baseline test_comparison
+	rm -f *.o *.a test_baseline test_comparison test_performance
 	@echo "Cleaned build files"
 
 clean_all: clean
@@ -144,7 +155,10 @@ help:
 	@echo "  all          - Build both linked list and array implementations"
 	@echo "  fitacf_llist - Build original linked list implementation"
 	@echo "  fitacf_array - Build array-based implementation with OpenMP"
-	@echo "  tests        - Build test suite"
+	@echo "  tests        - Build test suite (test_baseline, test_comparison, test_performance)"
+	@echo "  test_baseline - Build baseline test for linked list implementation"
+	@echo "  test_comparison - Build comparison test between implementations"  
+	@echo "  test_performance - Build comprehensive performance benchmark test"
 	@echo "  debug        - Build debug version with additional symbols"
 	@echo "  performance  - Build optimized performance version"
 	@echo "  install      - Install both implementations"
@@ -163,4 +177,4 @@ help:
         clean_all help
 
 # Include system-specific makefile rules
-include $(MAKELIB).$(SYSTEM)
+# include $(MAKELIB).$(SYSTEM)

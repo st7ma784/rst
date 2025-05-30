@@ -109,7 +109,18 @@ make -j$(nproc)
 #### Using Traditional Makefile:
 ```bash
 cd src
+
+# Show all available targets and options
+make -f makefile_array help
+
+# Build everything (both implementations + all tests)
 make -f makefile_array all
+
+# Build only array implementation with OpenMP
+make -f makefile_array fitacf_array
+
+# Build only tests
+make -f makefile_array tests
 ```
 
 #### Using NMAKE (Windows):
@@ -122,19 +133,27 @@ nmake /f makefile_array.nmake all
 
 ### Library Targets:
 - **fitacf_llist** - Original linked list implementation
-- **fitacf_array** - New array-based implementation  
-- **fitacf_array_debug** - Debug version with additional logging
-- **fitacf_array_perf** - Performance optimized version
+- **fitacf_array** - New array-based implementation with OpenMP optimization
+- **debug** - Debug version with additional logging and symbols
+- **performance** - Performance optimized version with all optimizations
 
 ### Test Targets:
-- **test_baseline** - Validates linked list implementation
-- **test_comparison** - Compares array vs linked list accuracy and performance
-- **test_array_performance** - Array-specific performance benchmarks
+- **test_baseline** - Validates linked list implementation (from test/test_fitacf_comprehensive.c)
+- **test_comparison** - Compares array vs linked list accuracy and performance (from test/test_array_vs_llist.c)
+- **test_performance** - Comprehensive performance benchmarks and scaling analysis (from test/test_fitacf_performance_comprehensive.c)
+- **tests** - Builds all three test programs
+
+### Utility Targets:
+- **all** - Builds both implementations and all tests
+- **install** - Installs both library implementations
+- **clean** - Removes build files and test executables
+- **clean_all** - Removes all files including installed libraries
+- **help** - Shows detailed help with all available targets
 
 ### Build Configurations:
-- **Debug**: `-g -O0 -DDEBUG_ARRAY`
-- **Release**: `-O3 -march=native -ftree-vectorize -DNDEBUG`
-- **Performance**: All optimizations + OpenMP + vectorization
+- **Debug**: `-g -DDEBUG_ARRAY` with debugging symbols and output
+- **Release**: `-O3 -march=native -ftree-vectorize -DNDEBUG` with full optimization
+- **Performance**: All optimizations + OpenMP + vectorization flags
 
 ## Usage
 
@@ -200,25 +219,175 @@ int validation_result = validate_fit_data(fit_llist, fit_array, tolerance);
 
 ## Testing
 
+### Test Directory Structure
+
+```
+fitacf_v3.0/
+├── src/                    # Source code and build location
+│   ├── makefile_array     # Main makefile with test targets
+│   └── *.c                # Implementation source files
+├── test/                   # Test source files directory
+│   ├── test_fitacf_comprehensive.c            # Baseline validation
+│   ├── test_array_vs_llist.c                  # Implementation comparison
+│   └── test_fitacf_performance_comprehensive.c # Performance benchmarks
+└── README_ARRAY.md        # This documentation
+```
+
+**Important**: Test executables are built in the `src/` directory, but test source files are located in the `test/` directory. The makefile automatically references the correct paths.
+
+### Available Test Files
+
+The test suite includes three comprehensive test programs located in the `test/` directory:
+
+1. **test/test_fitacf_comprehensive.c** - Baseline validation test for linked list implementation
+2. **test/test_array_vs_llist.c** - Comparison test between array and linked list implementations  
+3. **test/test_fitacf_performance_comprehensive.c** - Comprehensive performance benchmarking suite
+
+### Building Tests
+
+#### Using the Array Makefile (Recommended):
+```bash
+cd src
+make -f makefile_array tests
+```
+
+This builds all three test programs from the test directory:
+- `test_baseline` - Built from test/test_fitacf_comprehensive.c
+- `test_comparison` - Built from test/test_array_vs_llist.c  
+- `test_performance` - Built from test/test_fitacf_performance_comprehensive.c
+
+#### Building Individual Tests:
+```bash
+cd src
+make -f makefile_array test_baseline     # Baseline validation
+make -f makefile_array test_comparison   # Implementation comparison
+make -f makefile_array test_performance  # Performance benchmarks
+```
+
 ### Running Tests
 
 ```bash
-# Run all tests
+# Navigate to the src directory where executables are built
+cd src
+
+# Run baseline test (validates linked list implementation)
+./test_baseline
+
+# Run comparison test (validates array vs linked list accuracy)
+./test_comparison
+
+# Run performance benchmarks (measures speedup and efficiency)
+./test_performance
+```
+
+### Test Execution Workflow
+
+#### Recommended Testing Sequence:
+1. **Build all tests**: `make -f makefile_array tests`
+2. **Verify baseline**: `./test_baseline` (should pass without errors)
+3. **Check accuracy**: `./test_comparison` (should show matching results within tolerance)
+4. **Measure performance**: `./test_performance` (should demonstrate speedup with multiple threads)
+
+#### Expected Output:
+- **test_baseline**: "All tests passed" with timing information
+- **test_comparison**: Accuracy validation with difference metrics (should be < 1e-10)
+- **test_performance**: Detailed performance report showing:
+  - Single-threaded vs multi-threaded execution times
+  - Speedup ratios for different thread counts
+  - Memory usage comparison
+  - Cache efficiency metrics
+
+#### Troubleshooting Failed Tests:
+- **test_baseline fails**: Check linked list implementation and dependencies
+- **test_comparison shows large differences**: Investigate numerical precision issues
+- **test_performance shows no speedup**: Verify OpenMP is working (`echo $OMP_NUM_THREADS`)
+
+### Alternative Build Methods
+
+#### Using Build Scripts:
+```bash
+# Run all tests using build script (if available)
 ./build_fitacf.sh --tests
 
-# Run specific test suites
-cd build  # or src if using makefile
+# Windows (if available)
+build_fitacf.bat --tests
+```
+
+#### Using the Enhanced Performance Makefile:
+```bash
+# Use the specialized performance Makefile for comprehensive testing
+make -f Makefile.performance all
+
+# Run performance tests with different configurations
+make -f Makefile.performance test_scaling
+make -f Makefile.performance test_memory
+```
+
+#### Manual Compilation (for standalone testing):
+```bash
+# Compile individual test programs manually
+gcc -fopenmp -O3 -march=native -DUSE_ARRAY_IMPLEMENTATION \
+    -I../include -I$(IPATH)/base -I$(IPATH)/superdarn \
+    -o test_performance test/test_fitacf_performance_comprehensive.c \
+    src/*.c -lm
+```
+
+#### Using CMake:
+```bash
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=ON -DBUILD_TESTS=ON
+make -j$(nproc)
+
+# Run tests
 ./test_baseline
-./test_comparison
+./test_comparison  
+./test_performance
+```
+
+#### Docker-Based Testing:
+```bash
+# For comprehensive testing in isolated environment
+# (Requires Docker setup - see DOCKER_TESTING_GUIDE.md)
+./test_fitacf_performance_docker.sh
+
+# Or use the RST Docker environment
+docker run --rm -v $(pwd):/workspace rst-minimal-test \
+    /bin/bash -c "cd /workspace/codebase/superdarn/src.lib/tk/fitacf_v3.0/src && \
+    make -f makefile_array tests && ./test_performance"
 ```
 
 ### Test Coverage
 
-1. **Baseline Validation**: Ensures linked list implementation works correctly
-2. **Accuracy Comparison**: Validates array results match linked list results within tolerance
-3. **Performance Benchmarks**: Measures speedup and memory efficiency
-4. **Edge Case Testing**: Tests boundary conditions and error handling
-5. **Integration Testing**: Validates with real SuperDARN data files
+The comprehensive test suite validates both correctness and performance across multiple dimensions:
+
+#### 1. **Baseline Validation** (`test_baseline`): 
+   - **Purpose**: Ensures linked list implementation works correctly as reference
+   - **Source**: `test/test_fitacf_comprehensive.c`
+   - **Tests**: Core algorithm functionality, input validation, output correctness
+   - **Coverage**: Various input data ranges, edge cases, and error conditions
+
+#### 2. **Implementation Comparison** (`test_comparison`): 
+   - **Purpose**: Validates array results match linked list results within tolerance
+   - **Source**: `test/test_array_vs_llist.c`
+   - **Tests**: Cross-implementation validation with identical inputs
+   - **Coverage**: Floating-point precision, numerical stability, algorithmic equivalence
+
+#### 3. **Performance Benchmarks** (`test_performance`):
+   - **Purpose**: Measures speedup, efficiency, and resource utilization
+   - **Source**: `test/test_fitacf_performance_comprehensive.c`
+   - **Tests**: 
+     - Single-threaded vs multi-threaded performance
+     - Memory usage analysis and efficiency
+     - OpenMP thread scaling validation (1, 2, 4, 8+ threads)
+     - Cache performance and memory access patterns
+     - Comprehensive timing analysis across different data sizes
+     - Edge case performance under stress conditions
+
+#### 4. **Additional Validation**:
+   - **Edge Case Testing**: Boundary conditions and error handling
+   - **Integration Testing**: Real SuperDARN data compatibility  
+   - **Memory Leak Detection**: Resource cleanup verification
+   - **Thread Safety**: Concurrent execution validation
 
 ### Expected Results
 

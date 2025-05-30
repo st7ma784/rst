@@ -1,0 +1,82 @@
+# Docker Compose for SuperDARN FitACF v3.0 Testing
+version: '3.8'
+
+services:
+  fitacf-test:
+    build:
+      context: .
+      dockerfile: dockerfile.fitacf
+    container_name: fitacf-test-env
+    volumes:
+      - ./codebase/superdarn/src.lib/tk/fitacf_v3.0:/workspace/fitacf_v3.0
+      - ./test-results:/workspace/results
+    environment:
+      - OMP_NUM_THREADS=4
+      - OMP_SCHEDULE=dynamic,1
+      - OMP_PROC_BIND=true
+      - RSTPATH=/opt/rst
+      - MAKECFG=/opt/rst/build/make/makecfg
+      - MAKELIB=/opt/rst/build/make/makelib
+      - SYSTEM=linux
+      - OSTYPE=linux
+      - LIBPATH=/opt/rst/lib
+      - IPATH=/opt/rst/include
+      - BINPATH=/opt/rst/bin
+    working_dir: /workspace/fitacf_v3.0
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+  # Service for automated testing
+  fitacf-autotest:
+    build:
+      context: .
+      dockerfile: dockerfile.fitacf
+    container_name: fitacf-autotest
+    volumes:
+      - ./codebase/superdarn/src.lib/tk/fitacf_v3.0:/workspace/fitacf_v3.0
+      - ./test-results:/workspace/results
+    environment:
+      - OMP_NUM_THREADS=4
+      - OMP_SCHEDULE=dynamic,1
+      - OMP_PROC_BIND=true
+    working_dir: /workspace/fitacf_v3.0
+    command: >
+      /bin/bash -c "
+        source /opt/rst/.profile.bash &&
+        cd src &&
+        echo 'Building FitACF tests...' &&
+        make -f makefile_standalone clean &&
+        make -f makefile_standalone tests &&
+        echo 'Running test suite...' &&
+        ./test_baseline &&
+        ./test_comparison &&
+        ./test_performance &&
+        echo 'Tests completed. Results saved to /workspace/results/'
+      "
+
+  # Service for performance benchmarking
+  fitacf-benchmark:
+    build:
+      context: .
+      dockerfile: dockerfile.fitacf
+    container_name: fitacf-benchmark
+    volumes:
+      - ./codebase/superdarn/src.lib/tk/fitacf_v3.0:/workspace/fitacf_v3.0
+      - ./test-results:/workspace/results
+    environment:
+      - OMP_NUM_THREADS=8
+      - OMP_SCHEDULE=dynamic,1
+      - OMP_PROC_BIND=true
+    working_dir: /workspace/fitacf_v3.0
+    command: >
+      /bin/bash -c "
+        source /opt/rst/.profile.bash &&
+        cd src &&
+        echo 'Running comprehensive performance benchmarks...' &&
+        for threads in 1 2 4 8; do
+          echo 'Testing with $$threads threads...' &&
+          OMP_NUM_THREADS=$$threads ./test_performance | tee /workspace/results/benchmark_$$threads.txt
+        done &&
+        echo 'Benchmark completed. Results in /workspace/results/'
+      "

@@ -1,0 +1,92 @@
+# SuperDARN Performance Testing Environment
+version: '3.8'
+
+services:
+  # Interactive testing environment
+  superdarn-dev:
+    build:
+      context: .
+      dockerfile: dockerfile.fitacf
+    container_name: superdarn-dev
+    volumes:
+      - ./codebase:/workspace/codebase
+      - ./scripts:/workspace/scripts
+      - ./test-results:/workspace/results
+    environment:
+      - OMP_NUM_THREADS=4
+      - OMP_SCHEDULE=dynamic,1
+      - OMP_PROC_BIND=true
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+  # Automated performance testing
+  superdarn-test:
+    build:
+      context: .
+      dockerfile: dockerfile.fitacf
+    container_name: superdarn-test
+    volumes:
+      - ./codebase:/workspace/codebase
+      - ./scripts:/workspace/scripts  
+      - ./test-results:/workspace/results
+    environment:
+      - OMP_NUM_THREADS=8
+    working_dir: /workspace
+    command: >
+      /bin/bash -c "
+        echo '🚀 Starting SuperDARN Comprehensive Performance Tests...'
+        
+        # Run comprehensive test suite for all components
+        echo '📚 Running comprehensive SuperDARN component tests...'
+        ./scripts/superdarn_test_suite.sh
+        
+        echo '🔬 Running detailed FitACF v3.0 analysis...'
+        ./scripts/test_fitacf_comprehensive.sh
+        
+        echo '📊 Generating integrated dashboard...'
+        python3 ./scripts/generate_comprehensive_dashboard.py \
+          --results-dir /workspace/results \
+          --output /workspace/results/dashboards/complete_performance_dashboard.html
+        
+        echo '✅ All comprehensive tests completed! Results in /workspace/results/'
+        echo '📈 Main dashboard: /workspace/results/dashboards/complete_performance_dashboard.html'
+        echo '🔬 FitACF dashboard: /workspace/results/fitacf_detailed/fitacf_performance_dashboard.html'
+      "
+
+  # Quick development testing
+  superdarn-quick-test:
+    build:
+      context: .
+      dockerfile: dockerfile.fitacf
+    container_name: superdarn-quick
+    volumes:
+      - ./codebase:/workspace/codebase
+      - ./scripts:/workspace/scripts  
+      - ./test-results:/workspace/results
+    environment:
+      - OMP_NUM_THREADS=4
+    working_dir: /workspace
+    command: >
+      /bin/bash -c "
+        echo '⚡ Running Quick SuperDARN Tests...'
+        
+        # Test key components only
+        echo '📊 Testing FitACF v3.0...'
+        cd codebase/superdarn/src.lib/tk/fitacf_v3.0/src
+        if make -f makefile_standalone clean && make -f makefile_standalone; then
+          echo 'FitACF build: SUCCESS'
+        else
+          echo 'FitACF build: FAILED'
+        fi
+        
+        echo '🔧 Testing fit_speck_removal...'
+        cd /workspace/codebase/superdarn/src.bin/tk/tool/fit_speck_removal.1.0
+        if make clean && make; then
+          echo 'fit_speck_removal build: SUCCESS'
+        else
+          echo 'fit_speck_removal build: FAILED'
+        fi
+        
+        echo '⚡ Quick tests completed!'
+      "

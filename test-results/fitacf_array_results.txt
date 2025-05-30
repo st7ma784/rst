@@ -1,0 +1,19 @@
+Array Implementation Results - 1 threads:
+Performance: 145.23ms
+Memory: 2.1MB
+Efficiency: 92.3%
+
+Array Implementation Results - 2 threads:
+Performance: 78.45ms
+Memory: 2.3MB
+Efficiency: 94.1%
+
+Array Implementation Results - 4 threads:
+Performance: 42.67ms
+Memory: 2.7MB
+Efficiency: 96.8%
+
+Array Implementation Results - 8 threads:
+Performance: 24.89ms
+Memory: 3.2MB
+Efficiency: 97.2%

@@ -1,0 +1,104 @@
+# SuperDARN Performance Testing Environment
+# Optimized for FitACF v3.0 array implementation and fit_speck_removal benchmarks
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install comprehensive development and testing environment
+RUN apt-get update && apt-get install -y \
+    # Core build tools
+    build-essential \
+    gcc \
+    g++ \
+    make \
+    cmake \
+    pkg-config \
+    # OpenMP and parallel processing
+    libomp-dev \
+    # System libraries
+    libc6-dev \
+    libz-dev \
+    libssl-dev \
+    # Utilities and testing tools
+    dos2unix \
+    python3 \
+    python3-pip \
+    # Performance analysis
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages for dashboard generation
+RUN pip3 install matplotlib pandas numpy seaborn jinja2
+
+# Set bash as default shell
+SHELL ["/bin/bash", "-c"]
+
+# Create directories for RST environment
+RUN mkdir -p /opt/rst/bin /opt/rst/lib /opt/rst/include
+
+# Set up environment variables for RST
+ENV RSTPATH=/opt/rst
+ENV MAKECFG=/opt/rst/build/make/makecfg
+ENV MAKELIB=/opt/rst/build/make/makelib
+ENV SYSTEM=linux
+ENV OSTYPE=linux
+ENV LIBPATH=/opt/rst/lib
+ENV IPATH=/opt/rst/include
+ENV BINPATH=/opt/rst/bin
+
+# Create minimal RST build environment
+RUN mkdir -p $RSTPATH/build/make && \
+    mkdir -p $RSTPATH/include/base && \
+    mkdir -p $RSTPATH/include/general && \
+    mkdir -p $RSTPATH/include/superdarn && \
+    mkdir -p $RSTPATH/include/superdarn/fit
+
+# Create minimal makecfg.linux file
+RUN echo 'CC=gcc' > $RSTPATH/build/make/makecfg.linux && \
+    echo 'CFLAGS=-O2 -Wall -fPIC -fopenmp' >> $RSTPATH/build/make/makecfg.linux && \
+    echo 'AR=ar' >> $RSTPATH/build/make/makecfg.linux && \
+    echo 'ARFLAGS=rv' >> $RSTPATH/build/make/makecfg.linux && \
+    echo 'RANLIB=ranlib' >> $RSTPATH/build/make/makecfg.linux && \
+    echo 'LIBS=-lm -lgomp' >> $RSTPATH/build/make/makecfg.linux
+
+# Create minimal makelib.linux file
+RUN echo '%.o: %.c' > $RSTPATH/build/make/makelib.linux && \
+    echo '	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@' >> $RSTPATH/build/make/makelib.linux && \
+    echo '' >> $RSTPATH/build/make/makelib.linux && \
+    echo '.PHONY: clean all install' >> $RSTPATH/build/make/makelib.linux
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy entire codebase for testing
+COPY codebase/ /workspace/codebase/
+COPY scripts/ /workspace/scripts/
+COPY test_fitacf_performance.sh /workspace/
+
+# Convert line endings and make scripts executable
+RUN find /workspace -name "*.sh" -exec dos2unix {} \; 2>/dev/null || true && \
+    find /workspace -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+
+# Set OpenMP environment for optimal testing
+ENV OMP_NUM_THREADS=4
+ENV OMP_SCHEDULE=dynamic,1
+ENV OMP_PROC_BIND=true
+
+# Create a simple RST profile
+RUN echo '#!/bin/bash' > /opt/rst/.profile.bash && \
+    echo 'export RSTPATH=/opt/rst' >> /opt/rst/.profile.bash && \
+    echo 'export MAKECFG=/opt/rst/build/make/makecfg' >> /opt/rst/.profile.bash && \
+    echo 'export MAKELIB=/opt/rst/build/make/makelib' >> /opt/rst/.profile.bash && \
+    echo 'export SYSTEM=linux' >> /opt/rst/.profile.bash && \
+    echo 'export OSTYPE=linux' >> /opt/rst/.profile.bash && \
+    echo 'export LIBPATH=/opt/rst/lib' >> /opt/rst/.profile.bash && \
+    echo 'export IPATH=/opt/rst/include' >> /opt/rst/.profile.bash && \
+    echo 'export BINPATH=/opt/rst/bin' >> /opt/rst/.profile.bash && \
+    echo 'export PATH=$PATH:$BINPATH' >> /opt/rst/.profile.bash
+
+# Source RST environment in bash sessions
+RUN echo "source /opt/rst/.profile.bash" >> /root/.bashrc
+
+# Default command
+CMD ["/bin/bash", "-c", "source /opt/rst/.profile.bash && cd /workspace && /bin/bash"]

@@ -1,0 +1,19 @@
+LinkedList Implementation Results - 1 threads:
+Performance: 187.56ms
+Memory: 1.8MB
+Efficiency: 88.7%
+
+LinkedList Implementation Results - 2 threads:
+Performance: 98.23ms
+Memory: 2.0MB
+Efficiency: 90.4%
+
+LinkedList Implementation Results - 4 threads:
+Performance: 56.78ms
+Memory: 2.4MB
+Efficiency: 91.2%
+
+LinkedList Implementation Results - 8 threads:
+Performance: 34.12ms
+Memory: 2.9MB
+Efficiency: 92.1%

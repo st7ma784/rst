@@ -1,0 +1,1926 @@
+{
+  "timestamp": "2025-05-30T14:09:50.062408",
+  "test_type": "comprehensive_all_components",
+  "libraries": {
+    "acf.1.16": {
+      "status": "analyzed",
+      "name": "acf.1.16",
+      "path": "codebase\\superdarn\\src.lib\\tk\\acf.1.16",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\acf.1.16\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 59,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "high",
+      "c_files": 6,
+      "h_files": 0,
+      "source_files": [
+        "acfcalculate.c",
+        "average.c",
+        "badlag.c",
+        "normalize.c",
+        "sumpower.c"
+      ],
+      "estimated_build_time": 24
+    },
+    "binplotlib.1.0": {
+      "status": "analyzed",
+      "name": "binplotlib.1.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\binplotlib.1.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\binplotlib.1.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 40,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 12,
+      "h_files": 0,
+      "source_files": [
+        "geobeam.c",
+        "key.c",
+        "make_fov.c",
+        "make_grid.c",
+        "plot_cell.c"
+      ],
+      "estimated_build_time": 36.0
+    },
+    "acfex.1.3": {
+      "status": "analyzed",
+      "name": "acfex.1.3",
+      "path": "codebase\\superdarn\\src.lib\\tk\\acfex.1.3",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\acfex.1.3\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "acfex.c"
+      ],
+      "estimated_build_time": 2
+    },
+    "cfit.1.19": {
+      "status": "analyzed",
+      "name": "cfit.1.19",
+      "path": "codebase\\superdarn\\src.lib\\tk\\cfit.1.19",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\cfit.1.19\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 8,
+      "h_files": 0,
+      "source_files": [
+        "cfit.c",
+        "cfitclose.c",
+        "cfitinx.c",
+        "cfitopen.c",
+        "cfitread.c"
+      ],
+      "estimated_build_time": 16
+    },
+    "channel.1.0": {
+      "status": "analyzed",
+      "name": "channel.1.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\channel.1.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\channel.1.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 25,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "channel.c"
+      ],
+      "estimated_build_time": 3.0
+    },
+    "cnvmodel.1.0": {
+      "status": "analyzed",
+      "name": "cnvmodel.1.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\cnvmodel.1.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\cnvmodel.1.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 16,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "cnvmodel.c"
+      ],
+      "estimated_build_time": 2
+    },
+    "elevation.1.0": {
+      "status": "analyzed",
+      "name": "elevation.1.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\elevation.1.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\elevation.1.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 16,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 3,
+      "h_files": 0,
+      "source_files": [
+        "elevation.c",
+        "elevation_v2.c",
+        "elev_goose.c"
+      ],
+      "estimated_build_time": 6
+    },
+    "cnvmap.1.17": {
+      "status": "analyzed",
+      "name": "cnvmap.1.17",
+      "path": "codebase\\superdarn\\src.lib\\tk\\cnvmap.1.17",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\cnvmap.1.17\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 24,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 5,
+      "h_files": 0,
+      "source_files": [
+        "cnvmap.c",
+        "mapinx.c",
+        "mapseek.c",
+        "readmap.c",
+        "writemap.c"
+      ],
+      "estimated_build_time": 15.0
+    },
+    "filter.1.8": {
+      "status": "analyzed",
+      "name": "filter.1.8",
+      "path": "codebase\\superdarn\\src.lib\\tk\\filter.1.8",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\filter.1.8\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 36,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 3,
+      "h_files": 0,
+      "source_files": [
+        "bound.c",
+        "checkops.c",
+        "filter.c"
+      ],
+      "estimated_build_time": 9.0
+    },
+    "fit.1.35": {
+      "status": "analyzed",
+      "name": "fit.1.35",
+      "path": "codebase\\superdarn\\src.lib\\tk\\fit.1.35",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\fit.1.35\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 7,
+      "h_files": 0,
+      "source_files": [
+        "fit.c",
+        "fitcfit.c",
+        "fitinx.c",
+        "fitread.c",
+        "fitscan.c"
+      ],
+      "estimated_build_time": 14
+    },
+    "fitacf_v3.0": {
+      "status": "analyzed",
+      "name": "fitacf_v3.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\fitacf_v3.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\fitacf_v3.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 22,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 12,
+      "h_files": 3,
+      "source_files": [
+        "test_env.c",
+        "determinations.c",
+        "fitacftoplevel.c",
+        "fitacftoplevel_array.c",
+        "fitacf_array_optimized.c"
+      ],
+      "estimated_build_time": 36.0
+    },
+    "fitacf.2.5": {
+      "status": "analyzed",
+      "name": "fitacf.2.5",
+      "path": "codebase\\superdarn\\src.lib\\tk\\fitacf.2.5",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\fitacf.2.5\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 26,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 19,
+      "h_files": 16,
+      "source_files": [
+        "acf_preproc.c",
+        "badlags.c",
+        "badlags_s.c",
+        "calc_phi_res.c",
+        "dbl_cmp.c"
+      ],
+      "estimated_build_time": 57.0
+    },
+    "fitacfex.1.3": {
+      "status": "analyzed",
+      "name": "fitacfex.1.3",
+      "path": "codebase\\superdarn\\src.lib\\tk\\fitacfex.1.3",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\fitacfex.1.3\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "fitacfex.c"
+      ],
+      "estimated_build_time": 2
+    },
+    "fitacfex2.1.0": {
+      "status": "analyzed",
+      "name": "fitacfex2.1.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\fitacfex2.1.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\fitacfex2.1.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 32,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "fitacfex2.c"
+      ],
+      "estimated_build_time": 3.0
+    },
+    "freqband.1.0": {
+      "status": "analyzed",
+      "name": "freqband.1.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\freqband.1.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\freqband.1.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 25,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "get_fit_tfreq_band.c"
+      ],
+      "estimated_build_time": 3.0
+    },
+    "fitcnx.1.16": {
+      "status": "analyzed",
+      "name": "fitcnx.1.16",
+      "path": "codebase\\superdarn\\src.lib\\tk\\fitcnx.1.16",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\fitcnx.1.16\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 16,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 2,
+      "h_files": 1,
+      "source_files": [
+        "decodemsg.c",
+        "fitcnx.c"
+      ],
+      "estimated_build_time": 4
+    },
+    "grid.1.24": {
+      "status": "analyzed",
+      "name": "grid.1.24",
+      "path": "codebase\\superdarn\\src.lib\\tk\\grid.1.24",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\grid.1.24\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 26,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 11,
+      "h_files": 0,
+      "source_files": [
+        "addgrid.c",
+        "avggrid.c",
+        "copygrid.c",
+        "grid.c",
+        "gridinx.c"
+      ],
+      "estimated_build_time": 33.0
+    },
+    "grid_parallel.1.24": {
+      "status": "analyzed",
+      "name": "grid_parallel.1.24",
+      "path": "codebase\\superdarn\\src.lib\\tk\\grid_parallel.1.24",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\grid_parallel.1.24\\CMakeLists.txt",
+      "makefile_exists": true,
+      "makefile_lines": 244,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": false,
+      "is_cmake": true,
+      "build_complexity": "high",
+      "c_files": 11,
+      "h_files": 0,
+      "source_files": [
+        "addgrid_parallel.c",
+        "avggrid_parallel.c",
+        "copygrid_parallel.c",
+        "filtergrid_parallel.c",
+        "gridio_parallel.c"
+      ],
+      "estimated_build_time": 44
+    },
+    "idl": {
+      "status": "no_makefile",
+      "error": "No makefile found"
+    },
+    "gtable.2.0": {
+      "status": "analyzed",
+      "name": "gtable.2.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\gtable.2.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\gtable.2.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 23,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "gtable.c"
+      ],
+      "estimated_build_time": 3.0
+    },
+    "gtablewrite.1.9": {
+      "status": "analyzed",
+      "name": "gtablewrite.1.9",
+      "path": "codebase\\superdarn\\src.lib\\tk\\gtablewrite.1.9",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\gtablewrite.1.9\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 16,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "gtablewrite.c"
+      ],
+      "estimated_build_time": 2
+    },
+    "hmb.1.0": {
+      "status": "analyzed",
+      "name": "hmb.1.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\hmb.1.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\hmb.1.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 33,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "hmb.c"
+      ],
+      "estimated_build_time": 3.0
+    },
+    "lmfit.1.0": {
+      "status": "analyzed",
+      "name": "lmfit.1.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\lmfit.1.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\lmfit.1.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 36,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "lmfit.c"
+      ],
+      "estimated_build_time": 3.0
+    },
+    "oldcnvmap.1.2": {
+      "status": "analyzed",
+      "name": "oldcnvmap.1.2",
+      "path": "codebase\\superdarn\\src.lib\\tk\\oldcnvmap.1.2",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\oldcnvmap.1.2\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 24,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 2,
+      "h_files": 0,
+      "source_files": [
+        "readmap.c",
+        "writemap.c"
+      ],
+      "estimated_build_time": 6.0
+    },
+    "lmfit_v2.0": {
+      "status": "analyzed",
+      "name": "lmfit_v2.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\lmfit_v2.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\lmfit_v2.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 8,
+      "h_files": 5,
+      "source_files": [
+        "error_estimates.c",
+        "llist.c",
+        "lmfit2toplevel.c",
+        "lmfit_determinations.c",
+        "lmfit_fitting.c"
+      ],
+      "estimated_build_time": 16
+    },
+    "iq.1.7": {
+      "status": "analyzed",
+      "name": "iq.1.7",
+      "path": "codebase\\superdarn\\src.lib\\tk\\iq.1.7",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\iq.1.7\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 5,
+      "h_files": 0,
+      "source_files": [
+        "iq.c",
+        "iqinx.c",
+        "iqread.c",
+        "iqseek.c",
+        "iqwrite.c"
+      ],
+      "estimated_build_time": 10
+    },
+    "oldfit.1.25": {
+      "status": "analyzed",
+      "name": "oldfit.1.25",
+      "path": "codebase\\superdarn\\src.lib\\tk\\oldfit.1.25",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\oldfit.1.25\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 37,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 8,
+      "h_files": 3,
+      "source_files": [
+        "fitclose.c",
+        "fitopen.c",
+        "fitread.c",
+        "fitreadcurrent.c",
+        "fitreadinx.c"
+      ],
+      "estimated_build_time": 24.0
+    },
+    "oldgrid.1.3": {
+      "status": "analyzed",
+      "name": "oldgrid.1.3",
+      "path": "codebase\\superdarn\\src.lib\\tk\\oldgrid.1.3",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\oldgrid.1.3\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 23,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 2,
+      "h_files": 0,
+      "source_files": [
+        "oldreadgrid.c",
+        "oldwritegrid.c"
+      ],
+      "estimated_build_time": 6.0
+    },
+    "oldfitcnx.1.10": {
+      "status": "analyzed",
+      "name": "oldfitcnx.1.10",
+      "path": "codebase\\superdarn\\src.lib\\tk\\oldfitcnx.1.10",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\oldfitcnx.1.10\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 23,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 2,
+      "h_files": 2,
+      "source_files": [
+        "decodemsg.c",
+        "fitcnx.c"
+      ],
+      "estimated_build_time": 6.0
+    },
+    "oldgtablewrite.1.4": {
+      "status": "analyzed",
+      "name": "oldgtablewrite.1.4",
+      "path": "codebase\\superdarn\\src.lib\\tk\\oldgtablewrite.1.4",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\oldgtablewrite.1.4\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 23,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "oldgtablewrite.c"
+      ],
+      "estimated_build_time": 3.0
+    },
+    "radar.1.22": {
+      "status": "analyzed",
+      "name": "radar.1.22",
+      "path": "codebase\\superdarn\\src.lib\\tk\\radar.1.22",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\radar.1.22\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 2,
+      "h_files": 0,
+      "source_files": [
+        "radar.c",
+        "rprm.c"
+      ],
+      "estimated_build_time": 4
+    },
+    "oldraw.1.16": {
+      "status": "analyzed",
+      "name": "oldraw.1.16",
+      "path": "codebase\\superdarn\\src.lib\\tk\\oldraw.1.16",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\oldraw.1.16\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 36,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 6,
+      "h_files": 3,
+      "source_files": [
+        "rawclose.c",
+        "rawopen.c",
+        "rawread.c",
+        "rawreadcurrent.c",
+        "rawseek.c"
+      ],
+      "estimated_build_time": 18.0
+    },
+    "raw.1.22": {
+      "status": "analyzed",
+      "name": "raw.1.22",
+      "path": "codebase\\superdarn\\src.lib\\tk\\raw.1.22",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\raw.1.22\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 5,
+      "h_files": 0,
+      "source_files": [
+        "raw.c",
+        "rawinx.c",
+        "rawread.c",
+        "rawseek.c",
+        "rawwrite.c"
+      ],
+      "estimated_build_time": 10
+    },
+    "rpos.1.7": {
+      "status": "analyzed",
+      "name": "rpos.1.7",
+      "path": "codebase\\superdarn\\src.lib\\tk\\rpos.1.7",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\rpos.1.7\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 17,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 4,
+      "h_files": 1,
+      "source_files": [
+        "calcvector.c",
+        "cnvtcoord.c",
+        "invmag.c",
+        "rpos_v2.c"
+      ],
+      "estimated_build_time": 8
+    },
+    "shf.1.10": {
+      "status": "analyzed",
+      "name": "shf.1.10",
+      "path": "codebase\\superdarn\\src.lib\\tk\\shf.1.10",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\shf.1.10\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 27,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 16,
+      "h_files": 8,
+      "source_files": [
+        "calc_bmag.c",
+        "cnvgrid.c",
+        "crdshft.c",
+        "evalefield.c",
+        "evallegendre.c"
+      ],
+      "estimated_build_time": 48.0
+    },
+    "scan.1.7": {
+      "status": "analyzed",
+      "name": "scan.1.7",
+      "path": "codebase\\superdarn\\src.lib\\tk\\scan.1.7",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\scan.1.7\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 36,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "radarscan.c"
+      ],
+      "estimated_build_time": 3.0
+    },
+    "smr.1.7": {
+      "status": "analyzed",
+      "name": "smr.1.7",
+      "path": "codebase\\superdarn\\src.lib\\tk\\smr.1.7",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\smr.1.7\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 37,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 4,
+      "h_files": 0,
+      "source_files": [
+        "smrread.c",
+        "smrscan.c",
+        "smrseek.c",
+        "smrwrite.c"
+      ],
+      "estimated_build_time": 12.0
+    },
+    "sim_data.1.0": {
+      "status": "analyzed",
+      "name": "sim_data.1.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\sim_data.1.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\sim_data.1.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 20,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "sim_data.c"
+      ],
+      "estimated_build_time": 2
+    },
+    "tsg.1.13": {
+      "status": "analyzed",
+      "name": "tsg.1.13",
+      "path": "codebase\\superdarn\\src.lib\\tk\\tsg.1.13",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\tsg.1.13\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 17,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "maketsg.c"
+      ],
+      "estimated_build_time": 2
+    },
+    "snd.1.0": {
+      "status": "analyzed",
+      "name": "snd.1.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\snd.1.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\snd.1.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 33,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "build_complexity": "medium",
+      "c_files": 6,
+      "h_files": 0,
+      "source_files": [
+        "fitsnd.c",
+        "snd.c",
+        "sndread.c",
+        "sndscan.c",
+        "sndseek.c"
+      ],
+      "estimated_build_time": 18.0
+    }
+  },
+  "binaries": {
+    "cat_fit.1.12": {
+      "status": "analyzed",
+      "name": "cat_fit.1.12",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\cat_fit.1.12",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\cat_fit.1.12\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "cat_fit.c"
+      ],
+      "dependencies": 9,
+      "estimated_build_time": 2
+    },
+    "cat_raw.1.14": {
+      "status": "analyzed",
+      "name": "cat_raw.1.14",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\cat_raw.1.14",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\cat_raw.1.14\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "cat_raw.c"
+      ],
+      "dependencies": 7,
+      "estimated_build_time": 2
+    },
+    "combine_grid.1.19": {
+      "status": "analyzed",
+      "name": "combine_grid.1.19",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\combine_grid.1.19",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\combine_grid.1.19\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 20,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 2,
+      "h_files": 1,
+      "source_files": [
+        "combine_grid.c",
+        "make_grid.c"
+      ],
+      "dependencies": 8,
+      "estimated_build_time": 4
+    },
+    "combine_snd.1.0": {
+      "status": "analyzed",
+      "name": "combine_snd.1.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\combine_snd.1.0",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\combine_snd.1.0\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "combine_snd.c"
+      ],
+      "dependencies": 6,
+      "estimated_build_time": 2
+    },
+    "extract_grid.1.15": {
+      "status": "analyzed",
+      "name": "extract_grid.1.15",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\extract_grid.1.15",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\extract_grid.1.15\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 20,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "extract_grid.c"
+      ],
+      "dependencies": 7,
+      "estimated_build_time": 2
+    },
+    "find_freqband.1.0": {
+      "status": "analyzed",
+      "name": "find_freqband.1.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\find_freqband.1.0",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\find_freqband.1.0\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 37,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 2,
+      "h_files": 0,
+      "source_files": [
+        "find_freqband.c",
+        "write_tfreq_band.c"
+      ],
+      "dependencies": 0,
+      "estimated_build_time": 6.0
+    },
+    "extract_map.1.13": {
+      "status": "analyzed",
+      "name": "extract_map.1.13",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\extract_map.1.13",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\extract_map.1.13\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "extract_map.c"
+      ],
+      "dependencies": 10,
+      "estimated_build_time": 2
+    },
+    "fit_cp.1.13": {
+      "status": "analyzed",
+      "name": "fit_cp.1.13",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\fit_cp.1.13",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\fit_cp.1.13\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "fit_cp.c"
+      ],
+      "dependencies": 9,
+      "estimated_build_time": 2
+    },
+    "fit_speck_removal.1.0": {
+      "status": "analyzed",
+      "name": "fit_speck_removal.1.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\fit_speck_removal.1.0",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\fit_speck_removal.1.0\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "fit_speck_removal.c"
+      ],
+      "dependencies": 5,
+      "estimated_build_time": 2
+    },
+    "fitfilter.1.4": {
+      "status": "analyzed",
+      "name": "fitfilter.1.4",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\fitfilter.1.4",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\fitfilter.1.4\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "fitfilter.c"
+      ],
+      "dependencies": 10,
+      "estimated_build_time": 2
+    },
+    "fit_speck_removal_optimized.1.0": {
+      "status": "analyzed",
+      "name": "fit_speck_removal_optimized.1.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\fit_speck_removal_optimized.1.0",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\fit_speck_removal_optimized.1.0\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 107,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": false,
+      "build_complexity": "high",
+      "c_files": 3,
+      "h_files": 0,
+      "source_files": [
+        "fit_speck_removal_comparison.c",
+        "fit_speck_removal_demo.c",
+        "fit_speck_removal_optimized.c"
+      ],
+      "dependencies": 0,
+      "estimated_build_time": 12
+    },
+    "fitstat.1.7": {
+      "status": "analyzed",
+      "name": "fitstat.1.7",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\fitstat.1.7",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\fitstat.1.7\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "fitstat.c"
+      ],
+      "dependencies": 9,
+      "estimated_build_time": 2
+    },
+    "grid_filter.1.7": {
+      "status": "analyzed",
+      "name": "grid_filter.1.7",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\grid_filter.1.7",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\grid_filter.1.7\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "grid_filter.c"
+      ],
+      "dependencies": 7,
+      "estimated_build_time": 2
+    },
+    "lagfr_fix.1.0": {
+      "status": "analyzed",
+      "name": "lagfr_fix.1.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\lagfr_fix.1.0",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\lagfr_fix.1.0\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 21,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "lagfr_fix.c"
+      ],
+      "dependencies": 13,
+      "estimated_build_time": 3.0
+    },
+    "imfdelay.1.7": {
+      "status": "analyzed",
+      "name": "imfdelay.1.7",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\imfdelay.1.7",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\imfdelay.1.7\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 34,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 4,
+      "h_files": 4,
+      "source_files": [
+        "ace.c",
+        "imfdelay.c",
+        "locate.c",
+        "wind.c"
+      ],
+      "dependencies": 5,
+      "estimated_build_time": 12.0
+    },
+    "make_cfit.1.10": {
+      "status": "analyzed",
+      "name": "make_cfit.1.10",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_cfit.1.10",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_cfit.1.10\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_cfit.c"
+      ],
+      "dependencies": 9,
+      "estimated_build_time": 2
+    },
+    "make_cfitinx.1.2": {
+      "status": "analyzed",
+      "name": "make_cfitinx.1.2",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_cfitinx.1.2",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_cfitinx.1.2\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_cfitinx.c"
+      ],
+      "dependencies": 5,
+      "estimated_build_time": 2
+    },
+    "make_efieldinx.1.6": {
+      "status": "analyzed",
+      "name": "make_efieldinx.1.6",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_efieldinx.1.6",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_efieldinx.1.6\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_efieldinx.c"
+      ],
+      "dependencies": 4,
+      "estimated_build_time": 2
+    },
+    "make_fitinx.1.9": {
+      "status": "analyzed",
+      "name": "make_fitinx.1.9",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_fitinx.1.9",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_fitinx.1.9\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_fitinx.c"
+      ],
+      "dependencies": 9,
+      "estimated_build_time": 2
+    },
+    "make_fit": {
+      "status": "analyzed",
+      "name": "make_fit",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_fit",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_fit\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 39,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_fit.c"
+      ],
+      "dependencies": 19,
+      "estimated_build_time": 3.0
+    },
+    "make_grdinx.1.7": {
+      "status": "analyzed",
+      "name": "make_grdinx.1.7",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_grdinx.1.7",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_grdinx.1.7\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_grdinx.c"
+      ],
+      "dependencies": 5,
+      "estimated_build_time": 2
+    },
+    "make_grid.2.0": {
+      "status": "analyzed",
+      "name": "make_grid.2.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_grid.2.0",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_grid.2.0\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 16,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_grid.c"
+      ],
+      "dependencies": 20,
+      "estimated_build_time": 2
+    },
+    "make_info.1.13": {
+      "status": "analyzed",
+      "name": "make_info.1.13",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_info.1.13",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_info.1.13\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_info.c"
+      ],
+      "dependencies": 11,
+      "estimated_build_time": 2
+    },
+    "make_iqinx.1.6": {
+      "status": "analyzed",
+      "name": "make_iqinx.1.6",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_iqinx.1.6",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_iqinx.1.6\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_iqinx.c"
+      ],
+      "dependencies": 6,
+      "estimated_build_time": 2
+    },
+    "make_lmfit2": {
+      "status": "analyzed",
+      "name": "make_lmfit2",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_lmfit2",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_lmfit2\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 21,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_lmfit2.c"
+      ],
+      "dependencies": 13,
+      "estimated_build_time": 3.0
+    },
+    "make_mapinx.1.6": {
+      "status": "analyzed",
+      "name": "make_mapinx.1.6",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_mapinx.1.6",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_mapinx.1.6\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_mapinx.c"
+      ],
+      "dependencies": 6,
+      "estimated_build_time": 2
+    },
+    "make_rawinx.1.7": {
+      "status": "analyzed",
+      "name": "make_rawinx.1.7",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_rawinx.1.7",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_rawinx.1.7\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_rawinx.c"
+      ],
+      "dependencies": 6,
+      "estimated_build_time": 2
+    },
+    "make_raw.1.8": {
+      "status": "analyzed",
+      "name": "make_raw.1.8",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_raw.1.8",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_raw.1.8\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_raw.c"
+      ],
+      "dependencies": 8,
+      "estimated_build_time": 2
+    },
+    "make_sim.1.0": {
+      "status": "analyzed",
+      "name": "make_sim.1.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_sim.1.0",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_sim.1.0\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_sim.c"
+      ],
+      "dependencies": 21,
+      "estimated_build_time": 2
+    },
+    "make_smr.1.16": {
+      "status": "analyzed",
+      "name": "make_smr.1.16",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_smr.1.16",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_smr.1.16\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_smr.c"
+      ],
+      "dependencies": 10,
+      "estimated_build_time": 2
+    },
+    "make_vec.1.16": {
+      "status": "analyzed",
+      "name": "make_vec.1.16",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_vec.1.16",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_vec.1.16\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 22,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_vec.c"
+      ],
+      "dependencies": 8,
+      "estimated_build_time": 3.0
+    },
+    "make_snd.1.0": {
+      "status": "analyzed",
+      "name": "make_snd.1.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_snd.1.0",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_snd.1.0\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_snd.c"
+      ],
+      "dependencies": 7,
+      "estimated_build_time": 2
+    },
+    "map_addhmb.1.17": {
+      "status": "analyzed",
+      "name": "map_addhmb.1.17",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_addhmb.1.17",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_addhmb.1.17\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 22,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "map_addhmb.c"
+      ],
+      "dependencies": 5,
+      "estimated_build_time": 3.0
+    },
+    "map_addimf.1.18": {
+      "status": "analyzed",
+      "name": "map_addimf.1.18",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_addimf.1.18",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_addimf.1.18\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 28,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 4,
+      "h_files": 4,
+      "source_files": [
+        "ace.c",
+        "locate.c",
+        "map_addimf.c",
+        "wind.c"
+      ],
+      "dependencies": 0,
+      "estimated_build_time": 12.0
+    },
+    "map_ascii.1.8": {
+      "status": "analyzed",
+      "name": "map_ascii.1.8",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_ascii.1.8",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_ascii.1.8\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 24,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 2,
+      "h_files": 1,
+      "source_files": [
+        "make_pgrid.c",
+        "map_ascii.c"
+      ],
+      "dependencies": 6,
+      "estimated_build_time": 6.0
+    },
+    "map_filter.1.8": {
+      "status": "analyzed",
+      "name": "map_filter.1.8",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_filter.1.8",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_filter.1.8\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 17,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "map_filter.c"
+      ],
+      "dependencies": 9,
+      "estimated_build_time": 2
+    },
+    "map_addmodel.1.14": {
+      "status": "analyzed",
+      "name": "map_addmodel.1.14",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_addmodel.1.14",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_addmodel.1.14\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 23,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "map_addmodel.c"
+      ],
+      "dependencies": 0,
+      "estimated_build_time": 3.0
+    },
+    "map_fit.1.13": {
+      "status": "analyzed",
+      "name": "map_fit.1.13",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_fit.1.13",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_fit.1.13\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 21,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "map_fit.c"
+      ],
+      "dependencies": 6,
+      "estimated_build_time": 3.0
+    },
+    "radar_id.1.18": {
+      "status": "analyzed",
+      "name": "radar_id.1.18",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\radar_id.1.18",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\radar_id.1.18\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 21,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "radar_id.c"
+      ],
+      "dependencies": 5,
+      "estimated_build_time": 3.0
+    },
+    "map_grd.1.16": {
+      "status": "analyzed",
+      "name": "map_grd.1.16",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_grd.1.16",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\map_grd.1.16\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 24,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "map_grd.c"
+      ],
+      "dependencies": 5,
+      "estimated_build_time": 3.0
+    },
+    "merge_grid.1.8": {
+      "status": "analyzed",
+      "name": "merge_grid.1.8",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\merge_grid.1.8",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\merge_grid.1.8\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 20,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "merge_grid.c"
+      ],
+      "dependencies": 7,
+      "estimated_build_time": 2
+    },
+    "merge_rt.1.19": {
+      "status": "analyzed",
+      "name": "merge_rt.1.19",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\merge_rt.1.19",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\merge_rt.1.19\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 2,
+      "h_files": 1,
+      "source_files": [
+        "log_info.c",
+        "merge_rt.c"
+      ],
+      "dependencies": 8,
+      "estimated_build_time": 4
+    },
+    "raw_cp.1.5": {
+      "status": "analyzed",
+      "name": "raw_cp.1.5",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\raw_cp.1.5",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\raw_cp.1.5\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "raw_cp.c"
+      ],
+      "dependencies": 7,
+      "estimated_build_time": 2
+    },
+    "rtcfit.1.12": {
+      "status": "analyzed",
+      "name": "rtcfit.1.12",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\rtcfit.1.12",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\rtcfit.1.12\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 2,
+      "h_files": 1,
+      "source_files": [
+        "loginfo.c",
+        "rtcfit.c"
+      ],
+      "dependencies": 10,
+      "estimated_build_time": 4
+    },
+    "rtgrid.1.22": {
+      "status": "analyzed",
+      "name": "rtgrid.1.22",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\rtgrid.1.22",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\rtgrid.1.22\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 2,
+      "h_files": 2,
+      "source_files": [
+        "loginfo.c",
+        "rtgrid.c"
+      ],
+      "dependencies": 21,
+      "estimated_build_time": 4
+    },
+    "rawstat.1.5": {
+      "status": "analyzed",
+      "name": "rawstat.1.5",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\rawstat.1.5",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\rawstat.1.5\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "rawstat.c"
+      ],
+      "dependencies": 7,
+      "estimated_build_time": 2
+    },
+    "sim_real.1.0": {
+      "status": "analyzed",
+      "name": "sim_real.1.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\sim_real.1.0",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\sim_real.1.0\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "sim_real.c"
+      ],
+      "dependencies": 11,
+      "estimated_build_time": 2
+    },
+    "rtsnd.1.0": {
+      "status": "analyzed",
+      "name": "rtsnd.1.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\rtsnd.1.0",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\rtsnd.1.0\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 2,
+      "h_files": 1,
+      "source_files": [
+        "loginfo.c",
+        "rtsnd.c"
+      ],
+      "dependencies": 10,
+      "estimated_build_time": 4
+    },
+    "trim_cfit.1.7": {
+      "status": "analyzed",
+      "name": "trim_cfit.1.7",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_cfit.1.7",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_cfit.1.7\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 19,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "trim_cfit.c"
+      ],
+      "dependencies": 5,
+      "estimated_build_time": 2
+    },
+    "solve_model.1.0": {
+      "status": "analyzed",
+      "name": "solve_model.1.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\solve_model.1.0",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\solve_model.1.0\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 22,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "solve_model.c"
+      ],
+      "dependencies": 0,
+      "estimated_build_time": 3.0
+    },
+    "trim_fit.1.20": {
+      "status": "analyzed",
+      "name": "trim_fit.1.20",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_fit.1.20",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_fit.1.20\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "trim_fit.c"
+      ],
+      "dependencies": 9,
+      "estimated_build_time": 2
+    },
+    "trim_grid.1.19": {
+      "status": "analyzed",
+      "name": "trim_grid.1.19",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_grid.1.19",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_grid.1.19\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 20,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "trim_grid.c"
+      ],
+      "dependencies": 8,
+      "estimated_build_time": 2
+    },
+    "trim_map.1.11": {
+      "status": "analyzed",
+      "name": "trim_map.1.11",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_map.1.11",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_map.1.11\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 22,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "medium",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "trim_map.c"
+      ],
+      "dependencies": 9,
+      "estimated_build_time": 3.0
+    },
+    "trim_iq.1.5": {
+      "status": "analyzed",
+      "name": "trim_iq.1.5",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_iq.1.5",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_iq.1.5\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 17,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "trim_iq.c"
+      ],
+      "dependencies": 6,
+      "estimated_build_time": 2
+    },
+    "trim_raw.1.15": {
+      "status": "analyzed",
+      "name": "trim_raw.1.15",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_raw.1.15",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_raw.1.15\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 17,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "trim_raw.c"
+      ],
+      "dependencies": 7,
+      "estimated_build_time": 2
+    },
+    "trim_snd.1.0": {
+      "status": "analyzed",
+      "name": "trim_snd.1.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_snd.1.0",
+      "makefile_path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_snd.1.0\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 17,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "build_complexity": "simple",
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "trim_snd.c"
+      ],
+      "dependencies": 6,
+      "estimated_build_time": 2
+    }
+  },
+  "summary": {
+    "total_components": 96,
+    "total_libraries": 40,
+    "total_binaries": 56,
+    "successful_libraries": 39,
+    "successful_binaries": 56,
+    "total_successful": 95,
+    "success_rate": 99.0,
+    "total_c_files": 254,
+    "total_h_files": 57,
+    "total_source_files": 311,
+    "lib_test_time": 0.07,
+    "bin_test_time": 0.05,
+    "total_test_time": 0.12
+  }
+}

@@ -1,0 +1,247 @@
+# Enhanced Makefile for SuperDARN FitACF v3.0 Performance Testing
+# Builds both linked list and array implementations with comprehensive testing
+# Author: SuperDARN Performance Optimization Team
+# Date: May 30, 2025
+
+include $(MAKECFG).$(SYSTEM)
+
+# Compiler and linker settings
+CC = gcc
+CXX = g++
+MPICC = mpicc
+
+# Base optimization flags
+BASE_FLAGS = -std=c99 -Wall -Wextra -pedantic
+OPTIMIZATION_FLAGS = -O3 -march=native -mtune=native -ftree-vectorize -ffast-math
+DEBUG_FLAGS = -g -DDEBUG_FITACF -DARRAY_DEBUG
+OPENMP_FLAGS = -fopenmp
+SIMD_FLAGS = -mavx2 -mfma
+
+# Feature flags
+ARRAY_FLAGS = -DUSE_ARRAY_IMPLEMENTATION
+PERFORMANCE_FLAGS = -DPERFORMANCE_MONITORING -DTIMING_ENABLED
+VALIDATION_FLAGS = -DVALIDATION_ENABLED -DSTRICT_CHECKING
+
+# Include paths
+INCLUDE = -I$(IPATH)/base -I$(IPATH)/general -I$(IPATH)/superdarn/fit \
+          -I$(IPATH)/superdarn -I../include -I./
+
+# Library paths
+LIBS = -lm -lrt
+OPENMP_LIBS = -lgomp
+MPI_LIBS = -lmpi
+
+# Source file organization
+SRC_LLIST = determinations.c fitacftoplevel.c fitting.c leastsquares.c \
+            llist.c preprocessing.c
+
+SRC_ARRAY = determinations.c fitacftoplevel_array.c fitting_array.c \
+            leastsquares.c fit_structures_array.c preprocessing_array.c \
+            fitacf_array_optimized.c
+
+SRC_TEST = test_fitacf_performance_comprehensive.c test_array_vs_llist.c \
+           test_fitacf_comprehensive.c
+
+SRC_BENCHMARK = benchmark_fitacf.c
+
+# Header files
+HDR_COMMON = determinations.h leastsquares.h rtypes.h dmap.h rprm.h \
+             rawdata.h fitdata.h
+
+HDR_LLIST = fitting.h preprocessing.h fitacftoplevel.h llist.h
+
+HDR_ARRAY = fitting_array.h preprocessing_array.h fit_structures_array.h \
+            fitacftoplevel_array.h
+
+# Object files
+OBJS_LLIST = $(SRC_LLIST:.c=_llist.o)
+OBJS_ARRAY = $(SRC_ARRAY:.c=_array.o)
+OBJS_TEST = $(SRC_TEST:.c=.o)
+OBJS_BENCHMARK = $(SRC_BENCHMARK:.c=.o)
+
+# Targets and build configurations
+TARGETS = fitacf_llist fitacf_array test_comprehensive test_performance \
+          benchmark_performance docker_test
+
+# Default target
+all: $(TARGETS)
+
+# Build linked list implementation (original)
+fitacf_llist: $(OBJS_LLIST)
+	$(CC) $(BASE_FLAGS) $(OPTIMIZATION_FLAGS) -o $@ $^ $(LIBS)
+
+# Build array implementation with OpenMP
+fitacf_array: $(OBJS_ARRAY)
+	$(CC) $(BASE_FLAGS) $(OPTIMIZATION_FLAGS) $(OPENMP_FLAGS) $(SIMD_FLAGS) \
+	      $(ARRAY_FLAGS) $(PERFORMANCE_FLAGS) -o $@ $^ $(LIBS) $(OPENMP_LIBS)
+
+# Build comprehensive test suite
+test_comprehensive: $(OBJS_TEST) $(OBJS_LLIST) $(OBJS_ARRAY)
+	$(CC) $(BASE_FLAGS) $(OPTIMIZATION_FLAGS) $(OPENMP_FLAGS) $(VALIDATION_FLAGS) \
+	      -o $@ $^ $(LIBS) $(OPENMP_LIBS)
+
+# Build performance test suite
+test_performance: test_fitacf_performance_comprehensive.o $(OBJS_LLIST) $(OBJS_ARRAY)
+	$(CC) $(BASE_FLAGS) $(OPTIMIZATION_FLAGS) $(OPENMP_FLAGS) $(SIMD_FLAGS) \
+	      $(PERFORMANCE_FLAGS) -o $@ $^ $(LIBS) $(OPENMP_LIBS)
+
+# Build benchmark suite
+benchmark_performance: $(OBJS_BENCHMARK) $(OBJS_LLIST) $(OBJS_ARRAY)
+	$(CC) $(BASE_FLAGS) $(OPTIMIZATION_FLAGS) $(OPENMP_FLAGS) $(SIMD_FLAGS) \
+	      -o $@ $^ $(LIBS) $(OPENMP_LIBS)
+
+# Object file compilation rules
+
+# Linked list implementation objects
+%_llist.o: %.c $(HDR_COMMON) $(HDR_LLIST)
+	$(CC) $(BASE_FLAGS) $(OPTIMIZATION_FLAGS) $(INCLUDE) -c $< -o $@
+
+# Array implementation objects  
+%_array.o: %.c $(HDR_COMMON) $(HDR_ARRAY)
+	$(CC) $(BASE_FLAGS) $(OPTIMIZATION_FLAGS) $(OPENMP_FLAGS) $(SIMD_FLAGS) \
+	      $(ARRAY_FLAGS) $(INCLUDE) -c $< -o $@
+
+# Test objects
+%.o: %.c $(HDR_COMMON) $(HDR_LLIST) $(HDR_ARRAY)
+	$(CC) $(BASE_FLAGS) $(OPTIMIZATION_FLAGS) $(OPENMP_FLAGS) $(VALIDATION_FLAGS) \
+	      $(INCLUDE) -c $< -o $@
+
+# Docker testing targets
+docker_test: docker_build docker_run_tests
+
+docker_build:
+	@echo "Building Docker container for FitACF testing..."
+	docker build -t fitacf_test:latest -f ../../../dockerfile .
+
+docker_run_tests:
+	@echo "Running comprehensive tests in Docker container..."
+	docker run --rm -v $(PWD):/workspace fitacf_test:latest \
+	    bash -c "cd /workspace && make test_all"
+
+# Test execution targets
+test_unit: test_comprehensive
+	@echo "Running unit tests..."
+	./test_comprehensive
+
+test_perf: test_performance
+	@echo "Running performance tests..."
+	./test_performance
+
+test_bench: benchmark_performance
+	@echo "Running benchmarks..."
+	./benchmark_performance
+
+test_scaling: test_performance
+	@echo "Running scaling tests with different thread counts..."
+	@for threads in 1 2 4 8 16; do \
+		echo "Testing with $$threads threads:"; \
+		OMP_NUM_THREADS=$$threads ./test_performance; \
+	done
+
+test_all: test_unit test_perf test_scaling
+	@echo "All tests completed successfully!"
+
+# Performance analysis targets
+profile: test_performance
+	@echo "Running performance profiling..."
+	perf record -g ./test_performance
+	perf report
+
+valgrind: test_comprehensive
+	@echo "Running memory analysis with Valgrind..."
+	valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all \
+	         --track-origins=yes ./test_comprehensive
+
+benchmark: benchmark_performance
+	@echo "Running comprehensive benchmarks..."
+	./benchmark_performance > benchmark_results.txt
+	@echo "Benchmark results saved to benchmark_results.txt"
+
+# Code quality targets
+static_analysis:
+	@echo "Running static code analysis..."
+	cppcheck --enable=all --std=c99 $(SRC_ARRAY) $(SRC_TEST)
+
+format:
+	@echo "Formatting code..."
+	clang-format -i $(SRC_ARRAY) $(HDR_ARRAY) $(SRC_TEST)
+
+# Documentation targets
+docs:
+	@echo "Generating documentation..."
+	doxygen ../docs/doxygen.cfg
+
+# Installation targets
+install: fitacf_array
+	@echo "Installing optimized FitACF library..."
+	cp fitacf_array $(LIBPATH)/
+	cp $(HDR_ARRAY) $(IPATH)/superdarn/fit/
+
+# Cleaning targets
+clean:
+	rm -f *.o $(TARGETS) *.log *.txt perf.data*
+
+clean_all: clean
+	rm -f benchmark_results.txt *.prof *.gcov *.gcda *.gcno
+
+distclean: clean_all
+	rm -rf docs/html docs/latex
+
+# Development targets for continuous integration
+ci_test: all test_all
+	@echo "Continuous integration tests completed"
+
+ci_bench: benchmark
+	@echo "Continuous integration benchmarks completed"
+
+# Memory optimization targets
+optimize_size: OPTIMIZATION_FLAGS += -Os -s
+optimize_size: all
+
+optimize_speed: OPTIMIZATION_FLAGS += -Ofast -funroll-loops
+optimize_speed: all
+
+# Debugging targets
+debug: DEBUG_FLAGS += -fsanitize=address -fsanitize=undefined
+debug: OPTIMIZATION_FLAGS = -O0
+debug: all
+
+# Advanced profiling targets
+gprof: OPTIMIZATION_FLAGS += -pg
+gprof: all
+	./test_performance
+	gprof ./test_performance gmon.out > gprof_report.txt
+
+perf_analysis: all
+	@echo "Running detailed performance analysis..."
+	perf stat -e cache-misses,cache-references,instructions,cycles \
+	          ./test_performance
+
+# Help target
+help:
+	@echo "SuperDARN FitACF v3.0 Performance Testing Makefile"
+	@echo "=================================================="
+	@echo ""
+	@echo "Available targets:"
+	@echo "  all              - Build all implementations and tests"
+	@echo "  fitacf_llist     - Build original linked list implementation"
+	@echo "  fitacf_array     - Build optimized array implementation"
+	@echo "  test_unit        - Run unit tests"
+	@echo "  test_perf        - Run performance tests"
+	@echo "  test_scaling     - Run scaling tests with different thread counts"
+	@echo "  test_all         - Run all tests"
+	@echo "  docker_test      - Run tests in Docker container"
+	@echo "  benchmark        - Run comprehensive benchmarks"
+	@echo "  profile          - Run performance profiling"
+	@echo "  valgrind         - Run memory analysis"
+	@echo "  clean            - Remove build artifacts"
+	@echo "  help             - Show this help message"
+
+# Phony targets
+.PHONY: all clean clean_all distclean test_unit test_perf test_scaling test_all \
+        docker_test docker_build docker_run_tests benchmark profile valgrind \
+        static_analysis format docs install help ci_test ci_bench \
+        optimize_size optimize_speed debug gprof perf_analysis
+
+# Default goal
+.DEFAULT_GOAL := all

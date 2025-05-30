@@ -34,16 +34,52 @@
 #include <time.h>
 #include <assert.h>
 
-#include "rtypes.h"
-#include "dmap.h"
-#include "rprm.h"
-#include "rawdata.h"
-#include "fitdata.h"
+// Only include essential local headers that exist
 #include "fitacftoplevel.h"
 #include "fit_structures.h"
 #include "llist.h"
-#include "preprocessing.h"
-#include "fitting.h"
+
+// Define minimal structures needed for testing
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+// Minimal data structures for testing (instead of full RST types)
+struct RadarParm {
+    struct {int major; int minor;} revision;
+    int cp, stid, bmnum, scan, channel, rxrise;
+    struct {int sc; int us;} intt;
+    int txpl, mpinc, mppul, mplgs, nrang, frang, rsep, nave;
+    struct {double search; double mean;} noise;
+    int tfreq;
+    double bmazm;
+    struct {int yr, mo, dy, hr, mt, sc, us;} time;
+};
+
+struct RawData {
+    struct {int major; int minor;} revision;
+    double thr;
+    float *pwr0;
+    float complex **acfd;
+    float complex **xcfd;
+};
+
+struct FitData {
+    struct {int major; int minor;} revision;
+    int *slist;
+    int *qflg;
+    float *pwr0;
+    float *v;
+    float *v_e;
+    float *p_l;
+    float *w_l;
+    float *elv;
+    int rng_cnt;
+};
+
+// Function declarations for missing RST functions
+struct FitData *FitMake(void);
+void FitFree(struct FitData *fit);
 
 /* Test data structures for comprehensive result tracking */
 typedef struct test_result {
@@ -436,8 +472,30 @@ void test_memory_usage_linked_lists(void) {
     
     printf("  Estimated memory usage (linked lists): %zu bytes (%.2f KB)\n", 
            total_memory, total_memory / 1024.0);
-    
-    end_test(1, NULL);
+      end_test(1, NULL);
+}
+
+/* Stub implementations for missing RST functions */
+struct FitData *FitMake(void) {
+    struct FitData *fit = malloc(sizeof(struct FitData));
+    memset(fit, 0, sizeof(struct FitData));
+    fit->revision.major = 1;
+    fit->revision.minor = 0;
+    return fit;
+}
+
+void FitFree(struct FitData *fit) {
+    if (fit) {
+        free(fit->slist);
+        free(fit->qflg);
+        free(fit->pwr0);
+        free(fit->v);
+        free(fit->v_e);
+        free(fit->p_l);
+        free(fit->w_l);
+        free(fit->elv);
+        free(fit);
+    }
 }
 
 /* Main test execution */

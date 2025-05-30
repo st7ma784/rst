@@ -22,7 +22,8 @@ RUN apt-get update && \
     git \
     ffmpeg \
     libsm6 \
-    libxext6 \ 
+    libxext6 \
+    dos2unix \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -44,6 +45,11 @@ ENV CDF_PATH=/usr/local/cdf
 
 # Set the working directory
 COPY . /app/rst
+
+# Convert Windows line endings to Unix line endings
+RUN find /app/rst -name "*.bash" -type f -exec dos2unix {} \;
+RUN find /app/rst -name "*.sh" -type f -exec dos2unix {} \;
+RUN dos2unix /app/rst/.profile.bash
 
 # Open rst/.profile/base.bash to check paths are correctly set:
 # XPATH, NETCDF_PATH, CDF_PATH To check if the paths are set correctly locate the following header files: For NETCDF_PATH locate netcdf.h For CDF PATH locate cdf.h

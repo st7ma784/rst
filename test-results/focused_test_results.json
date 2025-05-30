@@ -1,0 +1,185 @@
+{
+  "timestamp": "2025-05-30T14:07:17.019793",
+  "test_type": "focused_validation",
+  "libraries": {
+    "fitacf_v3.0": {
+      "status": "analyzed",
+      "name": "fitacf_v3.0",
+      "path": "codebase\\superdarn\\src.lib\\tk\\fitacf_v3.0",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\fitacf_v3.0\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 22,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "c_files": 12,
+      "h_files": 3,
+      "source_files": [
+        "test_env.c",
+        "determinations.c",
+        "fitacftoplevel.c",
+        "fitacftoplevel_array.c",
+        "fitacf_array_optimized.c"
+      ]
+    },
+    "fit.1.35": {
+      "status": "analyzed",
+      "name": "fit.1.35",
+      "path": "codebase\\superdarn\\src.lib\\tk\\fit.1.35",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\fit.1.35\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "c_files": 7,
+      "h_files": 0,
+      "source_files": [
+        "fit.c",
+        "fitcfit.c",
+        "fitinx.c",
+        "fitread.c",
+        "fitscan.c"
+      ]
+    },
+    "grid.1.24": {
+      "status": "analyzed",
+      "name": "grid.1.24",
+      "path": "codebase\\superdarn\\src.lib\\tk\\grid.1.24",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\grid.1.24\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 26,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "c_files": 11,
+      "h_files": 0,
+      "source_files": [
+        "addgrid.c",
+        "avggrid.c",
+        "copygrid.c",
+        "grid.c",
+        "gridinx.c"
+      ]
+    },
+    "raw.1.22": {
+      "status": "analyzed",
+      "name": "raw.1.22",
+      "path": "codebase\\superdarn\\src.lib\\tk\\raw.1.22",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\raw.1.22\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "c_files": 5,
+      "h_files": 0,
+      "source_files": [
+        "raw.c",
+        "rawinx.c",
+        "rawread.c",
+        "rawseek.c",
+        "rawwrite.c"
+      ]
+    },
+    "cfit.1.19": {
+      "status": "analyzed",
+      "name": "cfit.1.19",
+      "path": "codebase\\superdarn\\src.lib\\tk\\cfit.1.19",
+      "makefile_path": "codebase\\superdarn\\src.lib\\tk\\cfit.1.19\\src\\makefile",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "is_rst_makefile": true,
+      "is_cmake": false,
+      "c_files": 8,
+      "h_files": 0,
+      "source_files": [
+        "cfit.c",
+        "cfitclose.c",
+        "cfitinx.c",
+        "cfitopen.c",
+        "cfitread.c"
+      ]
+    }
+  },
+  "binaries": {
+    "fit_speck_removal.1.0": {
+      "status": "analyzed",
+      "name": "fit_speck_removal.1.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\fit_speck_removal.1.0",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "fit_speck_removal.c"
+      ]
+    },
+    "fit_speck_removal_optimized.1.0": {
+      "status": "analyzed",
+      "name": "fit_speck_removal_optimized.1.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\fit_speck_removal_optimized.1.0",
+      "makefile_exists": true,
+      "makefile_lines": 107,
+      "has_includes": true,
+      "has_sources": true,
+      "c_files": 3,
+      "h_files": 0,
+      "source_files": [
+        "fit_speck_removal_comparison.c",
+        "fit_speck_removal_demo.c",
+        "fit_speck_removal_optimized.c"
+      ]
+    },
+    "make_fit": {
+      "status": "analyzed",
+      "name": "make_fit",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_fit",
+      "makefile_exists": true,
+      "makefile_lines": 39,
+      "has_includes": true,
+      "has_sources": true,
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_fit.c"
+      ]
+    },
+    "make_grid.2.0": {
+      "status": "analyzed",
+      "name": "make_grid.2.0",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\make_grid.2.0",
+      "makefile_exists": true,
+      "makefile_lines": 16,
+      "has_includes": true,
+      "has_sources": true,
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "make_grid.c"
+      ]
+    },
+    "trim_fit.1.20": {
+      "status": "analyzed",
+      "name": "trim_fit.1.20",
+      "path": "codebase\\superdarn\\src.bin\\tk\\tool\\trim_fit.1.20",
+      "makefile_exists": true,
+      "makefile_lines": 18,
+      "has_includes": true,
+      "has_sources": true,
+      "c_files": 1,
+      "h_files": 0,
+      "source_files": [
+        "trim_fit.c"
+      ]
+    }
+  }
+}

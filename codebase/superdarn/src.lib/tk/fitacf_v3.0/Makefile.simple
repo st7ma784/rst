@@ -1,0 +1,143 @@
+# Simple Makefile for FitACF v3.0 Performance Testing (Docker Compatible)
+# Builds both linked list and array implementations with comprehensive testing
+
+# Compiler settings
+CC = gcc
+CXX = g++
+
+# Base optimization flags
+CFLAGS = -std=c99 -Wall -Wextra -O3 -march=native -mtune=native
+DEBUG_FLAGS = -g -DDEBUG_FITACF
+OPENMP_FLAGS = -fopenmp
+SIMD_FLAGS = -mavx2 -mfma
+
+# Feature flags  
+ARRAY_FLAGS = -DUSE_ARRAY_IMPLEMENTATION
+PERFORMANCE_FLAGS = -DPERFORMANCE_MONITORING -DTIMING_ENABLED
+
+# Include paths
+INCLUDES = -I../include -I./include -I./src
+
+# Libraries
+LIBS = -lm -lrt
+OPENMP_LIBS = -lgomp
+
+# Source directories
+SRCDIR = src
+TESTDIR = test
+INCDIR = include
+
+# Source files for linked list implementation
+LLIST_SOURCES = $(SRCDIR)/fitacftoplevel.c
+LLIST_OBJS = $(LLIST_SOURCES:.c=_llist.o)
+
+# Source files for array implementation
+ARRAY_SOURCES = $(SRCDIR)/fitacftoplevel_array.c $(SRCDIR)/fitacf_array_optimized.c
+ARRAY_OBJS = $(ARRAY_SOURCES:.c=_array.o)
+
+# Test sources
+TEST_SOURCES = $(TESTDIR)/test_fitacf_performance_comprehensive.c
+TEST_OBJS = $(TEST_SOURCES:.c=.o)
+
+# Target executables
+LLIST_TARGET = fitacf_llist
+ARRAY_TARGET = fitacf_array
+PERF_TEST = test_fitacf_performance
+BENCHMARK = benchmark_performance
+
+# Default target
+.PHONY: all
+all: help
+
+# Help target
+.PHONY: help
+help:
+	@echo "SuperDARN FitACF v3.0 Performance Testing Makefile"
+	@echo "=================================================="
+	@echo ""
+	@echo "Available targets:"
+	@echo "  build_all         - Build both implementations"
+	@echo "  build_llist       - Build linked list implementation"
+	@echo "  build_array       - Build array implementation"
+	@echo "  test_basic        - Run basic functionality tests"
+	@echo "  test_performance  - Run performance comparison tests"
+	@echo "  benchmark         - Run comprehensive benchmarks"
+	@echo "  clean             - Clean all build artifacts"
+	@echo ""
+	@echo "Example usage:"
+	@echo "  make -f Makefile.simple build_all"
+	@echo "  make -f Makefile.simple test_performance"
+
+# Build targets
+.PHONY: build_all
+build_all: $(LLIST_TARGET) $(ARRAY_TARGET) $(PERF_TEST)
+
+.PHONY: build_llist
+build_llist: $(LLIST_TARGET)
+
+.PHONY: build_array  
+build_array: $(ARRAY_TARGET)
+
+# Compile object files for linked list
+%_llist.o: %.c
+	@echo "Compiling $< for linked list implementation..."
+	$(CC) $(CFLAGS) $(DEBUG_FLAGS) $(INCLUDES) -c $< -o $@
+
+# Compile object files for array
+%_array.o: %.c  
+	@echo "Compiling $< for array implementation..."
+	$(CC) $(CFLAGS) $(OPENMP_FLAGS) $(SIMD_FLAGS) $(ARRAY_FLAGS) $(PERFORMANCE_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -c $< -o $@
+
+# Test object files
+$(TESTDIR)/%.o: $(TESTDIR)/%.c
+	@echo "Compiling test $<..."
+	$(CC) $(CFLAGS) $(OPENMP_FLAGS) $(PERFORMANCE_FLAGS) $(DEBUG_FLAGS) $(INCLUDES) -c $< -o $@
+
+# Link executables
+$(LLIST_TARGET): $(LLIST_OBJS)
+	@echo "Linking $@..."
+	$(CC) -o $@ $^ $(LIBS)
+
+$(ARRAY_TARGET): $(ARRAY_OBJS)
+	@echo "Linking $@..."
+	$(CC) -o $@ $^ $(LIBS) $(OPENMP_LIBS)
+
+$(PERF_TEST): $(TEST_OBJS)
+	@echo "Linking performance test..."
+	$(CC) -o $@ $^ $(LIBS) $(OPENMP_LIBS)
+
+# Test targets
+.PHONY: test_basic
+test_basic: $(PERF_TEST)
+	@echo "Running basic functionality tests..."
+	./$(PERF_TEST) --unit-tests
+
+.PHONY: test_performance
+test_performance: $(LLIST_TARGET) $(ARRAY_TARGET) $(PERF_TEST)
+	@echo "Running performance comparison tests..."
+	./$(PERF_TEST) --performance-tests
+
+.PHONY: benchmark
+benchmark: $(LLIST_TARGET) $(ARRAY_TARGET) $(PERF_TEST)
+	@echo "Running comprehensive benchmarks..."
+	./$(PERF_TEST) --benchmark-all
+
+# Clean target
+.PHONY: clean
+clean:
+	@echo "Cleaning build artifacts..."
+	rm -f $(SRCDIR)/*_llist.o $(SRCDIR)/*_array.o $(TESTDIR)/*.o
+	rm -f $(LLIST_TARGET) $(ARRAY_TARGET) $(PERF_TEST) $(BENCHMARK)
+	rm -rf test_results
+
+# Show configuration
+.PHONY: config
+config:
+	@echo "Build Configuration:"
+	@echo "==================="
+	@echo "CC: $(CC)"
+	@echo "CFLAGS: $(CFLAGS)"
+	@echo "OPENMP_FLAGS: $(OPENMP_FLAGS)"
+	@echo "SIMD_FLAGS: $(SIMD_FLAGS)"
+	@echo "INCLUDES: $(INCLUDES)"
+	@echo "LIBS: $(LIBS)"
