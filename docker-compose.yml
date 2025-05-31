@@ -6,7 +6,7 @@ services:
   superdarn-dev:
     build:
       context: .
-      dockerfile: dockerfile.fitacf
+      dockerfile: dockerfile
     container_name: superdarn-dev
     volumes:
       - ./codebase:/workspace/codebase
@@ -24,7 +24,7 @@ services:
   superdarn-test:
     build:
       context: .
-      dockerfile: dockerfile.fitacf
+      dockerfile: dockerfile
     container_name: superdarn-test
     volumes:
       - ./codebase:/workspace/codebase
@@ -58,7 +58,7 @@ services:
   superdarn-quick-test:
     build:
       context: .
-      dockerfile: dockerfile.fitacf
+      dockerfile: dockerfile
     container_name: superdarn-quick
     volumes:
       - ./codebase:/workspace/codebase

@@ -11,9 +11,24 @@ FROM ubuntu:20.04
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libhdf5-serial-dev \
+    build-essential \
+    gcc \
+    g++ \
+    make \
+    cmake \
+    pkg-config \
+    # OpenMP and parallel processing
+    libomp-dev \
+    # System libraries
+    libc6-dev \
+    libz-dev \
+    libssl-dev \
+    # Utilities and testing tools
+    dos2unix \
+    python3 \
+    python3-pip \
     libncurses-dev \
     libnetcdf-dev \
-    python3-pip \
     libpng-dev \
     libx11-dev \
     libxext-dev \
@@ -46,10 +61,17 @@ ENV CDF_PATH=/usr/local/cdf
 # Set the working directory
 COPY . /app/rst
 
-# Convert Windows line endings to Unix line endings
+# Convert Windows line endings to Unix line endings for all script files
 RUN find /app/rst -name "*.bash" -type f -exec dos2unix {} \;
 RUN find /app/rst -name "*.sh" -type f -exec dos2unix {} \;
+RUN find /app/rst/build/script -type f -exec dos2unix {} \;
+RUN find /app/rst -type f -executable -exec dos2unix {} \;
 RUN dos2unix /app/rst/.profile.bash
+
+# Set executable permissions on script files
+RUN chmod +x /app/rst/build/script/*
+RUN find /app/rst -name "*.sh" -type f -exec chmod +x {} \;
+RUN find /app/rst -name "*.bash" -type f -exec chmod +x {} \;
 
 # Open rst/.profile/base.bash to check paths are correctly set:
 # XPATH, NETCDF_PATH, CDF_PATH To check if the paths are set correctly locate the following header files: For NETCDF_PATH locate netcdf.h For CDF PATH locate cdf.h
@@ -65,13 +87,25 @@ ENV RSTPATH=/app/rst
 ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/local/bin:/usr/bin/:/root/bin:/root/script:/app/rst/build/bin:/app/rst/build/script:/app/rst/bin:/app/rst/script"
 #HATE THIS LINE TOO !
 
+ENV BUILD="/app/rst/build"
+WORKDIR /app/rst/build/script
 
-# Load the RST environment variables
-RUN source /app/rst/.profile.bash && \
-    cd /app/rst/build/script && \
+# Create necessary directories for the build
+RUN mkdir -p /app/rst/build/lib /app/rst/build/bin /app/rst/build/include/base
+
+# Build the libraries and binaries in a single RUN command to preserve environment
+RUN echo "Starting build process..." && \
+    echo "RSTPATH: $RSTPATH" && \
+    echo "BUILD: $BUILD" && \
+    source /app/rst/.profile.bash && \
+    echo "Environment sourced, BUILD now: $BUILD" && \
+    echo "CODEBASE: $CODEBASE" && \
+    echo "Starting make.build..." && \
     make.build && \
-    make.code
-
+    echo "make.build completed, starting make.code..." && \
+    make.code && \
+    echo "Build process completed successfully"
+WORKDIR /app
     
 ##ad app/rst/.profile.bash to the .bashrc file
 RUN echo "source /app/rst/.profile.bash" >> ~/.bashrc

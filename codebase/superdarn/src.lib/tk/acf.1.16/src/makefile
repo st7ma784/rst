@@ -30,29 +30,4 @@ LINK="1"
 DSTPATH=$(LIBPATH)
 OUTPUT = acf
 
-
-
-
-
-
-
-
- 
-
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 include $(MAKELIB).$(SYSTEM)

@@ -3,8 +3,9 @@
 
 include $(MAKECFG).$(SYSTEM)
 
-INCLUDE_PATH = -I$(IPATH)/general -I$(IPATH)/base -I$(IPATH)/superdarn
-LIBRARY_PATH = -L$(LIBPATH) -lfit.1 -ldmap.1 -lopt.1 -lrtime.1 -lrtypes.1
+# Include paths (consolidated)
+INCLUDE = -I$(IPATH)/general -I$(IPATH)/base -I$(IPATH)/superdarn
+LIBRARY_PATH = -L$(LIBPATH)
 
 # Optimization flags
 CFLAGS += -O3 -march=native -mtune=native -funroll-loops -ffast-math
@@ -37,16 +38,25 @@ CFLAGS += -fprofile-generate
 LDFLAGS += -fprofile-generate
 endif
 
+SRC = hlpstr.h errstr.h fit_speck_removal_optimized.c
 OBJS = fit_speck_removal_optimized.o
 TARGETS = fit_speck_removal_optimized
+
+DSTPATH = $(BINPATH)
+OUTPUT = fit_speck_removal_optimized
+LIBS = -lradar.1 -lfit.1 -ldmap.1 -lopt.1 -lrcnv.1 -lrtime.1 -lrtypes.1
+SLIB = -lm -lz
+
+# Combined library flags
+ALL_LIBS = $(LIBRARY_PATH) $(LIBS) $(SLIB)
 
 all: $(TARGETS)
 
 fit_speck_removal_optimized: $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBRARY_PATH)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(ALL_LIBS)
 
 fit_speck_removal_optimized.o: fit_speck_removal_optimized.c
-	$(CC) $(CFLAGS) $(INCLUDE_PATH) -c $<
+	$(CC) $(CFLAGS) $(INCLUDE) -c $<
 
 # Performance benchmarking
 benchmark: fit_speck_removal_optimized
@@ -104,3 +114,5 @@ clean:
 	rm -f *.o $(TARGETS) gmon.out profile_report.txt *.gcda *.gcno
 
 .PHONY: all benchmark memcheck profile pgo-build thread-test install clean
+
+include $(MAKELIB).$(SYSTEM)

@@ -1,0 +1,3105 @@
+{
+  "libraries": {
+    "acfex.1.3": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.015035152435302734,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/acfex.1.3/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/acfex.1.3/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/acfex.1.3/src/acfex.c",
+            "codebase/superdarn/src.lib/tk/acfex.1.3/include/acfex.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 450
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "acf.1.16_optimized.2.0": {
+      "original": {
+        "build_status": "success",
+        "build_time": 0.015653371810913086,
+        "binary_size": 4688,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src'\nmake: Nothing to be done for 'fast'.\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src'\n",
+        "features": {
+          "has_openmp": true,
+          "has_simd": true,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src/acfcalculate.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src/average.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src/badlag.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src/normalize.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src/sumpower.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src/sumproduct.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/include/acf.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 1472
+        },
+        "optimization_level": "O3_plus_openmp"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "acf.1.16": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.014687776565551758,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/acf.1.16/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/acf.1.16/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/acf.1.16/src/acfcalculate.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16/src/average.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16/src/badlag.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16/src/normalize.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16/src/sumpower.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16/src/sumproduct.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16/include/acf.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 765
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": {
+        "build_status": "success",
+        "build_time": 0.014426469802856445,
+        "binary_size": 4688,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src'\nmake: Nothing to be done for 'fast'.\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src'\n",
+        "features": {
+          "has_openmp": true,
+          "has_simd": true,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src/acfcalculate.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src/average.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src/badlag.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src/normalize.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src/sumpower.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/src/sumproduct.c",
+            "codebase/superdarn/src.lib/tk/acf.1.16_optimized.2.0/include/acf.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 1472
+        },
+        "optimization_level": "O3_plus_openmp"
+      },
+      "has_optimization": true,
+      "performance_gain": {}
+    },
+    "binplotlib.1.0_optimized.2.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.07119917869567871,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src'\ngcc -O2 -Wall -fPIC -fopenmp -I/opt/rst/include/base -I/opt/rst/include/general -I/opt/rst/include/analysis -I/opt/rst/include/superdarn -c plot_cell_optimized.c -o plot_cell_optimized.o\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src'\nplot_cell_optimized.c:45:10: fatal error: rmath.h: No such file or directory\n   45 | #include \"rmath.h\"\n      |          ^~~~~~~~~\ncompilation terminated.\nmake: *** [makefile:57: plot_cell_optimized.o] Error 1\n",
+        "features": {
+          "has_openmp": true,
+          "has_simd": true,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/geobeam.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/key.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/make_fov.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/make_fov_optimized.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/make_grid.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/make_grid_optimized.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_cell.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_cell_optimized.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_logo.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_raw.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_source.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_time.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_time_label.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_vec.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/text_box.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/geobeam.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/key.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/make_fov.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/make_fov_optimized.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/make_grid.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/make_grid_optimized.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_cell.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_logo.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_raw.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_source.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_time.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_time_label.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_vec.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/text_box.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 4728
+        },
+        "optimization_level": "O3_plus_openmp"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "channel.1.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.013347625732421875,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/channel.1.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/channel.1.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": false,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/channel.1.0/src/channel.c",
+            "codebase/superdarn/src.lib/tk/channel.1.0/include/channel.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 86
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "cnvmodel.1.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.015043258666992188,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/cnvmodel.1.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/cnvmodel.1.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/cnvmodel.1.0/src/cnvmodel.c",
+            "codebase/superdarn/src.lib/tk/cnvmodel.1.0/include/cnvmodel.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 1372
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "binplotlib.1.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.015362262725830078,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/binplotlib.1.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/binplotlib.1.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/src/geobeam.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/src/key.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/src/make_fov.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/src/make_grid.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/src/plot_cell.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/src/plot_logo.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/src/plot_raw.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/src/plot_source.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/src/plot_time.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/src/plot_time_label.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/src/plot_vec.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/src/text_box.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/include/geobeam.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/include/key.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/include/make_fov.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/include/make_grid.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/include/plot_cell.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/include/plot_logo.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/include/plot_raw.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/include/plot_source.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/include/plot_time.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/include/plot_time_label.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/include/plot_vec.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0/include/text_box.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 2650
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": {
+        "build_status": "failed",
+        "build_time": 0.07596969604492188,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src'\ngcc -O2 -Wall -fPIC -fopenmp -I/opt/rst/include/base -I/opt/rst/include/general -I/opt/rst/include/analysis -I/opt/rst/include/superdarn -c plot_cell_optimized.c -o plot_cell_optimized.o\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src'\nplot_cell_optimized.c:45:10: fatal error: rmath.h: No such file or directory\n   45 | #include \"rmath.h\"\n      |          ^~~~~~~~~\ncompilation terminated.\nmake: *** [makefile:57: plot_cell_optimized.o] Error 1\n",
+        "features": {
+          "has_openmp": true,
+          "has_simd": true,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/geobeam.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/key.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/make_fov.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/make_fov_optimized.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/make_grid.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/make_grid_optimized.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_cell.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_cell_optimized.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_logo.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_raw.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_source.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_time.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_time_label.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/plot_vec.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/src/text_box.c",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/geobeam.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/key.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/make_fov.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/make_fov_optimized.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/make_grid.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/make_grid_optimized.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_cell.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_logo.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_raw.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_source.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_time.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_time_label.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/plot_vec.h",
+            "codebase/superdarn/src.lib/tk/binplotlib.1.0_optimized.2.0/include/text_box.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 4728
+        },
+        "optimization_level": "O3_plus_openmp"
+      },
+      "has_optimization": true,
+      "performance_gain": {}
+    },
+    "elevation.1.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.015033960342407227,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/elevation.1.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/elevation.1.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/elevation.1.0/src/elevation.c",
+            "codebase/superdarn/src.lib/tk/elevation.1.0/src/elevation_v2.c",
+            "codebase/superdarn/src.lib/tk/elevation.1.0/src/elev_goose.c",
+            "codebase/superdarn/src.lib/tk/elevation.1.0/include/elevation.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 534
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "cfit.1.19": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.012792587280273438,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/cfit.1.19/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/cfit.1.19/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/cfit.1.19/doc/src/CFitClose/CFitClose.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/doc/src/CFitFwrite/CFitFwrite.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/doc/src/CFitOpen/CFitOpen.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/doc/src/CFitRead/CFitRead.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/doc/src/CFitReadRadarScan/CFitReadRadarScan.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/doc/src/CFitSeek/CFitSeek.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/doc/src/CFitToRadarScan/CFitToRadarScan.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/doc/src/CFitWrite/CFitWrite.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/src/cfit.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/src/cfitclose.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/src/cfitinx.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/src/cfitopen.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/src/cfitread.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/src/cfitscan.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/src/cfitseek.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/src/cfitwrite.c",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/include/cfitdata.h",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/include/cfitindex.h",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/include/cfitread.h",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/include/cfitscan.h",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/include/cfitseek.h",
+            "codebase/superdarn/src.lib/tk/cfit.1.19/include/cfitwrite.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 2183
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "filter.1.8": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.015161514282226562,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/filter.1.8/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/filter.1.8/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/filter.1.8/doc/src/FilterBound/FilterBound.c",
+            "codebase/superdarn/src.lib/tk/filter.1.8/doc/src/FilterBoundType/FilterBoundType.c",
+            "codebase/superdarn/src.lib/tk/filter.1.8/doc/src/FilterCheckOps/FilterCheckOps.c",
+            "codebase/superdarn/src.lib/tk/filter.1.8/doc/src/FilterRadarScan/FilterRadarScan.c",
+            "codebase/superdarn/src.lib/tk/filter.1.8/src/bound.c",
+            "codebase/superdarn/src.lib/tk/filter.1.8/src/checkops.c",
+            "codebase/superdarn/src.lib/tk/filter.1.8/src/filter.c",
+            "codebase/superdarn/src.lib/tk/filter.1.8/include/bound.h",
+            "codebase/superdarn/src.lib/tk/filter.1.8/include/checkops.h",
+            "codebase/superdarn/src.lib/tk/filter.1.8/include/filter.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 1994
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "fitacfex.1.3": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.01307368278503418,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/fitacfex.1.3/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/fitacfex.1.3/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/fitacfex.1.3/src/fitacfex.c",
+            "codebase/superdarn/src.lib/tk/fitacfex.1.3/include/fitacfex.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 326
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "cnvmap.1.17": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.012936115264892578,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/cnvmap.1.17/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/cnvmap.1.17/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/doc/src/CnvMapFread/CnvMapFread.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/doc/src/CnvMapFseek/CnvMapFseek.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/doc/src/CnvMapFwrite/CnvMapFwrite.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/doc/src/CnvMapIndexFload/CnvMapIndexFload.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/doc/src/CnvMapIndexFree/CnvMapIndexFree.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/doc/src/CnvMapIndexLoad/CnvMapIndexLoad.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/doc/src/CnvMapRead/CnvMapRead.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/doc/src/CnvMapSeek/CnvMapSeek.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/doc/src/CnvMapWrite/CnvMapWrite.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/src/cnvmap.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/src/mapinx.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/src/mapseek.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/src/readmap.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/src/writemap.c",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/include/cnvmapindex.h",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/include/cnvmapread.h",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/include/cnvmapseek.h",
+            "codebase/superdarn/src.lib/tk/cnvmap.1.17/include/cnvmapwrite.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 2666
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "fitacfex2.1.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.012332916259765625,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/fitacfex2.1.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/fitacfex2.1.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/fitacfex2.1.0/src/fitacfex2.c",
+            "codebase/superdarn/src.lib/tk/fitacfex2.1.0/include/fitacfex2.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 882
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "fitacf.2.5": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.011272668838500977,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/fitacf.2.5/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/fitacf.2.5/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/doc/src/FitACF/FitACF.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/doc/src/FitACFBadLags/FitACFBadLags.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/doc/src/FitACFBadLagsStereo/FitACFBadLagsStereo.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/doc/src/FitACFCkRng/FitACFCkRng.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/doc/src/FitACFEnd/FitACFEnd.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/doc/src/FitACFStart/FitACFStart.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/acf_preproc.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/badlags.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/badlags_s.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/calc_phi_res.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/dbl_cmp.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/do_fit.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/do_phase_fit.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/fitacf.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/fit_acf.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/fit_mem_helpers.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/fit_noise.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/ground_scatter.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/more_badlags.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/noise_acf.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/noise_stat.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/omega_guess.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/power_fits.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/rang_badlags.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/remove_noise.c",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/include/badlags.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/include/badsmp.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/include/dofit.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/include/fitacf.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/acf_preproc.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/calc_phi_res.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/dbl_cmp.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/do_phase_fit.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/fitacfversion.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/fit_acf.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/fit_mem_helpers.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/fit_noise.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/ground_scatter.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/more_badlags.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/noise_acf.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/noise_stat.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/omega_guess.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/power_fits.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/rang_badlags.h",
+            "codebase/superdarn/src.lib/tk/fitacf.2.5/src/remove_noise.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 5308
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "fitacf_v3.0_optimized.3": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.04870104789733887,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src'\ngcc -O2 -Wall -fPIC -fopenmp -I/opt/rst/include/base -I/opt/rst/include/general -I/opt/rst/include/superdarn/fit -I/opt/rst/include/superdarn -I../include -c determinations.c -o determinations.o\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src'\nIn file included from determinations.c:34:\n../include/llist.h:30:10: fatal error: rtypes.h: No such file or directory\n   30 | #include \"rtypes.h\"\n      |          ^~~~~~~~~~\ncompilation terminated.\nmake: *** [/opt/rst/build/make/makelib.linux:2: determinations.o] Error 1\n",
+        "features": {
+          "has_openmp": true,
+          "has_simd": true,
+          "has_linked_lists": true,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/test_env.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/determinations.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fitacftoplevel.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fitacftoplevel_array.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fitacf_array_optimized.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fitting.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fitting_array.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fit_structures_array.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/leastsquares.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/llist.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/preprocessing.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/preprocessing_array.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/test/test_array_vs_llist.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/test/test_fitacf_comprehensive.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/test/test_fitacf_performance_comprehensive.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/include/fitacftoplevel.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/include/fit_structures.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/include/fit_structures_array.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/include/leastsquares.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/include/llist.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/determinations.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fitting.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/preprocessing.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 12049
+        },
+        "optimization_level": "O3_plus_openmp"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "fit.1.35": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.01875138282775879,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/fit.1.35/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/fit.1.35/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitDecode/FitDecode.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitFread/FitFread.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitFreadRadarScan/FitFreadRadarScan.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitFseek/FitFseek.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitFwrite/FitFwrite.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitIndexFload/FitIndexFload.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitIndexFree/FitIndexFree.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitIndexLoad/FitIndexLoad.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitRead/FitRead.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitReadRadarScan/FitReadRadarScan.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitSeek/FitSeek.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitToCFit/FitToCFit.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitToRadarScan/FitToRadarScan.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/doc/src/FitWrite/FitWrite.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/src/fitcfit.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/src/fitread.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/src/fitscan.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/src/fitseek.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c",
+            "codebase/superdarn/src.lib/tk/fit.1.35/include/fitblk.h",
+            "codebase/superdarn/src.lib/tk/fit.1.35/include/fitcfit.h",
+            "codebase/superdarn/src.lib/tk/fit.1.35/include/fitdata.h",
+            "codebase/superdarn/src.lib/tk/fit.1.35/include/fitindex.h",
+            "codebase/superdarn/src.lib/tk/fit.1.35/include/fitread.h",
+            "codebase/superdarn/src.lib/tk/fit.1.35/include/fitscan.h",
+            "codebase/superdarn/src.lib/tk/fit.1.35/include/fitseek.h",
+            "codebase/superdarn/src.lib/tk/fit.1.35/include/fitwrite.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 3717
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "fitacf_v3.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.011873960494995117,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/fitacf_v3.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/fitacf_v3.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": true,
+          "has_simd": true,
+          "has_linked_lists": true,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/src/determinations.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/src/fitacftoplevel.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/src/fitacf_array_optimized.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/src/fitting.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/src/leastsquares.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/src/llist.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/src/preprocessing.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/include/fitacftoplevel.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/include/fit_structures.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/include/fit_structures_array.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/include/leastsquares.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/include/llist.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/src/determinations.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/src/fitting.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0/src/preprocessing.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 7246
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": {
+        "build_status": "failed",
+        "build_time": 0.05037689208984375,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src'\ngcc -O2 -Wall -fPIC -fopenmp -I/opt/rst/include/base -I/opt/rst/include/general -I/opt/rst/include/superdarn/fit -I/opt/rst/include/superdarn -I../include -c determinations.c -o determinations.o\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src'\nIn file included from determinations.c:34:\n../include/llist.h:30:10: fatal error: rtypes.h: No such file or directory\n   30 | #include \"rtypes.h\"\n      |          ^~~~~~~~~~\ncompilation terminated.\nmake: *** [/opt/rst/build/make/makelib.linux:2: determinations.o] Error 1\n",
+        "features": {
+          "has_openmp": true,
+          "has_simd": true,
+          "has_linked_lists": true,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/test_env.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/determinations.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fitacftoplevel.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fitacftoplevel_array.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fitacf_array_optimized.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fitting.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fitting_array.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fit_structures_array.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/leastsquares.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/llist.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/preprocessing.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/preprocessing_array.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/test/test_array_vs_llist.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/test/test_fitacf_comprehensive.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/test/test_fitacf_performance_comprehensive.c",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/include/fitacftoplevel.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/include/fit_structures.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/include/fit_structures_array.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/include/leastsquares.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/include/llist.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/determinations.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/fitting.h",
+            "codebase/superdarn/src.lib/tk/fitacf_v3.0_optimized.3/src/preprocessing.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 12049
+        },
+        "optimization_level": "O3_plus_openmp"
+      },
+      "has_optimization": true,
+      "performance_gain": {}
+    },
+    "freqband.1.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.015286922454833984,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/freqband.1.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/freqband.1.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/freqband.1.0/src/get_fit_tfreq_band.c",
+            "codebase/superdarn/src.lib/tk/freqband.1.0/include/freqband.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 516
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "fitcnx.1.16": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.04440474510192871,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/fitcnx.1.16/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/fitcnx.1.16/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/fitcnx.1.16/doc/src/FitCnxRead/FitCnxRead.c",
+            "codebase/superdarn/src.lib/tk/fitcnx.1.16/src/decodemsg.c",
+            "codebase/superdarn/src.lib/tk/fitcnx.1.16/src/fitcnx.c",
+            "codebase/superdarn/src.lib/tk/fitcnx.1.16/include/fitcnx.h",
+            "codebase/superdarn/src.lib/tk/fitcnx.1.16/src/decodemsg.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 349
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "grid.1.24_optimized.2.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.014322280883789062,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/grid.1.24_optimized.2.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/grid.1.24_optimized.2.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": false,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/grid.1.24_optimized.2.0/include/griddata.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 87
+        },
+        "optimization_level": "O3_plus_openmp"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "gtable.2.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.012413978576660156,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/gtable.2.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/gtable.2.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/gtable.2.0/doc/src/GridTableMap/GridTableMap.c",
+            "codebase/superdarn/src.lib/tk/gtable.2.0/doc/src/GridTableTest/GridTableTest.c",
+            "codebase/superdarn/src.lib/tk/gtable.2.0/src/gtable.c",
+            "codebase/superdarn/src.lib/tk/gtable.2.0/include/gtable.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 1177
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "grid_parallel.1.24": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": true,
+          "has_simd": true,
+          "has_linked_lists": true,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/src/addgrid_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/src/avggrid_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/src/copygrid_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/src/filtergrid_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/src/gridio_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/src/gridmerge_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/src/gridseek_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/src/grid_parallel_utils.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/src/integrategrid_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/src/mergegrid_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/src/sortgrid_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/test/test_addgrid_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/test/test_avggrid_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/test/test_copygrid_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/test/test_filtergrid_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/test/test_gridio_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/test/test_gridseek_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/test/test_grid_parallel_suite.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/test/test_mergegrid_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/test/test_sortgrid_parallel.c",
+            "codebase/superdarn/src.lib/tk/grid_parallel.1.24/include/griddata_parallel.h"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 12363
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "gtablewrite.1.9": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.014817476272583008,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/gtablewrite.1.9/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/gtablewrite.1.9/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/gtablewrite.1.9/doc/src/GridTableFwrite/GridTableFwrite.c",
+            "codebase/superdarn/src.lib/tk/gtablewrite.1.9/doc/src/GridTableWrite/GridTableWrite.c",
+            "codebase/superdarn/src.lib/tk/gtablewrite.1.9/src/gtablewrite.c",
+            "codebase/superdarn/src.lib/tk/gtablewrite.1.9/include/gtablewrite.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 713
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "hmb.1.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.013035297393798828,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/hmb.1.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/hmb.1.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/hmb.1.0/src/hmb.c",
+            "codebase/superdarn/src.lib/tk/hmb.1.0/include/map_addhmb.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 373
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "lmfit.1.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.014484643936157227,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/lmfit.1.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/lmfit.1.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/lmfit.1.0/src/lmfit.c",
+            "codebase/superdarn/src.lib/tk/lmfit.1.0/include/lmfit.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 1384
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "iq.1.7": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.013283252716064453,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/iq.1.7/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/iq.1.7/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/iq.1.7/src/iq.c",
+            "codebase/superdarn/src.lib/tk/iq.1.7/src/iqinx.c",
+            "codebase/superdarn/src.lib/tk/iq.1.7/src/iqread.c",
+            "codebase/superdarn/src.lib/tk/iq.1.7/src/iqseek.c",
+            "codebase/superdarn/src.lib/tk/iq.1.7/src/iqwrite.c",
+            "codebase/superdarn/src.lib/tk/iq.1.7/include/iq.h",
+            "codebase/superdarn/src.lib/tk/iq.1.7/include/iqindex.h",
+            "codebase/superdarn/src.lib/tk/iq.1.7/include/iqread.h",
+            "codebase/superdarn/src.lib/tk/iq.1.7/include/iqseek.h",
+            "codebase/superdarn/src.lib/tk/iq.1.7/include/iqwrite.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 1401
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "lmfit_v2.0_optimized.4.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.011538028717041016,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": true,
+          "has_simd": true,
+          "has_linked_lists": true,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/error_estimates.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/llist.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit2toplevel.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_determinations.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_fitting.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_leastsquares.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_preprocessing.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/selfclutter.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/error_estimates.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/llist.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit2toplevel.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_determinations.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_determinations_optimized.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_fitting.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_fitting_optimized.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_leastsquares.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_leastsquares_optimized.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_leastsquares_optimized_conservative.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_preprocessing.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_preprocessing_optimized.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/selfclutter.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/include/lmfit2toplevel.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/include/lmfit_leastsquares.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/include/lmfit_structures.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/include/lmfit2toplevel.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/include/lmfit_leastsquares.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/include/lmfit_structures.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/error_estimates.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_determinations.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_fitting.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_preprocessing.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/selfclutter.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/error_estimates.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_determinations.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_fitting.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_optimized.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_preprocessing.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/selfclutter.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 11067
+        },
+        "optimization_level": "O3_plus_openmp"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "idl": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/idl/cnvmapidl.1.3/src/cnvmapidl.c",
+            "codebase/superdarn/src.lib/tk/idl/fitidl.1.5/src/fitidl.c",
+            "codebase/superdarn/src.lib/tk/idl/grdidl.1.4/src/grdidl.c",
+            "codebase/superdarn/src.lib/tk/idl/rawidl.1.5/src/rawidl.c",
+            "codebase/superdarn/src.lib/tk/idl/rprmidl.1.6/src/rprmidl.c",
+            "codebase/superdarn/src.lib/tk/idl/sndidl.1.0/src/sndidl.c",
+            "codebase/superdarn/src.lib/tk/idl/cnvmapidl.1.3/include/cnvmapidl.h",
+            "codebase/superdarn/src.lib/tk/idl/fitidl.1.5/include/fitidl.h",
+            "codebase/superdarn/src.lib/tk/idl/grdidl.1.4/include/grdidl.h",
+            "codebase/superdarn/src.lib/tk/idl/rawidl.1.5/include/rawidl.h",
+            "codebase/superdarn/src.lib/tk/idl/rprmidl.1.6/include/rprmidl.h",
+            "codebase/superdarn/src.lib/tk/idl/sndidl.1.0/include/sndidl.h"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 2763
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "grid.1.24": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.014113187789916992,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/grid.1.24/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/grid.1.24/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridAdd/GridAdd.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridAverage/GridAverage.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridCopy/GridCopy.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridFread/GridFread.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridFseek/GridFseek.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridFwrite/GridFwrite.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridIndexFload/GridIndexFload.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridIndexFree/GridIndexFree.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridIndexLoad/GridIndexLoad.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridIntegrate/GridIntegrate.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridLocateCell/GridLocateCell.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridMerge/GridMerge.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridRead/GridRead.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridSeek/GridSeek.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridSort/GridSort.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/doc/src/GridWrite/GridWrite.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/src/addgrid.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/src/avggrid.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/src/copygrid.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/src/grid.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/src/gridinx.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/src/gridseek.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/src/integrategrid.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/src/mergegrid.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/src/readgrid.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/src/sortgrid.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/src/writegrid.c",
+            "codebase/superdarn/src.lib/tk/grid.1.24/include/griddata.h",
+            "codebase/superdarn/src.lib/tk/grid.1.24/include/gridindex.h",
+            "codebase/superdarn/src.lib/tk/grid.1.24/include/gridread.h",
+            "codebase/superdarn/src.lib/tk/grid.1.24/include/gridseek.h",
+            "codebase/superdarn/src.lib/tk/grid.1.24/include/gridwrite.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 3770
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": {
+        "build_status": "failed",
+        "build_time": 0.015566349029541016,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/grid.1.24_optimized.2.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/grid.1.24_optimized.2.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": false,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/grid.1.24_optimized.2.0/include/griddata.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 87
+        },
+        "optimization_level": "O3_plus_openmp"
+      },
+      "has_optimization": true,
+      "performance_gain": {}
+    },
+    "lmfit_v2.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.02631211280822754,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/lmfit_v2.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/lmfit_v2.0/src'\nmake: *** No rule to make target 'lmfit', needed by 'all'.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": true,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/src/error_estimates.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/src/llist.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/src/lmfit2toplevel.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/src/lmfit_determinations.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/src/lmfit_fitting.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/src/lmfit_leastsquares.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/src/lmfit_preprocessing.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/src/selfclutter.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/include/lmfit2toplevel.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/include/lmfit_leastsquares.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/include/lmfit_structures.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/src/error_estimates.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/src/lmfit_determinations.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/src/lmfit_fitting.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/src/lmfit_preprocessing.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0/src/selfclutter.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 4483
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": {
+        "build_status": "failed",
+        "build_time": 0.0237576961517334,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": true,
+          "has_simd": true,
+          "has_linked_lists": true,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/error_estimates.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/llist.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit2toplevel.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_determinations.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_fitting.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_leastsquares.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_preprocessing.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/selfclutter.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/error_estimates.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/llist.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit2toplevel.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_determinations.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_determinations_optimized.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_fitting.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_fitting_optimized.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_leastsquares.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_leastsquares_optimized.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_leastsquares_optimized_conservative.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_preprocessing.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_preprocessing_optimized.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/selfclutter.c",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/include/lmfit2toplevel.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/include/lmfit_leastsquares.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/include/lmfit_structures.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/include/lmfit2toplevel.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/include/lmfit_leastsquares.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/include/lmfit_structures.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/error_estimates.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_determinations.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_fitting.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/lmfit_preprocessing.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/lmfit_v2.0/src/selfclutter.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/error_estimates.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_determinations.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_fitting.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_optimized.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/lmfit_preprocessing.h",
+            "codebase/superdarn/src.lib/tk/lmfit_v2.0_optimized.4.0/src/selfclutter.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 11067
+        },
+        "optimization_level": "O3_plus_openmp"
+      },
+      "has_optimization": true,
+      "performance_gain": {}
+    },
+    "oldfitcnx.1.10": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.01605963706970215,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/oldfitcnx.1.10/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/oldfitcnx.1.10/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/oldfitcnx.1.10/doc/src/OldFitCnxRead/OldFitCnxRead.c",
+            "codebase/superdarn/src.lib/tk/oldfitcnx.1.10/src/decodemsg.c",
+            "codebase/superdarn/src.lib/tk/oldfitcnx.1.10/src/fitcnx.c",
+            "codebase/superdarn/src.lib/tk/oldfitcnx.1.10/include/oldfitcnx.h",
+            "codebase/superdarn/src.lib/tk/oldfitcnx.1.10/src/cnxstr.h",
+            "codebase/superdarn/src.lib/tk/oldfitcnx.1.10/src/decodemsg.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 567
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "oldcnvmap.1.2": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.015594959259033203,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/oldcnvmap.1.2/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/oldcnvmap.1.2/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/oldcnvmap.1.2/doc/src/OldCnvMapFread/OldCnvMapFread.c",
+            "codebase/superdarn/src.lib/tk/oldcnvmap.1.2/doc/src/OldCnvMapFseek/OldCnvMapFseek.c",
+            "codebase/superdarn/src.lib/tk/oldcnvmap.1.2/doc/src/OldCnvMapFwrite/OldCnvMapFwrite.c",
+            "codebase/superdarn/src.lib/tk/oldcnvmap.1.2/src/readmap.c",
+            "codebase/superdarn/src.lib/tk/oldcnvmap.1.2/src/writemap.c",
+            "codebase/superdarn/src.lib/tk/oldcnvmap.1.2/include/oldcnvmapread.h",
+            "codebase/superdarn/src.lib/tk/oldcnvmap.1.2/include/oldcnvmapwrite.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 1311
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "oldgrid.1.3": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.016386747360229492,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/oldgrid.1.3/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/oldgrid.1.3/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/oldgrid.1.3/doc/src/OldGridFread/OldGridFread.c",
+            "codebase/superdarn/src.lib/tk/oldgrid.1.3/doc/src/OldGridFseek/OldGridFseek.c",
+            "codebase/superdarn/src.lib/tk/oldgrid.1.3/doc/src/OldGridFwrite/OldGridFwrite.c",
+            "codebase/superdarn/src.lib/tk/oldgrid.1.3/src/oldreadgrid.c",
+            "codebase/superdarn/src.lib/tk/oldgrid.1.3/src/oldwritegrid.c",
+            "codebase/superdarn/src.lib/tk/oldgrid.1.3/include/oldgridread.h",
+            "codebase/superdarn/src.lib/tk/oldgrid.1.3/include/oldgridwrite.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 1085
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "oldgtablewrite.1.4": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.019726991653442383,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/oldgtablewrite.1.4/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/oldgtablewrite.1.4/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/oldgtablewrite.1.4/doc/src/OldGridTableFwrite/OldGridTableFwrite.c",
+            "codebase/superdarn/src.lib/tk/oldgtablewrite.1.4/doc/src/OldGridTableWrite/OldGridTableWrite.c",
+            "codebase/superdarn/src.lib/tk/oldgtablewrite.1.4/src/oldgtablewrite.c",
+            "codebase/superdarn/src.lib/tk/oldgtablewrite.1.4/include/oldgtablewrite.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 700
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "oldraw.1.16": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.013724088668823242,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/oldraw.1.16/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/oldraw.1.16/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/doc/src/OldRawClose/OldRawClose.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/doc/src/OldRawFwrite/OldRawFwrite.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/doc/src/OldRawHeaderFwrite/OldRawHeaderFwrite.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/doc/src/OldRawHeaderWrite/OldRawHeaderWrite.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/doc/src/OldRawOpen/OldRawOpen.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/doc/src/OldRawRead/OldRawRead.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/doc/src/OldRawSeek/OldRawSeek.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/doc/src/OldRawWrite/OldRawWrite.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/src/rawclose.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/src/rawopen.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/src/rawread.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/src/rawreadcurrent.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/src/rawseek.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/src/rawwrite.c",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/include/oldrawread.h",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/include/oldrawwrite.h",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/src/lmt.h",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/src/raw.h",
+            "codebase/superdarn/src.lib/tk/oldraw.1.16/src/rawversions.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 2140
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "oldfit.1.25": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.01694774627685547,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/oldfit.1.25/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/oldfit.1.25/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitClose/OldFitClose.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitFwrite/OldFitFwrite.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitHeaderFwrite/OldFitHeaderFwrite.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitHeaderWrite/OldFitHeaderWrite.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitInxClose/OldFitInxClose.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitInxFclose/OldFitInxFclose.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitInxFwrite/OldFitInxFwrite.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitInxHeaderFwrite/OldFitInxHeaderFwrite.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitInxHeaderWrite/OldFitInxHeaderWrite.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitInxWrite/OldFitInxWrite.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitOpen/OldFitOpen.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitRead/OldFitRead.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitReadRadarScan/OldFitReadRadarScan.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitSeek/OldFitSeek.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/doc/src/OldFitWrite/OldFitWrite.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/src/fitclose.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/src/fitopen.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/src/fitread.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/src/fitreadcurrent.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/src/fitreadinx.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/src/fitscan.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/src/fitseek.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/src/fitwrite.c",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/include/oldfitread.h",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/include/oldfitscan.h",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/include/oldfitwrite.h",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/src/fitreadinx.h",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/src/fitstr.h",
+            "codebase/superdarn/src.lib/tk/oldfit.1.25/src/fitversions.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 3573
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "raw.1.22": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.014626741409301758,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/raw.1.22/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/raw.1.22/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/raw.1.22/doc/src/RawFread/RawFread.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/doc/src/RawFseek/RawFseek.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/doc/src/RawFwrite/RawFwrite.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/doc/src/RawIndexFload/RawIndexFload.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/doc/src/RawIndexFree/RawIndexFree.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/doc/src/RawIndexLoad/RawIndexLoad.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/doc/src/RawRead/RawRead.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/doc/src/RawSeek/RawSeek.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/doc/src/RawWrite/RawWrite.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/src/raw.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/src/rawinx.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/src/rawread.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/src/rawseek.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/src/rawwrite.c",
+            "codebase/superdarn/src.lib/tk/raw.1.22/include/rawdata.h",
+            "codebase/superdarn/src.lib/tk/raw.1.22/include/rawindex.h",
+            "codebase/superdarn/src.lib/tk/raw.1.22/include/rawread.h",
+            "codebase/superdarn/src.lib/tk/raw.1.22/include/rawseek.h",
+            "codebase/superdarn/src.lib/tk/raw.1.22/include/rawwrite.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 2113
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "scan.1.7": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.020260334014892578,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/scan.1.7/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/scan.1.7/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/scan.1.7/doc/src/RadarScanReset/RadarScanReset.c",
+            "codebase/superdarn/src.lib/tk/scan.1.7/doc/src/RadarScanResetBeam/RadarScanResetBeam.c",
+            "codebase/superdarn/src.lib/tk/scan.1.7/src/radarscan.c",
+            "codebase/superdarn/src.lib/tk/scan.1.7/include/scandata.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 529
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "radar.1.22": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.022266626358032227,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/radar.1.22/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/radar.1.22/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/radar.1.22/doc/src/RadarEpochGetSite/RadarEpochGetSite.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/doc/src/RadarFree/RadarFree.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/doc/src/RadarGetCode/RadarGetCode.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/doc/src/RadarGetCodeNum/RadarGetCodeNum.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/doc/src/RadarGetID/RadarGetID.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/doc/src/RadarGetName/RadarGetName.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/doc/src/RadarGetOperator/RadarGetOperator.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/doc/src/RadarGetRadar/RadarGetRadar.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/doc/src/RadarGetStatus/RadarGetStatus.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/doc/src/RadarLoad/RadarLoad.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/doc/src/RadarLoadHardware/RadarLoadHardware.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/doc/src/RadarYMDHMSGetSite/RadarYMDHMSGetSite.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/src/radar.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/src/rprm.c",
+            "codebase/superdarn/src.lib/tk/radar.1.22/include/radar.h",
+            "codebase/superdarn/src.lib/tk/radar.1.22/include/rprm.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 2667
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "sim_data.1.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.015977144241333008,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/sim_data.1.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/sim_data.1.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/sim_data.1.0/src/sim_data.c",
+            "codebase/superdarn/src.lib/tk/sim_data.1.0/include/sim_data.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 881
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "snd.1.0": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.014468193054199219,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/snd.1.0/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/snd.1.0/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/snd.1.0/src/fitsnd.c",
+            "codebase/superdarn/src.lib/tk/snd.1.0/src/snd.c",
+            "codebase/superdarn/src.lib/tk/snd.1.0/src/sndread.c",
+            "codebase/superdarn/src.lib/tk/snd.1.0/src/sndscan.c",
+            "codebase/superdarn/src.lib/tk/snd.1.0/src/sndseek.c",
+            "codebase/superdarn/src.lib/tk/snd.1.0/src/sndwrite.c",
+            "codebase/superdarn/src.lib/tk/snd.1.0/include/fitsnd.h",
+            "codebase/superdarn/src.lib/tk/snd.1.0/include/snddata.h",
+            "codebase/superdarn/src.lib/tk/snd.1.0/include/sndread.h",
+            "codebase/superdarn/src.lib/tk/snd.1.0/include/sndscan.h",
+            "codebase/superdarn/src.lib/tk/snd.1.0/include/sndseek.h",
+            "codebase/superdarn/src.lib/tk/snd.1.0/include/sndwrite.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 1566
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "rpos.1.7": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.015705585479736328,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/rpos.1.7/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/rpos.1.7/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/rpos.1.7/doc/src/RPosCalcVector/RPosCalcVector.c",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/doc/src/RPosCubic/RPosCubic.c",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/doc/src/RPosCubicGS/RPosCubicGS.c",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/doc/src/RPosGeo/RPosGeo.c",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/doc/src/RPosGeoGS/RPosGeoGS.c",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/doc/src/RPosInvMag/RPosInvMag.c",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/doc/src/RPosMag/RPosMag.c",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/doc/src/RPosMagGS/RPosMagGS.c",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/doc/src/RPosRngBmAzmElv/RPosRngBmAzmElv.c",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/src/calcvector.c",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/src/cnvtcoord.c",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/src/invmag.c",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/src/rpos_v2.c",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/include/calcvector.h",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/include/invmag.h",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/include/rpos.h",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/include/rpos_v2.h",
+            "codebase/superdarn/src.lib/tk/rpos.1.7/src/geodtgc.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 2621
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "shf.1.10": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.016294240951538086,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/shf.1.10/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/shf.1.10/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/calc_bmag.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/cnvgrid.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/crdshft.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/evalefield.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/evallegendre.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/evalpotential.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/evalvelocity.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/fitmap.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/fitvector.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/indexlegendre.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/solve.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/solveefield.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/solvepotential.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/solvevelocity.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/svdbksb.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/svdcmp.c",
+            "codebase/superdarn/src.lib/tk/shf.1.10/include/calc_bmag.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/include/cnvgrid.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/include/cnvmap.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/include/cnvmapsolve.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/include/crdshft.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/include/evalefield.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/include/evallegendre.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/include/evalpotential.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/include/evalvelocity.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/include/fitmap.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/include/shfconst.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/fitvector.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/nrutil.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/shfvector.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/solveefield.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/solvepotential.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/solvevelocity.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/svdbksb.h",
+            "codebase/superdarn/src.lib/tk/shf.1.10/src/svdcmp.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 3285
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "tsg.1.13": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.016448020935058594,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/tsg.1.13/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/tsg.1.13/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/tsg.1.13/src/maketsg.c",
+            "codebase/superdarn/src.lib/tk/tsg.1.13/include/maketsg.h",
+            "codebase/superdarn/src.lib/tk/tsg.1.13/include/tsg.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 650
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "smr.1.7": {
+      "original": {
+        "build_status": "failed",
+        "build_time": 0.052678823471069336,
+        "binary_size": 0,
+        "build_output": "make: Entering directory '/workspace/codebase/superdarn/src.lib/tk/smr.1.7/src'\nmake: Leaving directory '/workspace/codebase/superdarn/src.lib/tk/smr.1.7/src'\nmake: *** No targets.  Stop.\n",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.lib/tk/smr.1.7/doc/src/SmrFread/SmrFread.c",
+            "codebase/superdarn/src.lib/tk/smr.1.7/doc/src/SmrFwrite/SmrFwrite.c",
+            "codebase/superdarn/src.lib/tk/smr.1.7/doc/src/SmrHeaderFwrite/SmrHeaderFwrite.c",
+            "codebase/superdarn/src.lib/tk/smr.1.7/doc/src/SmrRadarScan/SmrRadarScan.c",
+            "codebase/superdarn/src.lib/tk/smr.1.7/doc/src/SmrSeek/SmrSeek.c",
+            "codebase/superdarn/src.lib/tk/smr.1.7/src/smrread.c",
+            "codebase/superdarn/src.lib/tk/smr.1.7/src/smrscan.c",
+            "codebase/superdarn/src.lib/tk/smr.1.7/src/smrseek.c",
+            "codebase/superdarn/src.lib/tk/smr.1.7/src/smrwrite.c",
+            "codebase/superdarn/src.lib/tk/smr.1.7/include/smrread.h",
+            "codebase/superdarn/src.lib/tk/smr.1.7/include/smrscan.h",
+            "codebase/superdarn/src.lib/tk/smr.1.7/include/smrseek.h",
+            "codebase/superdarn/src.lib/tk/smr.1.7/include/smrwrite.h"
+          ],
+          "makefile_exists": true,
+          "complexity_score": 1316
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    }
+  },
+  "binaries": {
+    "cat_fit.1.12": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/cat_fit.1.12/cat_fit.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 210
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "cat_raw.1.14": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/cat_raw.1.14/cat_raw.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 202
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "combine_grid.1.19": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": true,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/combine_grid.1.19/combine_grid.c",
+            "codebase/superdarn/src.bin/tk/tool/combine_grid.1.19/make_grid.c",
+            "codebase/superdarn/src.bin/tk/tool/combine_grid.1.19/make_grid.h"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 507
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "combine_snd.1.0": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/combine_snd.1.0/combine_snd.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 251
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "extract_grid.1.15": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/extract_grid.1.15/extract_grid.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 217
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "extract_map.1.13": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/extract_map.1.13/extract_map.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 327
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "find_freqband.1.0": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/find_freqband.1.0/find_freqband.c",
+            "codebase/superdarn/src.bin/tk/tool/find_freqband.1.0/write_tfreq_band.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 353
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "fitfilter.1.4": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/fitfilter.1.4/fitfilter.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 821
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "fitstat.1.7": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/fitstat.1.7/fitstat.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 217
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "fit_cp.1.13": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/fit_cp.1.13/fit_cp.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 203
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "grid_filter.1.7": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/grid_filter.1.7/grid_filter.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 159
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "fit_speck_removal.1.0_optimized.1": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": true,
+          "has_simd": true,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/fit_speck_removal.1.0_optimized.1/fit_speck_removal_comparison.c",
+            "codebase/superdarn/src.bin/tk/tool/fit_speck_removal.1.0_optimized.1/fit_speck_removal_demo.c",
+            "codebase/superdarn/src.bin/tk/tool/fit_speck_removal.1.0_optimized.1/fit_speck_removal_optimized.c",
+            "codebase/superdarn/src.bin/tk/tool/fit_speck_removal.1.0_optimized.1/test/test_fit_speck_removal_optimized.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 2778
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "lagfr_fix.1.0": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/lagfr_fix.1.0/lagfr_fix.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 275
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "fit_speck_removal.1.0": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/fit_speck_removal.1.0/fit_speck_removal.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 444
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": true,
+          "has_simd": true,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/fit_speck_removal.1.0_optimized.1/fit_speck_removal_comparison.c",
+            "codebase/superdarn/src.bin/tk/tool/fit_speck_removal.1.0_optimized.1/fit_speck_removal_demo.c",
+            "codebase/superdarn/src.bin/tk/tool/fit_speck_removal.1.0_optimized.1/fit_speck_removal_optimized.c",
+            "codebase/superdarn/src.bin/tk/tool/fit_speck_removal.1.0_optimized.1/test/test_fit_speck_removal_optimized.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 2778
+        },
+        "optimization_level": "O0"
+      },
+      "has_optimization": true,
+      "performance_gain": {}
+    },
+    "imfdelay.1.7": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/imfdelay.1.7/ace.c",
+            "codebase/superdarn/src.bin/tk/tool/imfdelay.1.7/imfdelay.c",
+            "codebase/superdarn/src.bin/tk/tool/imfdelay.1.7/locate.c",
+            "codebase/superdarn/src.bin/tk/tool/imfdelay.1.7/wind.c",
+            "codebase/superdarn/src.bin/tk/tool/imfdelay.1.7/ace.h",
+            "codebase/superdarn/src.bin/tk/tool/imfdelay.1.7/istp.h",
+            "codebase/superdarn/src.bin/tk/tool/imfdelay.1.7/locate.h",
+            "codebase/superdarn/src.bin/tk/tool/imfdelay.1.7/wind.h"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 1788
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_cfit.1.10": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_cfit.1.10/make_cfit.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 281
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_cfitinx.1.2": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_cfitinx.1.2/make_cfitinx.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 168
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_efieldinx.1.6": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_efieldinx.1.6/make_efieldinx.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 198
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_fit": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_fit/make_fit.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 794
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_fitinx.1.9": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_fitinx.1.9/make_fitinx.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 254
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_grdinx.1.7": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_grdinx.1.7/make_grdinx.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 173
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_grid.2.0": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": true,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_grid.2.0/make_grid.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 1019
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_info.1.13": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_info.1.13/make_info.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 451
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_iqinx.1.6": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_iqinx.1.6/make_iqinx.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 170
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_lmfit2": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_lmfit2/make_lmfit2.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 327
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_mapinx.1.6": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_mapinx.1.6/make_mapinx.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 175
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_raw.1.8": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_raw.1.8/make_raw.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 466
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_rawinx.1.7": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_rawinx.1.7/make_rawinx.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 160
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_sim.1.0": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_sim.1.0/make_sim.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 842
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_smr.1.16": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_smr.1.16/make_smr.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 242
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_snd.1.0": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_snd.1.0/make_snd.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 205
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "make_vec.1.16": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/make_vec.1.16/make_vec.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 428
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "map_addhmb.1.17": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/map_addhmb.1.17/map_addhmb.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 529
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "map_addmodel.1.14": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/map_addmodel.1.14/map_addmodel.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 565
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "map_filter.1.8": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/map_filter.1.8/map_filter.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 168
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "map_ascii.1.8": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/map_ascii.1.8/make_pgrid.c",
+            "codebase/superdarn/src.bin/tk/tool/map_ascii.1.8/map_ascii.c",
+            "codebase/superdarn/src.bin/tk/tool/map_ascii.1.8/make_pgrid.h"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 595
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "map_addimf.1.18": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/map_addimf.1.18/ace.c",
+            "codebase/superdarn/src.bin/tk/tool/map_addimf.1.18/locate.c",
+            "codebase/superdarn/src.bin/tk/tool/map_addimf.1.18/map_addimf.c",
+            "codebase/superdarn/src.bin/tk/tool/map_addimf.1.18/wind.c",
+            "codebase/superdarn/src.bin/tk/tool/map_addimf.1.18/ace.h",
+            "codebase/superdarn/src.bin/tk/tool/map_addimf.1.18/istp.h",
+            "codebase/superdarn/src.bin/tk/tool/map_addimf.1.18/locate.h",
+            "codebase/superdarn/src.bin/tk/tool/map_addimf.1.18/wind.h"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 1463
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "map_fit.1.13": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/map_fit.1.13/map_fit.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 239
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "map_grd.1.16": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/map_grd.1.16/map_grd.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 458
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "merge_grid.1.8": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/merge_grid.1.8/merge_grid.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 188
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "merge_rt.1.19": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/merge_rt.1.19/log_info.c",
+            "codebase/superdarn/src.bin/tk/tool/merge_rt.1.19/merge_rt.c",
+            "codebase/superdarn/src.bin/tk/tool/merge_rt.1.19/log_info.h"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 547
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "radar_id.1.18": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/radar_id.1.18/radar_id.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 429
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "rawstat.1.5": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/rawstat.1.5/rawstat.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 239
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "raw_cp.1.5": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/raw_cp.1.5/raw_cp.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 206
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "rtcfit.1.12": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/rtcfit.1.12/loginfo.c",
+            "codebase/superdarn/src.bin/tk/tool/rtcfit.1.12/rtcfit.c",
+            "codebase/superdarn/src.bin/tk/tool/rtcfit.1.12/loginfo.h"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 501
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "rtgrid.1.22": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/rtgrid.1.22/loginfo.c",
+            "codebase/superdarn/src.bin/tk/tool/rtgrid.1.22/rtgrid.c",
+            "codebase/superdarn/src.bin/tk/tool/rtgrid.1.22/loginfo.h",
+            "codebase/superdarn/src.bin/tk/tool/rtgrid.1.22/output.h"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 835
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "sim_real.1.0": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/sim_real.1.0/sim_real.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 644
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "rtsnd.1.0": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/rtsnd.1.0/loginfo.c",
+            "codebase/superdarn/src.bin/tk/tool/rtsnd.1.0/rtsnd.c",
+            "codebase/superdarn/src.bin/tk/tool/rtsnd.1.0/loginfo.h"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 568
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "solve_model.1.0": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/solve_model.1.0/solve_model.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 540
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "trim_cfit.1.7": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/trim_cfit.1.7/trim_cfit.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 336
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "trim_fit.1.20": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/trim_fit.1.20/trim_fit.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 542
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "trim_grid.1.19": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/trim_grid.1.19/trim_grid.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 489
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "trim_iq.1.5": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/trim_iq.1.5/trim_iq.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 344
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "trim_map.1.11": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/trim_map.1.11/trim_map.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 328
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "trim_raw.1.15": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/trim_raw.1.15/trim_raw.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 428
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    },
+    "trim_snd.1.0": {
+      "original": {
+        "build_status": "no_makefile",
+        "build_time": 0.0,
+        "binary_size": 0,
+        "build_output": "",
+        "features": {
+          "has_openmp": false,
+          "has_simd": false,
+          "has_linked_lists": false,
+          "has_loops": true,
+          "source_files": [
+            "codebase/superdarn/src.bin/tk/tool/trim_snd.1.0/trim_snd.c"
+          ],
+          "makefile_exists": false,
+          "complexity_score": 289
+        },
+        "optimization_level": "O0"
+      },
+      "optimized": null,
+      "has_optimization": false,
+      "performance_gain": {}
+    }
+  },
+  "metadata": {
+    "timestamp": "2025-05-30T17:52:00.517054",
+    "total_original": 101,
+    "total_optimized": 6,
+    "optimization_coverage": 5.9405940594059405
+  }
+}

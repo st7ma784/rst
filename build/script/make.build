@@ -1,30 +1,12 @@
-#!/bin/bash
-
-set -e 
-
-# make.build
-# ==========
-# Author R.J.Barnes
-#
-# Purpose: 
-#
-# Make build software.
-#
-# Syntax:
-# 
-# make.build
-#
-# Description:
-#
-# Make the build software.
-#
-
-############################################################################
-
+set -e
 if [ -z "$BUILD" ]; then
     echo "BUILD environment variable is empty, please set"
     exit 1
 fi
+
+# Debug output
+echo "BUILD path: $BUILD"
+echo "CODEBASE path: $CODEBASE"
 
 export LD_LIBRARY_PATH=${BUILD}/lib
 export BINPATH=${BUILD}/bin
@@ -33,32 +15,47 @@ export IPATH=${BUILD}/include
 mkdir -p ${LIBPATH}
 mkdir -p ${BINPATH}
 mkdir -p ${IPATH}
-
 makebuild() {
-
   loct=${1}
   type=${2}
   path=${CODEBASE}/base/src.${type}/${loct}
+  echo "Building ${type}: ${loct}"
+  echo "Looking for path: ${path}"
+  
   if test ! -d ${path}
   then 
     path=${path}".*"
+    echo "Directory not found, trying pattern: ${path}"
   fi
 
   if test "${type}" = lib
   then
-    mkfile=`find ${path} -maxdepth 2 -name "makefile" | sort | tail -1 `
+    mkfile=`find ${path} -maxdepth 2 -name "makefile" | sort | tail -1`
   else
-    mkfile=`find ${path} -maxdepth 1 -name "makefile" | sort | tail -1` 
+    mkfile=`find ${path} -maxdepth 1 -name "makefile" | sort | tail -1`
   fi
 
+  if [ -z "$mkfile" ]; then
+    echo "ERROR: No makefile found for ${loct} in ${path}"
+    return 1
+  fi
+  echo "Using makefile: ${mkfile}"
   cd ${mkfile%%/makefile}
+  echo "Building in directory: $(pwd)"
+  
+  echo "Cleaning previous build artifacts..."
   make clean
-  make
+  echo "Starting build for ${loct}..."
+  if ! make; then
+    echo "ERROR: Build failed for ${loct}"
+    return 1
+  fi
+  echo "Successfully built ${loct}"
   return 0
 }
 
-liblist="xml/xml xml/xmldb xml/tagdb xml/xmldoclib \
-         task/option httpd/rscript"
+liblist="task/rtypes xml/xml xml/xmldb xml/tagdb xml/xmldoclib \
+         task/option task/convert math/rmath httpd/rscript"
 binlist="xmldoc/xmldoc xmldoc/scdoc \
          build/addtext build/maketree build/makeall"
 

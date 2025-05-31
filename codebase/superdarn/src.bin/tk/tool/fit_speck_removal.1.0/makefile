@@ -6,6 +6,7 @@
 include $(MAKECFG).$(SYSTEM)
 
 INCLUDE=-I$(IPATH)/base -I$(IPATH)/general -I$(IPATH)/superdarn
+
 OBJS = fit_speck_removal.o
 SRC=hlpstr.h errstr.h fit_speck_removal.c
 DSTPATH = $(BINPATH)

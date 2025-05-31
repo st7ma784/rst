@@ -5,7 +5,7 @@ services:
   fitacf-test:
     build:
       context: .
-      dockerfile: dockerfile.fitacf
+      dockerfile: dockerfile
     container_name: fitacf-test-env
     volumes:
       - ./codebase/superdarn/src.lib/tk/fitacf_v3.0:/workspace/fitacf_v3.0

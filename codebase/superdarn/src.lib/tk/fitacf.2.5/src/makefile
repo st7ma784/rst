@@ -20,6 +20,8 @@ INC=$(IPATH)/superdarn
 DSTPATH=$(LIBPATH)
 OUTPUT=fitacf
 LINK="1"
+# add target for optimized version
+
 
 include $(MAKELIB).$(SYSTEM)
 
