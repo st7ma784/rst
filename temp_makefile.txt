@@ -1,0 +1,33 @@
+# makefile for fitacf_v3.0_optimized2.4.0
+# Optimized SuperDARN FitACF processing library
+#
+include $(MAKECFG).$(SYSTEM)
+
+# Performance optimizations
+CFLAGS += -O3 -ffast-math -march=native -finline-functions
+
+# Conditional optimizations
+ifdef USE_OPENMP
+    CFLAGS += -fopenmp -DUSE_OPENMP
+endif
+
+ifdef USE_SIMD
+    CFLAGS += -mavx2 -mfma -DUSE_SIMD
+endif
+
+ifdef USE_CUDA
+    CFLAGS += -DUSE_CUDA
+endif
+
+INCLUDE= -I$(IPATH)/base -I$(IPATH)/general -I$(IPATH)/superdarn/fit -I$(IPATH)/superdarn
+SRC = determinations.c fitacftoplevel.c fitting.c leastsquares.c llist.c \
+        preprocessing.c determinations.h fit_structures.h leastsquares.h \
+        preprocessing.h fitacftoplevel.h fitting.h llist.h
+OBJS = determinations.o fitacftoplevel.o fitting.o leastsquares.o llist.o \
+        preprocessing.o
+INC=$(IPATH)/superdarn
+DSTPATH=$(LIBPATH)
+OUTPUT=fitacf_v3.0_optimized2
+LINK="3.0"
+
+include $(MAKELIB).$(SYSTEM)

@@ -1,11 +1,18 @@
 # Makefile for Optimized Fit Speck Removal Tool
 # =============================================
 
+
 include $(MAKECFG).$(SYSTEM)
 
-# Include paths (consolidated)
-INCLUDE = -I$(IPATH)/general -I$(IPATH)/base -I$(IPATH)/superdarn
-LIBRARY_PATH = -L$(LIBPATH)
+INCLUDE=-I$(IPATH)/base -I$(IPATH)/general -I$(IPATH)/superdarn
+
+OBJS = fit_speck_removal_optimized.o
+SRC=hlpstr.h errstr.h fit_speck_removal_optimized.c
+DSTPATH = $(BINPATH)
+OUTPUT = fit_speck_removal_optimized
+LIBS=-lradar.1 -lfit.1 -ldmap.1 -lopt.1 -lrcnv.1 
+SLIB=-lm -lz
+ 
 
 # Optimization flags
 CFLAGS += -O3 -march=native -mtune=native -funroll-loops -ffast-math
@@ -37,82 +44,7 @@ ifdef PGO
 CFLAGS += -fprofile-generate
 LDFLAGS += -fprofile-generate
 endif
+include $(MAKEBIN).$(SYSTEM)
+# Include paths (consolidated)
 
-SRC = hlpstr.h errstr.h fit_speck_removal_optimized.c
-OBJS = fit_speck_removal_optimized.o
-TARGETS = fit_speck_removal_optimized
 
-DSTPATH = $(BINPATH)
-OUTPUT = fit_speck_removal_optimized
-LIBS = -lradar.1 -lfit.1 -ldmap.1 -lopt.1 -lrcnv.1 -lrtime.1 -lrtypes.1
-SLIB = -lm -lz
-
-# Combined library flags
-ALL_LIBS = $(LIBRARY_PATH) $(LIBS) $(SLIB)
-
-all: $(TARGETS)
-
-fit_speck_removal_optimized: $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(ALL_LIBS)
-
-fit_speck_removal_optimized.o: fit_speck_removal_optimized.c
-	$(CC) $(CFLAGS) $(INCLUDE) -c $<
-
-# Performance benchmarking
-benchmark: fit_speck_removal_optimized
-	@echo "Running performance benchmark..."
-	@echo "Single-threaded:"
-	@time ./fit_speck_removal_optimized --no-parallel test_data.fit > /dev/null
-	@echo "Multi-threaded (auto):"
-	@time ./fit_speck_removal_optimized test_data.fit > /dev/null
-	@echo "Multi-threaded (4 threads):"
-	@time ./fit_speck_removal_optimized --threads=4 test_data.fit > /dev/null
-
-# Memory profiling with valgrind (if available)
-memcheck: fit_speck_removal_optimized
-	@if command -v valgrind >/dev/null 2>&1; then \
-		echo "Running memory check..."; \
-		valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all \
-		./fit_speck_removal_optimized test_data.fit > /dev/null; \
-	else \
-		echo "Valgrind not available for memory checking"; \
-	fi
-
-# Performance profiling with gprof
-profile: CFLAGS += -pg
-profile: LDFLAGS += -pg
-profile: fit_speck_removal_optimized
-	@echo "Running with profiling enabled..."
-	@./fit_speck_removal_optimized test_data.fit > /dev/null
-	@gprof fit_speck_removal_optimized gmon.out > profile_report.txt
-	@echo "Profile report generated: profile_report.txt"
-
-# Generate optimized build with profile feedback
-pgo-build: 
-	@echo "Building with Profile-Guided Optimization..."
-	@$(MAKE) clean
-	@$(MAKE) PGO=1 fit_speck_removal_optimized
-	@echo "Training with sample data..."
-	@./fit_speck_removal_optimized test_data.fit > /dev/null || true
-	@$(MAKE) clean
-	@$(MAKE) CFLAGS="$(CFLAGS) -fprofile-use" fit_speck_removal_optimized
-	@echo "PGO build complete"
-
-# Thread scaling test
-thread-test: fit_speck_removal_optimized
-	@echo "Testing thread scaling performance..."
-	@for threads in 1 2 4 8; do \
-		echo "Testing with $$threads threads:"; \
-		time ./fit_speck_removal_optimized --threads=$$threads test_data.fit > /dev/null; \
-		echo ""; \
-	done
-
-install: fit_speck_removal_optimized
-	$(INSTALL_BIN) $< $(BINPATH)
-
-clean:
-	rm -f *.o $(TARGETS) gmon.out profile_report.txt *.gcda *.gcno
-
-.PHONY: all benchmark memcheck profile pgo-build thread-test install clean
-
-include $(MAKELIB).$(SYSTEM)

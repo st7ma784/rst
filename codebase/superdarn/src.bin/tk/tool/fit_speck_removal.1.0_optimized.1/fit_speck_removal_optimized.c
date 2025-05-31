@@ -52,8 +52,8 @@
 #include "fitdata.h"
 #include "fitread.h"
 #include "fitwrite.h"
-// #include "errstr.h"
-// #include "hlpstr.h"
+#include "errstr.h"
+#include "hlpstr.h"
 
 // Enhanced constants for optimization
 #define TMAX_INITIAL 2000       
@@ -193,58 +193,58 @@ static void free_parameters_optimized(struct RadarParm *prm, struct FitData *fit
     }
 }
 
-// Pre-compute 3x3 filter kernels for all positions
-static FilterKernel* compute_filter_kernel(int beam, int channel, int range, int time_idx,
-                                          int maxbeam, int maxchannel, int maxrange, int max_time) {
-    FilterKernel *kernel = malloc(sizeof(FilterKernel));
-    if (!kernel) return NULL;
+// // Pre-compute 3x3 filter kernels for all positions
+// static FilterKernel* compute_filter_kernel(int beam, int channel, int range, int time_idx,
+//                                           int maxbeam, int maxchannel, int maxrange, int max_time) {
+//     FilterKernel *kernel = malloc(sizeof(FilterKernel));
+//     if (!kernel) return NULL;
     
-    kernel->valid_count = 0;
+//     kernel->valid_count = 0;
     
-    // 3x3 spatial-temporal neighborhood
-    int offsets[9][4] = {
-        {0, 0, 0, 0},     // center
-        {0, 0, -1, 0},    // range-1
-        {0, 0, 1, 0},     // range+1
-        {0, 0, 0, -1},    // time-1
-        {0, 0, -1, -1},   // range-1, time-1
-        {0, 0, 1, -1},    // range+1, time-1
-        {0, 0, 0, 1},     // time+1
-        {0, 0, -1, 1},    // range-1, time+1
-        {0, 0, 1, 1}      // range+1, time+1
-    };
+//     // 3x3 spatial-temporal neighborhood
+//     int offsets[9][4] = {
+//         {0, 0, 0, 0},     // center
+//         {0, 0, -1, 0},    // range-1
+//         {0, 0, 1, 0},     // range+1
+//         {0, 0, 0, -1},    // time-1
+//         {0, 0, -1, -1},   // range-1, time-1
+//         {0, 0, 1, -1},    // range+1, time-1
+//         {0, 0, 0, 1},     // time+1
+//         {0, 0, -1, 1},    // range-1, time+1
+//         {0, 0, 1, 1}      // range+1, time+1
+//     };
     
-    for (int i = 0; i < 9; i++) {
-        int new_beam = beam + offsets[i][0];
-        int new_channel = channel + offsets[i][1];
-        int new_range = range + offsets[i][2];
-        int new_time = time_idx + offsets[i][3];
+//     for (int i = 0; i < 9; i++) {
+//         int new_beam = beam + offsets[i][0];
+//         int new_channel = channel + offsets[i][1];
+//         int new_range = range + offsets[i][2];
+//         int new_time = time_idx + offsets[i][3];
         
-        // Check bounds
-        if (new_beam >= 0 && new_beam < maxbeam &&
-            new_channel >= 0 && new_channel < maxchannel &&
-            new_range >= 0 && new_range < maxrange &&
-            new_time >= 0 && new_time < max_time) {
+//         // Check bounds
+//         if (new_beam >= 0 && new_beam < maxbeam &&
+//             new_channel >= 0 && new_channel < maxchannel &&
+//             new_range >= 0 && new_range < maxrange &&
+//             new_time >= 0 && new_time < max_time) {
             
-            kernel->offsets[kernel->valid_count] = 
-                get_index_simd(new_beam, new_channel, new_range, new_time, 
-                              maxbeam, maxchannel, maxrange);
+//             kernel->offsets[kernel->valid_count] = 
+//                 get_index_simd(new_beam, new_channel, new_range, new_time, 
+//                               maxbeam, maxchannel, maxrange);
             
-            // Weight based on position (corners get higher weight for replication padding)
-            int weight = 1;
-            if (i == 0) weight = 1; // center
-            else if (new_range == 0 || new_range == maxrange-1 || 
-                     new_time == 0 || new_time == max_time-1) {
-                weight = 2; // edge cases get higher weight
-            }
+//             // Weight based on position (corners get higher weight for replication padding)
+//             int weight = 1;
+//             if (i == 0) weight = 1; // center
+//             else if (new_range == 0 || new_range == maxrange-1 || 
+//                      new_time == 0 || new_time == max_time-1) {
+//                 weight = 2; // edge cases get higher weight
+//             }
             
-            kernel->weights[kernel->valid_count] = weight;
-            kernel->valid_count++;
-        }
-    }
+//             kernel->weights[kernel->valid_count] = weight;
+//             kernel->valid_count++;
+//         }
+//     }
     
-    return kernel;
-}
+//     return kernel;
+// }
 
 // SIMD-optimized sum calculation
 static inline int calculate_weighted_sum_simd(const int *values, const int *weights, 
@@ -354,7 +354,7 @@ static int read_fitacf_optimized(FILE *fp, QflgDataOptimized *qflgs) {
     do {
         beam = prm->bmnum;
         channel = prm->channel;
-        
+        int r=0;
         // Batch process ranges for better cache locality
         #pragma omp parallel for if(prm->nrang > PARALLEL_THRESHOLD)
         for (int range = 0; range < prm->nrang; range++) {
@@ -369,7 +369,7 @@ static int read_fitacf_optimized(FILE *fp, QflgDataOptimized *qflgs) {
                     size_t new_size = qflgs->size + TMAX_INITIAL * MAXRANGE * MAXCHANNEL * MAXBEAM;
                     if (qflg_data_resize(qflgs, new_size) != 0) {
                         fprintf(stderr, "Memory allocation failed\n");
-                        return -1;
+                        r= -1;
                     }
                 }
                 
@@ -377,8 +377,12 @@ static int read_fitacf_optimized(FILE *fp, QflgDataOptimized *qflgs) {
                 qflgs->value[index] = (fit->rng[range].qflg == 1) ? 1 : 0;
                 qflgs->used = maxindex + 1;
             }
+            
         }
-        
+        if (r < 0) {
+                
+                return -1;
+        }
         nrec[beam][channel]++;
         
     } while (FitFread(fp, prm, fit) != -1);
