@@ -14,6 +14,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <sys/types.h>
+#include "rtypes.h"
+#include "rfile.h"
+#include "griddata.h"
+#include "griddata_parallel.h"
 
 #ifdef OPENMP_ENABLED
 #include <omp.h>
@@ -85,7 +90,7 @@ typedef struct {
     float spatial_tolerance;
 } GridAddHashTable;
 
-static GridAddHashTable* create_spatial_hash(const GridData *grid, float tolerance) {
+static GridAddHashTable* create_spatial_hash(const struct GridData *grid, float tolerance) {
     if (!grid || tolerance <= 0.0f) return NULL;
     
     GridAddHashTable *hash = malloc(sizeof(GridAddHashTable));
@@ -158,7 +163,7 @@ static void free_spatial_hash(GridAddHashTable *hash) {
 /**
  * Add two grids with spatial matching and statistical combination
  */
-int GridAddParallel(GridData *target, const GridData *source, float spatial_tolerance) {
+int GridAddParallel(struct GridData *target, const struct GridData *source, float spatial_tolerance) {
     if (!target || !source) return -1;
     if (spatial_tolerance <= 0.0f) spatial_tolerance = 0.1f; // Default 0.1 degree tolerance
     
@@ -306,7 +311,7 @@ int GridAddParallel(GridData *target, const GridData *source, float spatial_tole
 /**
  * Weighted addition of grids
  */
-int GridAddWeightedParallel(GridData *target, const GridData *source, 
+int GridAddWeightedParallel(struct GridData *target, const struct GridData *source, 
                            float target_weight, float source_weight,
                            float spatial_tolerance) {
     if (!target || !source) return -1;
@@ -382,7 +387,7 @@ int GridAddWeightedParallel(GridData *target, const GridData *source,
 /**
  * Subtract one grid from another
  */
-int GridSubtractParallel(GridData *target, const GridData *source, float spatial_tolerance) {
+int GridSubtractParallel(struct GridData *target, const struct GridData *source, float spatial_tolerance) {
     if (!target || !source) return -1;
     
     GridAddHashTable *hash = create_spatial_hash(target, spatial_tolerance);

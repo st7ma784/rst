@@ -20,4 +20,9 @@ CFLAGS += -fopenmp
 LDFLAGS += -fopenmp
 endif
 
+# AVX2 support (optional)
+ifdef AVX2
+CFLAGS += -mavx2 -mfma -DAVX2_ENABLED
+endif
+
 include $(MAKELIB).$(SYSTEM)

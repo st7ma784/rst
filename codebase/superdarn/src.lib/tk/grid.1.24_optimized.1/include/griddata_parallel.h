@@ -298,6 +298,60 @@ void aligned_free(void *ptr);
 #define GRID_MERGE_PREFER_HIGHER_POWER 3
 #define GRID_MERGE_PREFER_LOWER_ERROR 4
 
+/* Performance statistics structure */
+struct GridPerformanceStats {
+    double processing_time;
+    double memory_usage;
+    int operations_count;
+    int error_count;
+    int cache_hits;
+    int cache_misses;
+} ALIGNED(64);
+
+/* Parallel grid vector structure */
+struct GridGVecParallel {
+    double mlat, mlon;
+    double azm;
+    double kvect;
+    struct GridStats vel;
+    struct GridStats pwr;
+    struct GridStats wdt;
+    int32_t st_id;
+    int32_t chn;
+    int32_t index;
+    uint32_t quality_flag;
+    uint32_t filter_flags;
+    uint32_t avg_count;
+    uint32_t merge_count;
+} ALIGNED(64);
+
+/* Parallel grid data structure */
+struct GridDataParallel {
+    struct {
+        int yr, mo, dy, hr, mt, sc, us;
+    } st_time, ed_time;
+    
+    int stnum;
+    int vcnum;
+    int xtd;
+    
+    struct GridSVec *sdata;
+    struct GridGVecParallel *data;
+    
+    /* Enhanced parallel processing structures */
+    struct GridMatrix *velocity_matrix;
+    struct GridMatrix *power_matrix;
+    struct GridMatrix *width_matrix;
+    struct GridMatrix *azimuth_matrix;
+    
+    /* Spatial indexing for fast lookup */
+    uint32_t *spatial_index;
+    uint32_t spatial_grid_size;
+    
+    /* Performance monitoring */
+    struct GridPerformanceStats perf_stats;
+} ALIGNED(128);
+
 /* Enhanced grid index structure with parallel optimization */
 struct GridIndexParallel {
     int num;

@@ -164,15 +164,15 @@ int ACFCalculate(struct TSGprm *prm,
     
     int nrang = prm->nrang;
     
-    /* Use optimized version for larger datasets */
-    if (nrang >= ACF_MIN_PARALLEL_RANGES && mplgs >= 4) {
+    /* Use optimized version only for very large datasets to avoid overhead */
+    if (nrang >= 100 && mplgs >= 32) {
         return ACFCalculateParallelRanges(prm, inbuf, rngoff, dflg, roffset, ioffset,
                                          mplgs, lagtable, acfbuf, xcf, xcfoff,
                                          badrange, atten, dco);
     }
     
-    /* Fall back to vectorized version for medium datasets */
-    if (mplgs >= ACF_SIMD_WIDTH) {
+    /* Use SIMD only for medium-large datasets */
+    if (nrang >= 50 && mplgs >= 16) {
         return ACFCalculateVectorized(prm, inbuf, rngoff, dflg, roffset, ioffset,
                                      mplgs, lagtable, acfbuf, xcf, xcfoff,
                                      badrange, atten, dco);
@@ -431,12 +431,27 @@ int ACFCalculateParallelRanges(struct TSGprm *prm,
                 imag_part /= atten;
             }
             
-            // Critical section for updating shared ACF buffer
-            #pragma omp critical
-            {
-                acfbuf[range * (2 * mplgs) + 2 * lag] += real_part;
-                acfbuf[range * (2 * mplgs) + 2 * lag + 1] += imag_part;
+            real_part = 0.0f, imag_part = 0.0f;
+            
+            // Calculate ACF for this lag without critical section
+            for (int sample = 0; sample < sampleunit; sample++) {
+                int idx1 = sample1 + sample;
+                int idx2 = sample2 + sample;
+                
+                float real1 = (float)inbuf[idx1 * 2];
+                float imag1 = (float)inbuf[idx1 * 2 + 1];
+                float real2 = (float)inbuf[idx2 * 2];
+                float imag2 = (float)inbuf[idx2 * 2 + 1];
+                
+                real_part += real1 * real2 + imag1 * imag2;
+                imag_part += imag1 * real2 - real1 * imag2;
             }
+            
+            // Single atomic update per lag (much better than critical section)
+            #pragma omp atomic
+            acfbuf[range * (2 * mplgs) + 2 * lag] += real_part;
+            #pragma omp atomic
+            acfbuf[range * (2 * mplgs) + 2 * lag + 1] += imag_part;
         }
     }
 #else

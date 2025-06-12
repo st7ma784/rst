@@ -1,7 +1,6 @@
 # Makefile for Optimized Fit Speck Removal Tool
 # =============================================
 
-
 include $(MAKECFG).$(SYSTEM)
 
 INCLUDE=-I$(IPATH)/base -I$(IPATH)/general -I$(IPATH)/superdarn
@@ -12,7 +11,6 @@ DSTPATH = $(BINPATH)
 OUTPUT = fit_speck_removal_optimized
 LIBS=-lradar.1 -lfit.1 -ldmap.1 -lopt.1 -lrcnv.1 
 SLIB=-lm -lz
- 
 
 # Optimization flags
 CFLAGS += -O3 -march=native -mtune=native -funroll-loops -ffast-math
@@ -44,7 +42,7 @@ ifdef PGO
 CFLAGS += -fprofile-generate
 LDFLAGS += -fprofile-generate
 endif
+
 include $(MAKEBIN).$(SYSTEM)
-# Include paths (consolidated)
 
 

@@ -114,9 +114,10 @@ class SuperDARNOptimizationTester:
         for ext in ['*.c', '*.h']:
             features['source_files'].extend(list(component_path.rglob(ext)))
         
-        # Check for makefile
-        makefile_path = os.path.join(component_path, "src", "makefile")
-        features['makefile_exists'] = os.path.exists(makefile_path)
+        # Check for makefile (both in src subdirectory and root)
+        makefile_path_src = os.path.join(component_path, "src", "makefile")
+        makefile_path_root = os.path.join(component_path, "makefile")
+        features['makefile_exists'] = os.path.exists(makefile_path_src) or os.path.exists(makefile_path_root)
         # Analyze source code features
         for src_file in features['source_files']:
             try:
@@ -165,11 +166,22 @@ class SuperDARNOptimizationTester:
             # Analyze features first
             result['features'] = self.analyze_component_features(component_path)
             
-            # Check if makefile exists
-            makefile_path = os.path.join(component_path, "src" , "makefile")
-            print(f"🔍 Checking makefile at: {makefile_path}"   )
-            if not os.path.exists(makefile_path):
+            # Check if makefile exists in src subdirectory or root
+            makefile_path_src = os.path.join(component_path, "src", "makefile")
+            makefile_path_root = os.path.join(component_path, "makefile")
+            
+            build_dir = component_path
+            if os.path.exists(makefile_path_src):
+                makefile_path = makefile_path_src
+                build_dir = os.path.join(component_path, "src")
+                print(f"🔍 Found makefile in src subdirectory: {makefile_path}")
+            elif os.path.exists(makefile_path_root):
+                makefile_path = makefile_path_root
+                build_dir = component_path
+                print(f"🔍 Found makefile in root directory: {makefile_path}")
+            else:
                 result['build_status'] = 'no_makefile'
+                result['build_output'] = 'No makefile found in src directory or root'
                 return result
             
             # Determine optimization level from path
@@ -179,7 +191,7 @@ class SuperDARNOptimizationTester:
             # Build the component
             start_time = time.time()
             
-            cmd = ["make", "-C", str(os.path.join(component_path, "src"))]
+            cmd = ["make", "-C", str(build_dir)]
             process = subprocess.run(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -342,7 +354,7 @@ class SuperDARNOptimizationTester:
 
 def main():
     parser = argparse.ArgumentParser(description='SuperDARN Optimization Testing Framework')
-    parser.add_argument('--rst-root', default='.."   ', help='RST root directory')
+    parser.add_argument('--rst-root', default='.', help='RST root directory')
     parser.add_argument('--component', help='Test specific component only')
     parser.add_argument('--only-optimized', action='store_true', help='Test only components with optimized versions')
     parser.add_argument('--workers', type=int, default=4, help='Number of parallel workers')
