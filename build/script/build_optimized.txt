@@ -1,0 +1,45 @@
+# SuperDARN RST - Optimized Build Configuration
+# ==============================================
+# This file defines the build order with optional optimized modules
+# Format: project codebase/path type [optimization_level] [opt_module_version]
+
+# Core libraries - no optimization for compatibility
+base codebase/base/src.lib lib
+base codebase/base/src.bin bin 
+
+# General libraries - basic optimization safe
+general codebase/general/src.lib lib 
+general codebase/general/src.bin bin 
+
+# Analysis libraries - optimized versions available
+analysis codebase/analysis/src.lib lib opt1
+analysis codebase/analysis/src.bin bin
+analysis codebase/analysis/src.dlm dlm
+
+# Imagery libraries
+imagery codebase/imagery/src.lib lib
+
+# SuperDARN libraries - multiple optimization levels available
+superdarn codebase/superdarn/src.lib lib opt2
+superdarn codebase/superdarn/src.bin bin
+superdarn codebase/superdarn/src.dlm dlm
+superdarn codebase/superdarn/src.doc doc
+
+# Optimization Configuration
+# =========================
+# opt1 = basic optimization (safe for all platforms - OpenMP, safe flags)
+# opt2 = advanced optimization (requires modern hardware - SIMD, AVX2)
+# opt3 = maximum optimization (experimental - CUDA, aggressive opts)
+
+# Optimized module detection rules:
+# The build system will automatically detect optimized versions by:
+# 1. Looking for directories with "_optimized" suffix
+# 2. Checking for version-specific optimized directories
+# 3. Using naming patterns: module.version_optimized.level
+# 
+# Examples of auto-detected patterns:
+# - grid.1.24_optimized.1 -> opt1 version of grid library
+# - fitacf_v3.0_optimized.2 -> opt2 version of fitacf library
+# - acf.1.16_optimized.2.0 -> opt2 version with sub-version
+#
+# No manual mapping required - optimized modules are discovered automatically!

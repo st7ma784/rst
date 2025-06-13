@@ -1,0 +1,86 @@
+# Enhanced Makefile for libraries with optimization support
+# ========================================================
+# by R.J.Barnes (Original), SuperDARN Optimization Framework (Enhanced)
+#
+# Linux (GCC) with dynamic optimization support
+#
+
+# Base compiler flags
+BASE_CFLAGS = -fPIC -Wall -pedantic -D_GNU_SOURCE -D_LINUX $(INCLUDE)
+BASE_LFLAGS = -shared -lm -lz
+
+# Apply optimization flags based on environment variables
+ifdef OPTIMIZATION_FLAGS
+CFLAGS += $(BASE_CFLAGS) $(OPTIMIZATION_FLAGS)
+else
+CFLAGS += $(BASE_CFLAGS) -O2
+endif
+
+# OpenMP support
+ifdef OPENMP
+CFLAGS += -fopenmp
+LFLAGS += $(BASE_LFLAGS) -fopenmp
+else
+LFLAGS += $(BASE_LFLAGS)
+endif
+
+# SIMD/AVX2 support
+ifdef AVX2
+CFLAGS += -mavx2 -mfma -DAVX2_ENABLED
+endif
+
+# CUDA support flags
+ifdef CUDA
+CFLAGS += -DCUDA_ENABLED
+LFLAGS += -lcuda -lcudart
+endif
+
+SUF=so
+  
+VSTR=$(shell get.version ${CURDIR}/..)
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<    
+
+ifdef OUTPUT
+$(OUTPUT): version hdr $(OBJS)
+	mkdir -p $(DSTPATH)
+	ar -r $(DSTPATH)/lib$(OUTPUT).$(VSTR).a $(OBJS)
+	$(LD) $(LFLAGS) -o $(DSTPATH)/lib$(OUTPUT).$(VSTR).$(SUF) \
+              $(OBJS) $(LNK) -L$(LIBPATH) $(LIBS) $(SLIB)
+	cd $(DSTPATH); ln -sf lib$(OUTPUT).$(VSTR).a \
+               lib$(OUTPUT).$(LINK).a 
+	cd $(DSTPATH); ln -sf lib$(OUTPUT).$(VSTR).so \
+               lib$(OUTPUT).$(LINK).so 
+
+else
+dummy: hdr
+
+endif
+
+hdr: 
+	make.hdr $(CURDIR)/../include $(INC) 
+
+version:
+	make.version $(CURDIR)/..
+
+# Enhanced optimization-aware targets
+opt-info:
+	@echo "Optimization Configuration:"
+	@echo "  OPENMP: $(OPENMP)"
+	@echo "  AVX2: $(AVX2)"
+	@echo "  CUDA: $(CUDA)"
+	@echo "  OPTIMIZATION_FLAGS: $(OPTIMIZATION_FLAGS)"
+	@echo "  CFLAGS: $(CFLAGS)"
+
+benchmark: $(OUTPUT)
+	@echo "Building benchmark for $(OUTPUT)..."
+	@if [ -f "../test/benchmark.c" ]; then \
+		$(CC) $(CFLAGS) -o $(OUTPUT)_benchmark ../test/benchmark.c $(OBJS) $(LFLAGS); \
+		echo "Benchmark built: $(OUTPUT)_benchmark"; \
+	else \
+		echo "No benchmark source found"; \
+	fi
+
+clean:
+	rm -f *.o $(OUTPUT)_benchmark

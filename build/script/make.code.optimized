@@ -1,0 +1,523 @@
+#!/bin/bash
+
+# make.code.optimized
+# ===================
+# Enhanced build script with optimization options
+# Author: SuperDARN Optimization Framework
+#
+# Purpose:
+# Make source code into binaries with configurable optimization levels
+#
+# Syntax:
+# make.code.optimized [type] [-o optimization_level] [-p pattern] [--help]
+#
+# Description:
+# Enhanced version of make.code that supports optimized module selection
+
+set -e
+
+############################################################################
+# Default configuration
+############################################################################
+
+OPTIMIZATION_LEVEL=""
+OPT_CONFIG_FILE="${BUILD}/script/build_optimized.txt"
+ORIGINAL_CONFIG_FILE="${BUILD}/script/build.txt"
+USE_OPTIMIZED=0
+VERBOSE=0
+
+# Hardware detection
+detect_hardware() {
+    local cpu_flags=""
+    local has_avx2=0
+    local has_openmp=0
+    local num_cores=$(nproc 2>/dev/null || echo "1")
+    
+    if [ -f /proc/cpuinfo ]; then
+        cpu_flags=$(grep -m1 "^flags" /proc/cpuinfo | cut -d: -f2)
+        if echo "$cpu_flags" | grep -q avx2; then
+            has_avx2=1
+        fi
+    fi
+    
+    # Check for OpenMP support
+    if command -v gcc >/dev/null 2>&1; then
+        if gcc -fopenmp -E - </dev/null >/dev/null 2>&1; then
+            has_openmp=1
+        fi
+    fi
+    
+    echo "Hardware Detection Results:"
+    echo "  CPU Cores: $num_cores"
+    echo "  AVX2 Support: $([ $has_avx2 -eq 1 ] && echo "Yes" || echo "No")"
+    echo "  OpenMP Support: $([ $has_openmp -eq 1 ] && echo "Yes" || echo "No")"
+    
+    # Recommend optimization level
+    if [ $has_avx2 -eq 1 ] && [ $has_openmp -eq 1 ] && [ $num_cores -gt 4 ]; then
+        echo "  Recommended Optimization: opt2 (Advanced)"
+        return 2
+    elif [ $has_openmp -eq 1 ] && [ $num_cores -gt 2 ]; then
+        echo "  Recommended Optimization: opt1 (Basic)"
+        return 1
+    else
+        echo "  Recommended Optimization: none (Standard)"
+        return 0
+    fi
+}
+
+# Function to show available optimizations with dynamic discovery
+show_optimizations() {
+    echo "Available Optimization Levels:"
+    echo "  none - Standard build (maximum compatibility)"
+    echo "  opt1 - Basic optimization (OpenMP, safe optimizations)"
+    echo "  opt2 - Advanced optimization (SIMD, AVX2, aggressive opts)"
+    echo "  opt3 - Maximum optimization (experimental, may be unstable)"
+    echo ""
+    echo "Dynamically Detected Optimized Modules:"
+    
+    # Search for optimized modules in the codebase
+    if [ -d "${CODEBASE}/superdarn/src.lib/tk" ]; then
+        find "${CODEBASE}/superdarn/src.lib/tk" -maxdepth 1 -type d -name "*optimized*" 2>/dev/null | while read optimized_dir; do
+            if [ -f "$optimized_dir/src/makefile" ] || [ -f "$optimized_dir/CMakeLists.txt" ] || [ -f "$optimized_dir/Makefile" ]; then
+                local module_name="${optimized_dir##*/}"
+                local relative_path="${optimized_dir#${CODEBASE}/}"
+                
+                # Try to determine base module name
+                local base_name=$(echo "$module_name" | sed 's/_optimized.*//' | sed 's/\.optimized.*//')
+                
+                echo "  $base_name -> codebase/$relative_path"
+            fi
+        done
+        
+        # Also search in src.bin for optimized binaries
+        find "${CODEBASE}/superdarn/src.bin" -maxdepth 3 -type d -name "*optimized*" 2>/dev/null | while read optimized_dir; do
+            if [ -f "$optimized_dir/makefile" ] || [ -f "$optimized_dir/CMakeLists.txt" ] || [ -f "$optimized_dir/Makefile" ]; then
+                local module_name="${optimized_dir##*/}"
+                local relative_path="${optimized_dir#${CODEBASE}/}"
+                local base_name=$(echo "$module_name" | sed 's/_optimized.*//' | sed 's/\.optimized.*//')
+                
+                echo "  $base_name (bin) -> codebase/$relative_path"
+            fi
+        done
+    fi
+    
+    echo ""
+    echo "Static Configuration (from build_optimized.txt):"
+    if [ -f "$OPT_CONFIG_FILE" ]; then
+        grep -E "^[a-z]+ opt[0-9]" "$OPT_CONFIG_FILE" 2>/dev/null | while read module level path; do
+            echo "  $module ($level): $path"
+        done
+    else
+        echo "  No static configuration file found"
+    fi
+}
+
+# Function to dynamically find optimized module path
+get_optimized_path() {
+    local module_type="$1"
+    local opt_level="$2"
+    local original_path="$3"
+    
+    if [ -z "$opt_level" ] || [ "$opt_level" = "none" ]; then
+        echo "$original_path"
+        return
+    fi
+    
+    # Dynamic detection of optimized modules
+    local optimized_path=""
+    local base_path="${original_path%/*}"  # Get directory part
+    local module_name="${original_path##*/}"  # Get module name part
+    
+    # Search patterns for optimized modules
+    local search_patterns=(
+        "${module_name}_optimized*"
+        "${module_name}.*_optimized*"
+        "*${module_name}*_optimized*"
+        "${module_name}.optimized*"
+    )
+    
+    # Search in the same directory as original module
+    for pattern in "${search_patterns[@]}"; do
+        local candidates=$(find "${CODEBASE}/${base_path#codebase/}" -maxdepth 1 -type d -name "$pattern" 2>/dev/null | head -5)
+        
+        for candidate in $candidates; do
+            if [ -d "$candidate" ]; then
+                # Check if it has source files
+                if [ -f "$candidate/src/makefile" ] || [ -f "$candidate/CMakeLists.txt" ] || [ -f "$candidate/Makefile" ]; then
+                    # Convert back to relative path
+                    optimized_path="${candidate#${CODEBASE}/}"
+                    optimized_path="codebase/${optimized_path}"
+                    
+                    if [ $VERBOSE -eq 1 ]; then
+                        echo "Found optimized module: $optimized_path" >&2
+                    fi
+                    break 2
+                fi
+            fi
+        done
+    done
+    
+    # Fallback: Check config file if dynamic detection fails
+    if [ -z "$optimized_path" ] && [ -f "$OPT_CONFIG_FILE" ]; then
+        optimized_path=$(grep -E "^$module_type $opt_level " "$OPT_CONFIG_FILE" | cut -d' ' -f3)
+    fi
+    
+    # Validate the optimized path exists
+    if [ -n "$optimized_path" ] && [ -d "${CODEBASE}/${optimized_path#codebase/}" ]; then
+        echo "$optimized_path"
+    else
+        if [ $VERBOSE -eq 1 ] && [ -n "$opt_level" ] && [ "$opt_level" != "none" ]; then
+            echo "No optimized version found for $module_type, using original: $original_path" >&2
+        fi
+        echo "$original_path"
+    fi
+}
+
+# Enhanced makeaction function with dynamic optimization detection
+makeaction() {
+    local compile="$1"
+    local project="$2"
+    local module="$3"
+    local type="$4"
+    local mode="$5"
+
+    if [ -n "$mtype" ] && [ "${type}" != "${mtype}" ]; then 
+        return 0
+    fi
+
+    local opt=""
+    local ctmp="$compile"
+    
+    if [ "${compile}" = "hdr" ]; then
+        ctmp="lib"
+        opt="-t hdr"
+    fi
+
+    if [ "${ctmp}" != "${type}" ]; then 
+        return 0
+    fi
+
+    # Enhanced module detection for optimization
+    local module_name=""
+    local src_path="$module"
+    
+    # Extract module name for optimization lookup using pattern matching
+    local base_module="${module##*/}"  # Get just the module name
+    
+    # Better pattern matching for module types
+    case "$base_module" in
+        grid.*|*grid*) module_name="grid" ;;
+        fitacf.*|*fitacf*) module_name="fitacf" ;;
+        acf.*|*acf*) module_name="acf" ;;
+        lmfit.*|*lmfit*) module_name="lmfit" ;;
+        binplot.*|*binplot*) module_name="binplot" ;;
+        cnvmap.*|*cnvmap*) module_name="cnvmap" ;;
+        shf.*|*shf*) module_name="shf" ;;
+        filter.*|*filter*) module_name="filter" ;;
+        *) 
+            # Generic detection: check if any optimized version exists
+            if [ -n "$OPTIMIZATION_LEVEL" ] && [ "$OPTIMIZATION_LEVEL" != "none" ]; then
+                module_name="$base_module"
+            fi
+            ;;
+    esac
+    
+    # Get optimized path if available and optimization is requested
+    if [ -n "$module_name" ] && [ -n "$OPTIMIZATION_LEVEL" ] && [ "$OPTIMIZATION_LEVEL" != "none" ]; then
+        local optimized_path=$(get_optimized_path "$module_name" "$OPTIMIZATION_LEVEL" "$module")
+        if [ "$optimized_path" != "$module" ]; then
+            src_path="$optimized_path"
+            if [ $VERBOSE -eq 1 ]; then
+                echo "Using optimized module: $module_name -> $optimized_path (level: $OPTIMIZATION_LEVEL)"
+            fi
+        else
+            if [ $VERBOSE -eq 1 ]; then
+                echo "No optimization available for: $module_name (using original)"
+            fi
+        fi
+    fi
+
+    # Set source path
+    if [ "${module%%/*}" = "codebase" ]; then
+        src="${CODEBASE}/${src_path#codebase/}"
+    else
+        src="$src_path"
+    fi
+
+    # Set optimization environment variables based on level
+    if [ -n "$OPTIMIZATION_LEVEL" ] && [ "$OPTIMIZATION_LEVEL" != "none" ]; then
+        case "$OPTIMIZATION_LEVEL" in
+            opt1)
+                export OPENMP=1
+                export OPTIMIZATION_FLAGS="-O2 -fopenmp"
+                if [ $VERBOSE -eq 1 ]; then
+                    echo "Applied opt1: OpenMP + basic optimizations"
+                fi
+                ;;
+            opt2)
+                export OPENMP=1
+                export SIMD=1
+                export AVX2=1
+                export OPTIMIZATION_FLAGS="-O3 -fopenmp -mavx2 -march=native"
+                if [ $VERBOSE -eq 1 ]; then
+                    echo "Applied opt2: OpenMP + SIMD + AVX2 optimizations"
+                fi
+                ;;
+            opt3)
+                export OPENMP=1
+                export SIMD=1
+                export AVX2=1
+                export CUDA=1
+                export OPTIMIZATION_FLAGS="-O3 -fopenmp -mavx2 -march=native -flto"
+                if [ $VERBOSE -eq 1 ]; then
+                    echo "Applied opt3: Maximum optimizations + LTO"
+                fi
+                ;;
+        esac
+    fi
+
+    # Execute the build
+    if [ "${mode}" = "stdin" ]; then
+        echo "${module##*/}" "$opt"
+        echo "${module##*/}" | makeall -vb $patn $opt "${src%/*}" stdin >> "${log}.${dtval}"
+    else
+        if [ ! -d "$src" ]; then
+            src="$src".*
+        fi
+        
+        if [ $VERBOSE -eq 1 ]; then
+            echo "Building: $src"
+        fi
+        
+        makeall -vb $patn $opt "$src" >> "${log}.${dtval}"
+    fi
+    
+    return 0
+}
+
+# Function to build with specific configuration
+makemodule() {
+    local SEP="+"
+    local compile="$1"
+    local fname="$2"
+    local modlst
+    
+    if [ ! -f "$fname" ]; then
+        echo "Error: Configuration file $fname not found"
+        return 1
+    fi
+    
+    modlst=$(cat "$fname" | tr " " "$SEP")
+
+    for lval in $modlst; do
+        if [ -z "$lval" ]; then continue; fi
+        
+        local tmp=$(echo "$lval" | tr "$SEP" " ")
+        local prm="${tmp%%#*}"
+        
+        if [ -z "$prm" ]; then continue; fi
+
+        makeaction "$compile" $prm
+    done
+    
+    return 0
+}
+
+# Show help
+show_help() {
+    cat << EOF
+SuperDARN RST Optimized Build System
+
+USAGE:
+    $0 [type] [options]
+
+TYPES:
+    lib     - Build libraries only
+    bin     - Build binaries only  
+    dlm     - Build IDL DLMs only
+    hdr     - Build headers only
+    (none)  - Build everything
+
+OPTIONS:
+    -o, --optimization LEVEL   Set optimization level (none,opt1,opt2,opt3)
+    -p, --pattern PATTERN      Build only modules matching pattern
+    --auto-optimize            Auto-detect optimal optimization level
+    --list-optimizations       Show available optimizations and exit
+    --hardware-info            Show hardware capabilities and exit
+    -v, --verbose              Verbose output
+    -h, --help                 Show this help
+
+OPTIMIZATION LEVELS:
+    none - Standard build (maximum compatibility)
+    opt1 - Basic optimization (OpenMP, safe optimizations)  
+    opt2 - Advanced optimization (SIMD, AVX2, aggressive optimizations)
+    opt3 - Maximum optimization (experimental, may be unstable)
+
+EXAMPLES:
+    $0                          # Standard build
+    $0 --auto-optimize          # Auto-detect and use optimal settings
+    $0 -o opt1                  # Build with basic optimizations
+    $0 -o opt2 lib              # Build libraries with advanced optimizations
+    $0 -p grid -o opt2          # Build only grid modules with optimizations
+    $0 --list-optimizations     # Show available optimized modules
+
+EOF
+}
+
+############################################################################
+# Parse command line arguments
+############################################################################
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -o|--optimization)
+            OPTIMIZATION_LEVEL="$2"
+            USE_OPTIMIZED=1
+            shift 2
+            ;;
+        --auto-optimize)
+            detect_hardware
+            OPTIMIZATION_LEVEL="opt$?"
+            USE_OPTIMIZED=1
+            shift
+            ;;
+        --list-optimizations)
+            show_optimizations
+            exit 0
+            ;;
+        --hardware-info)
+            detect_hardware
+            exit 0
+            ;;
+        -p|--pattern)
+            patn="-p $2"
+            shift 2
+            ;;
+        -v|--verbose)
+            VERBOSE=1
+            shift
+            ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        lib|bin|dlm|hdr)
+            mtype="$1"
+            shift
+            ;;
+        *)
+            if [ -z "$mtype" ]; then
+                mtype="$1"
+            else
+                echo "Unknown option: $1"
+                show_help
+                exit 1
+            fi
+            shift
+            ;;
+    esac
+done
+
+############################################################################
+# Validate and setup
+############################################################################
+
+# Choose configuration file
+config_file="$ORIGINAL_CONFIG_FILE"
+if [ $USE_OPTIMIZED -eq 1 ]; then
+    if [ -f "$OPT_CONFIG_FILE" ]; then
+        config_file="$OPT_CONFIG_FILE"
+    else
+        echo "Warning: Optimized configuration file not found, using standard build"
+        OPTIMIZATION_LEVEL=""
+        USE_OPTIMIZED=0
+    fi
+fi
+
+if [ ! -s "$config_file" ]; then
+    echo "Error: Build configuration file not found: $config_file"
+    exit 1
+fi
+
+# Setup logging
+log="${LOGPATH}/superdarn-rst.build"
+dtval=$(date +%Y%m%d.%H%M)
+
+# Display build configuration
+echo "SuperDARN RST Optimized Build System"
+echo "===================================="
+echo "Configuration: $config_file"
+echo "Optimization Level: ${OPTIMIZATION_LEVEL:-none}"
+echo "Build Type: ${mtype:-all}"
+echo "Log File: ${log}.${dtval}"
+
+if [ $VERBOSE -eq 1 ]; then
+    echo "Pattern: ${patn:-none}"
+    echo "Use Optimized: $USE_OPTIMIZED"
+fi
+
+echo ""
+
+############################################################################
+# IDL preparation (from original make.code)
+############################################################################
+
+if [ ! -r "${IDL_IPATH}/idl_export.h" ]; then
+    echo "Failed to locate idl_export.h - will not compile IDL libraries or DLMs"
+    if [ -d "${RSTPATH}/codebase/superdarn/src.lib/tk/idl" ]; then
+        currentdir=$(pwd)
+        cd "${RSTPATH}/codebase/superdarn/src.lib/tk"
+        tar -P -czvf idl.tar.gz idl
+        rm -R idl
+        cd "$currentdir"
+    fi
+else
+    if [ ! -d "${RSTPATH}/codebase/superdarn/src.lib/tk/idl" ]; then
+        if [ -a "${RSTPATH}/codebase/superdarn/src.lib/tk/idl.tar.gz" ]; then
+            currentdir=$(pwd)
+            cd "${RSTPATH}/codebase/superdarn/src.lib/tk"
+            tar -xzvf idl.tar.gz
+            rm idl.tar.gz
+            cd "$currentdir"
+        else
+            echo "Failed to locate IDL libraries for DLMs"
+            exit 1
+        fi
+    fi
+fi
+
+############################################################################
+# Execute build
+############################################################################
+
+mkdir -p "${LOGPATH}"
+
+echo "Starting build process..."
+
+# Build in correct order
+makemodule hdr "$config_file"
+makemodule lib "$config_file" 
+makemodule bin "$config_file"
+
+if [ -r "${IDL_IPATH}/idl_export.h" ]; then 
+    makemodule dlm "$config_file"
+fi
+
+# Setup IDL directories
+mkdir -p "${RSTPATH}/idl"
+mkdir -p "${RSTPATH}/idl/lib"
+mkdir -p "${RSTPATH}/idl/app"
+
+echo ""
+echo "Build completed successfully!"
+echo "Log file: ${log}.${dtval}"
+
+if [ $USE_OPTIMIZED -eq 1 ]; then
+    echo "Optimization level used: $OPTIMIZATION_LEVEL"
+    echo ""
+    echo "Performance notes:"
+    echo "- Optimized builds may have different performance characteristics"
+    echo "- Run validation tests before deploying to production"
+    echo "- See documentation for optimization-specific features"
+fi

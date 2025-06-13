@@ -1,0 +1,873 @@
+name: SuperDARN RST Performance Testing
+# ====================================
+# Automated performance testing workflow for SuperDARN RST
+# Compares optimized vs standard builds using Docker containers
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'codebase/**'
+      - 'build/**'
+      - 'dockerfile.optimized'
+      - '.github/workflows/performance-testing.yml'
+  
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'codebase/**'
+      - 'build/**'
+      - 'dockerfile.optimized'
+  
+  schedule:
+    # Run comprehensive tests nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+    # Run benchmark tests weekly on Sunday at 4 AM UTC
+    - cron: '0 4 * * 0'
+  
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: true
+        default: 'standard'
+        type: choice
+        options:
+          - quick
+          - standard
+          - comprehensive
+          - benchmark
+      data_sets:
+        description: 'Data sets to test (comma-separated)'
+        required: false
+        default: 'small,medium'
+      force_rebuild:
+        description: 'Force rebuild of Docker containers'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+  RESULTS_RETENTION_DAYS: 30
+
+jobs:
+  # ============================================================================
+  # Setup and Configuration
+  # ============================================================================
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      test_suite: ${{ steps.config.outputs.test_suite }}
+      data_sets: ${{ steps.config.outputs.data_sets }}
+      timeout_minutes: ${{ steps.config.outputs.timeout_minutes }}
+      should_run_tests: ${{ steps.config.outputs.should_run_tests }}
+      container_tag: ${{ steps.config.outputs.container_tag }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Configure test parameters
+        id: config
+        run: |
+          # Determine test suite based on trigger
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TEST_SUITE="${{ github.event.inputs.test_suite }}"
+            DATA_SETS="${{ github.event.inputs.data_sets }}"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            TEST_SUITE="quick"
+            DATA_SETS="small"
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ github.event.schedule }}" = "0 2 * * *" ]; then
+              TEST_SUITE="comprehensive"
+              DATA_SETS="small,medium,large"
+            else
+              TEST_SUITE="benchmark"
+              DATA_SETS="small,medium,large,benchmark"
+            fi
+          else
+            TEST_SUITE="standard"
+            DATA_SETS="small,medium"
+          fi
+          
+          # Set timeout based on test suite
+          case $TEST_SUITE in
+            quick) TIMEOUT=10 ;;
+            standard) TIMEOUT=20 ;;
+            comprehensive) TIMEOUT=60 ;;
+            benchmark) TIMEOUT=120 ;;
+            *) TIMEOUT=20 ;;
+          esac
+          
+          # Generate container tag
+          CONTAINER_TAG="rst-$(date +%Y%m%d)-${GITHUB_SHA:0:8}"
+          
+          echo "test_suite=${TEST_SUITE}" >> $GITHUB_OUTPUT
+          echo "data_sets=${DATA_SETS}" >> $GITHUB_OUTPUT
+          echo "timeout_minutes=${TIMEOUT}" >> $GITHUB_OUTPUT
+          echo "should_run_tests=true" >> $GITHUB_OUTPUT
+          echo "container_tag=${CONTAINER_TAG}" >> $GITHUB_OUTPUT
+          
+          echo "::notice::Test suite: ${TEST_SUITE}, Data sets: ${DATA_SETS}, Timeout: ${TIMEOUT}min"
+
+  # ============================================================================
+  # Build Docker Containers
+  # ============================================================================
+  build-containers:
+    runs-on: ubuntu-latest
+    needs: setup
+    if: needs.setup.outputs.should_run_tests == 'true'
+    timeout-minutes: 45
+    
+    strategy:
+      matrix:
+        build_type: [standard, optimized]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache-${{ matrix.build_type }}
+          key: ${{ runner.os }}-buildx-${{ matrix.build_type }}-${{ hashFiles('dockerfile.optimized') }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ matrix.build_type }}-
+      
+      - name: Build ${{ matrix.build_type }} container
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: dockerfile.optimized
+          target: rst_${{ matrix.build_type }}
+          tags: |
+            rst:${{ matrix.build_type }}
+            ${{ needs.setup.outputs.container_tag }}-${{ matrix.build_type }}
+          cache-from: type=local,src=/tmp/.buildx-cache-${{ matrix.build_type }}
+          cache-to: type=local,dest=/tmp/.buildx-cache-${{ matrix.build_type }}-new,mode=max
+          outputs: type=docker,dest=/tmp/rst-${{ matrix.build_type }}.tar
+      
+      - name: Upload container artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: rst-${{ matrix.build_type }}-container
+          path: /tmp/rst-${{ matrix.build_type }}.tar
+          retention-days: 1
+      
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache-${{ matrix.build_type }}
+          mv /tmp/.buildx-cache-${{ matrix.build_type }}-new /tmp/.buildx-cache-${{ matrix.build_type }}
+
+  # ============================================================================
+  # Prepare Test Data
+  # ============================================================================
+  prepare-test-data:
+    runs-on: ubuntu-latest
+    needs: setup
+    if: needs.setup.outputs.should_run_tests == 'true'
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Cache test data
+        id: cache-test-data
+        uses: actions/cache@v3
+        with:
+          path: test-data/
+          key: test-data-v1-${{ hashFiles('scripts/generate_test_data.py') }}
+      
+      - name: Generate test data
+        if: steps.cache-test-data.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p test-data/{small,medium,large,benchmark}
+          
+          # Generate synthetic test data
+          python3 << 'EOF'
+          import os
+          import json
+          import random
+          from datetime import datetime, timedelta
+          
+          def create_synthetic_rawacf(output_path, size_mb=1):
+              """Create synthetic rawacf file for testing"""
+              # This is a simplified version - in production, use real data
+              data_size = size_mb * 1024 * 1024
+              with open(output_path, 'wb') as f:
+                  # Write synthetic radar data
+                  f.write(b'RAWACF_SYNTHETIC_DATA_' * (data_size // 20))
+              return output_path
+          
+          def create_metadata(directory, file_count, avg_size_mb):
+              """Create metadata for test dataset"""
+              metadata = {
+                  "dataset_name": os.path.basename(directory),
+                  "file_count": file_count,
+                  "average_size_mb": avg_size_mb,
+                  "total_size_mb": file_count * avg_size_mb,
+                  "created_at": datetime.utcnow().isoformat(),
+                  "description": f"Synthetic test data for {os.path.basename(directory)} performance testing"
+              }
+              
+              with open(os.path.join(directory, 'metadata.json'), 'w') as f:
+                  json.dump(metadata, f, indent=2)
+          
+          # Create test datasets
+          datasets = {
+              'small': {'count': 2, 'size': 1},
+              'medium': {'count': 5, 'size': 5},
+              'large': {'count': 10, 'size': 10},
+              'benchmark': {'count': 20, 'size': 20}
+          }
+          
+          for dataset_name, config in datasets.items():
+              dataset_dir = f'test-data/{dataset_name}'
+              os.makedirs(dataset_dir, exist_ok=True)
+              
+              for i in range(config['count']):
+                  filename = f'radar_{i:03d}.rawacf'
+                  filepath = os.path.join(dataset_dir, filename)
+                  create_synthetic_rawacf(filepath, config['size'])
+              
+              create_metadata(dataset_dir, config['count'], config['size'])
+              print(f"Created {dataset_name} dataset: {config['count']} files, {config['size']}MB each")
+          EOF
+      
+      - name: Upload test data
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-data
+          path: test-data/
+          retention-days: 1
+
+  # ============================================================================
+  # Run Performance Tests
+  # ============================================================================
+  performance-tests:
+    runs-on: ubuntu-latest
+    needs: [setup, build-containers, prepare-test-data]
+    if: needs.setup.outputs.should_run_tests == 'true'
+    timeout-minutes: ${{ fromJson(needs.setup.outputs.timeout_minutes) }}
+    
+    strategy:
+      matrix:
+        build_type: [standard, optimized]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download container
+        uses: actions/download-artifact@v3
+        with:
+          name: rst-${{ matrix.build_type }}-container
+          path: /tmp/
+      
+      - name: Download test data
+        uses: actions/download-artifact@v3
+        with:
+          name: test-data
+          path: test-data/
+      
+      - name: Load Docker image
+        run: |
+          docker load -i /tmp/rst-${{ matrix.build_type }}.tar
+          docker images
+      
+      - name: Create test runner script
+        run: |
+          mkdir -p results/${{ matrix.build_type }}
+          cat > run_performance_tests.sh << 'EOF'
+          #!/bin/bash
+          set -e
+          
+          BUILD_TYPE="${{ matrix.build_type }}"
+          RESULTS_DIR="/results/${BUILD_TYPE}/$(date +%Y%m%d_%H%M%S)"
+          DATA_SETS="${{ needs.setup.outputs.data_sets }}"
+          
+          mkdir -p "$RESULTS_DIR"
+          
+          echo "=== Performance Test Run ===" | tee "$RESULTS_DIR/test_info.txt"
+          echo "Build Type: $BUILD_TYPE" | tee -a "$RESULTS_DIR/test_info.txt"
+          echo "Data Sets: $DATA_SETS" | tee -a "$RESULTS_DIR/test_info.txt"
+          echo "Start Time: $(date)" | tee -a "$RESULTS_DIR/test_info.txt"
+          echo "Hostname: $(hostname)" | tee -a "$RESULTS_DIR/test_info.txt"
+          
+          # System information
+          echo "=== System Information ===" > "$RESULTS_DIR/system_info.txt"
+          cat /proc/cpuinfo >> "$RESULTS_DIR/system_info.txt"
+          echo "--- Memory Info ---" >> "$RESULTS_DIR/system_info.txt"
+          cat /proc/meminfo >> "$RESULTS_DIR/system_info.txt"
+          
+          # Test each dataset
+          IFS=',' read -ra DATASETS <<< "$DATA_SETS"
+          for dataset in "${DATASETS[@]}"; do
+              dataset=$(echo "$dataset" | xargs)  # trim whitespace
+              
+              if [ -d "/data/$dataset" ]; then
+                  echo "Testing dataset: $dataset"
+                  dataset_results="$RESULTS_DIR/$dataset"
+                  mkdir -p "$dataset_results"
+                  
+                  # Start system monitoring
+                  (while true; do
+                      echo "$(date +%s.%N),$(free -m | grep '^Mem:' | awk '{print $3}')" >> "$dataset_results/memory.csv"
+                      echo "$(date +%s.%N),$(cat /proc/loadavg | cut -d' ' -f1)" >> "$dataset_results/cpu.csv"
+                      sleep 0.5
+                  done) &
+                  MONITOR_PID=$!
+                  
+                  # Process files in dataset
+                  time_start=$(date +%s.%N)
+                  file_count=0
+                  
+                  for rawacf_file in /data/$dataset/*.rawacf; do
+                      if [ -f "$rawacf_file" ]; then
+                          base_name=$(basename "$rawacf_file" .rawacf)
+                          echo "Processing $base_name..."
+                          
+                          # Time the fitacf processing
+                          /usr/bin/time -f "%e,%M,%P" -o "$dataset_results/${base_name}_time.csv" \
+                              timeout 300 make_fit \
+                              -i "$rawacf_file" \
+                              -o "$dataset_results/${base_name}.fitacf" \
+                              2> "$dataset_results/${base_name}_error.log" || echo "TIMEOUT/ERROR: $base_name"
+                          
+                          ((file_count++))
+                      fi
+                  done
+                  
+                  time_end=$(date +%s.%N)
+                  kill $MONITOR_PID 2>/dev/null || true
+                  
+                  # Calculate metrics
+                  total_time=$(echo "$time_end - $time_start" | bc -l)
+                  echo "$total_time" > "$dataset_results/total_time.txt"
+                  echo "$file_count" > "$dataset_results/file_count.txt"
+                  
+                  echo "Dataset $dataset completed: ${file_count} files in ${total_time}s"
+              else
+                  echo "Dataset $dataset not found, skipping"
+              fi
+          done
+          
+          echo "End Time: $(date)" >> "$RESULTS_DIR/test_info.txt"
+          echo "All tests completed. Results in $RESULTS_DIR"
+          EOF
+          
+          chmod +x run_performance_tests.sh
+      
+      - name: Run performance tests
+        run: |
+          docker run --rm \
+            -v $(pwd)/test-data:/data:ro \
+            -v $(pwd)/results:/results \
+            -v $(pwd)/run_performance_tests.sh:/app/run_performance_tests.sh:ro \
+            --name rst-${{ matrix.build_type }}-test \
+            rst:${{ matrix.build_type }} \
+            /app/run_performance_tests.sh
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-results-${{ matrix.build_type }}
+          path: results/${{ matrix.build_type }}/
+          retention-days: ${{ env.RESULTS_RETENTION_DAYS }}
+
+  # ============================================================================
+  # Generate Performance Dashboard
+  # ============================================================================
+  generate-dashboard:
+    runs-on: ubuntu-latest
+    needs: [setup, performance-tests]
+    if: always() && needs.setup.outputs.should_run_tests == 'true'
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install dependencies
+        run: |
+          pip install plotly pandas numpy scipy jinja2
+      
+      - name: Download all results
+        uses: actions/download-artifact@v3
+        with:
+          pattern: performance-results-*
+          path: results/
+      
+      - name: Generate performance dashboard
+        run: |
+          python3 << 'EOF'
+          import os
+          import json
+          import pandas as pd
+          import plotly.graph_objects as go
+          import plotly.express as px
+          from plotly.subplots import make_subplots
+          import plotly.offline as pyo
+          from datetime import datetime
+          import glob
+          
+          def load_results(results_dir):
+              """Load performance test results"""
+              results = {}
+              
+              for build_type in ['standard', 'optimized']:
+                  build_results = {}
+                  build_dir = os.path.join(results_dir, f'performance-results-{build_type}')
+                  
+                  if not os.path.exists(build_dir):
+                      print(f"Warning: {build_dir} not found")
+                      continue
+                  
+                  # Find the latest result directory
+                  result_dirs = glob.glob(os.path.join(build_dir, '*'))
+                  if not result_dirs:
+                      continue
+                  
+                  latest_result = max(result_dirs, key=os.path.getmtime)
+                  
+                  # Load test info
+                  test_info_file = os.path.join(latest_result, 'test_info.txt')
+                  if os.path.exists(test_info_file):
+                      with open(test_info_file, 'r') as f:
+                          build_results['test_info'] = f.read()
+                  
+                  # Load dataset results
+                  datasets = {}
+                  for dataset_dir in glob.glob(os.path.join(latest_result, '*')):
+                      if os.path.isdir(dataset_dir):
+                          dataset_name = os.path.basename(dataset_dir)
+                          dataset_data = {}
+                          
+                          # Load timing data
+                          time_file = os.path.join(dataset_dir, 'total_time.txt')
+                          if os.path.exists(time_file):
+                              with open(time_file, 'r') as f:
+                                  dataset_data['total_time'] = float(f.read().strip())
+                          
+                          # Load file count
+                          count_file = os.path.join(dataset_dir, 'file_count.txt')
+                          if os.path.exists(count_file):
+                              with open(count_file, 'r') as f:
+                                  dataset_data['file_count'] = int(f.read().strip())
+                          
+                          # Load individual file timings
+                          time_files = glob.glob(os.path.join(dataset_dir, '*_time.csv'))
+                          file_times = []
+                          for time_file in time_files:
+                              try:
+                                  with open(time_file, 'r') as f:
+                                      line = f.read().strip()
+                                      if line:
+                                          time_val, memory_val, cpu_val = line.split(',')
+                                          file_times.append({
+                                              'time': float(time_val),
+                                              'memory': int(memory_val),
+                                              'cpu': float(cpu_val.rstrip('%'))
+                                          })
+                              except:
+                                  pass
+                          
+                          dataset_data['file_times'] = file_times
+                          datasets[dataset_name] = dataset_data
+                  
+                  build_results['datasets'] = datasets
+                  results[build_type] = build_results
+              
+              return results
+          
+          def create_dashboard(results):
+              """Create performance dashboard"""
+              
+              # Create subplots
+              fig = make_subplots(
+                  rows=2, cols=2,
+                  subplot_titles=('Processing Time Comparison', 'Memory Usage Comparison',
+                                'File Processing Rate', 'Performance Improvement'),
+                  specs=[[{"secondary_y": False}, {"secondary_y": False}],
+                         [{"secondary_y": False}, {"secondary_y": False}]]
+              )
+              
+              # Collect data for comparison
+              datasets = []
+              standard_times = []
+              optimized_times = []
+              standard_memory = []
+              optimized_memory = []
+              
+              if 'standard' in results and 'optimized' in results:
+                  for dataset_name in results['standard']['datasets'].keys():
+                      if dataset_name in results['optimized']['datasets']:
+                          datasets.append(dataset_name)
+                          
+                          std_data = results['standard']['datasets'][dataset_name]
+                          opt_data = results['optimized']['datasets'][dataset_name]
+                          
+                          standard_times.append(std_data.get('total_time', 0))
+                          optimized_times.append(opt_data.get('total_time', 0))
+                          
+                          # Calculate average memory usage
+                          std_mem = sum(f['memory'] for f in std_data.get('file_times', [])) / max(len(std_data.get('file_times', [])), 1)
+                          opt_mem = sum(f['memory'] for f in opt_data.get('file_times', [])) / max(len(opt_data.get('file_times', [])), 1)
+                          
+                          standard_memory.append(std_mem)
+                          optimized_memory.append(opt_mem)
+              
+              # Plot 1: Processing Time Comparison
+              fig.add_trace(
+                  go.Bar(name='Standard', x=datasets, y=standard_times, marker_color='lightblue'),
+                  row=1, col=1
+              )
+              fig.add_trace(
+                  go.Bar(name='Optimized', x=datasets, y=optimized_times, marker_color='lightgreen'),
+                  row=1, col=1
+              )
+              
+              # Plot 2: Memory Usage Comparison
+              fig.add_trace(
+                  go.Bar(name='Standard', x=datasets, y=standard_memory, marker_color='lightcoral'),
+                  row=1, col=2
+              )
+              fig.add_trace(
+                  go.Bar(name='Optimized', x=datasets, y=optimized_memory, marker_color='lightseagreen'),
+                  row=1, col=2
+              )
+              
+              # Plot 3: Processing Rate (files/second)
+              if datasets and standard_times and optimized_times:
+                  std_rates = []
+                  opt_rates = []
+                  for i, dataset in enumerate(datasets):
+                      std_count = results['standard']['datasets'][dataset].get('file_count', 1)
+                      opt_count = results['optimized']['datasets'][dataset].get('file_count', 1)
+                      
+                      std_rate = std_count / max(standard_times[i], 0.001)
+                      opt_rate = opt_count / max(optimized_times[i], 0.001)
+                      
+                      std_rates.append(std_rate)
+                      opt_rates.append(opt_rate)
+                  
+                  fig.add_trace(
+                      go.Scatter(name='Standard Rate', x=datasets, y=std_rates, mode='lines+markers', line=dict(color='red')),
+                      row=2, col=1
+                  )
+                  fig.add_trace(
+                      go.Scatter(name='Optimized Rate', x=datasets, y=opt_rates, mode='lines+markers', line=dict(color='green')),
+                      row=2, col=1
+                  )
+              
+              # Plot 4: Performance Improvement Percentage
+              if datasets and standard_times and optimized_times:
+                  improvements = []
+                  for i in range(len(datasets)):
+                      if standard_times[i] > 0:
+                          improvement = ((standard_times[i] - optimized_times[i]) / standard_times[i]) * 100
+                          improvements.append(improvement)
+                      else:
+                          improvements.append(0)
+                  
+                  colors = ['green' if imp > 0 else 'red' for imp in improvements]
+                  fig.add_trace(
+                      go.Bar(name='Time Improvement %', x=datasets, y=improvements, marker_color=colors),
+                      row=2, col=2
+                  )
+              
+              # Update layout
+              fig.update_layout(
+                  title=f"SuperDARN RST Performance Comparison - {datetime.now().strftime('%Y-%m-%d %H:%M UTC')}",
+                  height=800,
+                  showlegend=True
+              )
+              
+              # Update axes labels
+              fig.update_yaxes(title_text="Time (seconds)", row=1, col=1)
+              fig.update_yaxes(title_text="Memory (MB)", row=1, col=2)
+              fig.update_yaxes(title_text="Files/Second", row=2, col=1)
+              fig.update_yaxes(title_text="Improvement %", row=2, col=2)
+              
+              return fig
+          
+          def generate_summary(results):
+              """Generate performance summary"""
+              summary = {
+                  'timestamp': datetime.now().isoformat(),
+                  'test_run_id': os.environ.get('GITHUB_SHA', 'unknown')[:8],
+                  'commit': os.environ.get('GITHUB_SHA', 'unknown'),
+                  'branch': os.environ.get('GITHUB_REF_NAME', 'unknown'),
+                  'datasets_tested': [],
+                  'overall_performance': {},
+                  'regression_detected': False
+              }
+              
+              if 'standard' in results and 'optimized' in results:
+                  total_std_time = 0
+                  total_opt_time = 0
+                  total_files = 0
+                  
+                  for dataset_name in results['standard']['datasets'].keys():
+                      if dataset_name in results['optimized']['datasets']:
+                          summary['datasets_tested'].append(dataset_name)
+                          
+                          std_data = results['standard']['datasets'][dataset_name]
+                          opt_data = results['optimized']['datasets'][dataset_name]
+                          
+                          std_time = std_data.get('total_time', 0)
+                          opt_time = opt_data.get('total_time', 0)
+                          
+                          total_std_time += std_time
+                          total_opt_time += opt_time
+                          total_files += std_data.get('file_count', 0)
+                  
+                  if total_std_time > 0:
+                      improvement = ((total_std_time - total_opt_time) / total_std_time) * 100
+                      summary['overall_performance'] = {
+                          'total_standard_time': total_std_time,
+                          'total_optimized_time': total_opt_time,
+                          'time_improvement_percent': improvement,
+                          'total_files_processed': total_files,
+                          'speedup_factor': total_std_time / max(total_opt_time, 0.001)
+                      }
+                      
+                      # Check for regression (performance degradation > 5%)
+                      if improvement < -5.0:
+                          summary['regression_detected'] = True
+              
+              return summary
+          
+          # Load results and generate dashboard
+          results = load_results('results/')
+          
+          if results:
+              # Generate dashboard
+              fig = create_dashboard(results)
+              
+              # Save dashboard
+              os.makedirs('dashboard', exist_ok=True)
+              pyo.plot(fig, filename='dashboard/performance_dashboard.html', auto_open=False)
+              
+              # Generate summary
+              summary = generate_summary(results)
+              with open('dashboard/performance_summary.json', 'w') as f:
+                  json.dump(summary, f, indent=2)
+              
+              print("Dashboard generated successfully!")
+              print(f"Datasets tested: {summary['datasets_tested']}")
+              if summary['overall_performance']:
+                  print(f"Overall improvement: {summary['overall_performance']['time_improvement_percent']:.1f}%")
+              if summary['regression_detected']:
+                  print("⚠️ Performance regression detected!")
+          else:
+              print("No valid results found, creating placeholder dashboard")
+              # Create placeholder dashboard
+              os.makedirs('dashboard', exist_ok=True)
+              with open('dashboard/performance_dashboard.html', 'w') as f:
+                  f.write('<html><body><h1>No performance data available</h1></body></html>')
+              
+              with open('dashboard/performance_summary.json', 'w') as f:
+                  json.dump({'error': 'No performance data available'}, f)
+          EOF
+      
+      - name: Upload dashboard
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-dashboard
+          path: dashboard/
+          retention-days: ${{ env.RESULTS_RETENTION_DAYS }}
+      
+      - name: Check for performance regression
+        id: check-regression
+        run: |
+          if [ -f "dashboard/performance_summary.json" ]; then
+            REGRESSION=$(jq -r '.regression_detected // false' dashboard/performance_summary.json)
+            echo "regression_detected=${REGRESSION}" >> $GITHUB_OUTPUT
+            
+            if [ "$REGRESSION" = "true" ]; then
+              echo "::warning::Performance regression detected!"
+              exit 1
+            fi
+          fi
+
+  # ============================================================================
+  # Deploy Dashboard and Report Results
+  # ============================================================================
+  deploy-and-report:
+    runs-on: ubuntu-latest
+    needs: [setup, generate-dashboard]
+    if: always() && needs.setup.outputs.should_run_tests == 'true'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download dashboard
+        uses: actions/download-artifact@v3
+        with:
+          name: performance-dashboard
+          path: dashboard/
+      
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dashboard
+          destination_dir: performance/${{ github.sha }}
+          
+      - name: Create latest performance link
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dashboard
+          destination_dir: performance/latest
+      
+      - name: Comment on PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comment = `## 🚀 SuperDARN RST Performance Test Results\n\n`;
+            
+            try {
+              const summary = JSON.parse(fs.readFileSync('dashboard/performance_summary.json', 'utf8'));
+              
+              if (summary.error) {
+                comment += `❌ **Test execution failed or no data available**\n\n`;
+                comment += `Error: ${summary.error}\n\n`;
+              } else {
+                const datasets = summary.datasets_tested || [];
+                const perf = summary.overall_performance || {};
+                
+                comment += `**Test Configuration:**\n`;
+                comment += `- Datasets tested: ${datasets.join(', ')}\n`;
+                comment += `- Test suite: ${{ needs.setup.outputs.test_suite }}\n`;
+                comment += `- Commit: ${summary.commit || 'unknown'}\n\n`;
+                
+                if (Object.keys(perf).length > 0) {
+                  comment += `**Performance Results:**\n`;
+                  comment += `| Metric | Value |\n`;
+                  comment += `|--------|-------|\n`;
+                  comment += `| Total Files Processed | ${perf.total_files_processed || 'N/A'} |\n`;
+                  comment += `| Standard Build Time | ${(perf.total_standard_time || 0).toFixed(2)}s |\n`;
+                  comment += `| Optimized Build Time | ${(perf.total_optimized_time || 0).toFixed(2)}s |\n`;
+                  comment += `| Speed Improvement | **${(perf.time_improvement_percent || 0).toFixed(1)}%** |\n`;
+                  comment += `| Speedup Factor | **${(perf.speedup_factor || 1).toFixed(2)}x** |\n\n`;
+                  
+                  if (summary.regression_detected) {
+                    comment += `⚠️ **Performance regression detected!** The optimized build is slower than expected.\n\n`;
+                  } else if ((perf.time_improvement_percent || 0) > 5) {
+                    comment += `✅ **Significant performance improvement detected!**\n\n`;
+                  } else {
+                    comment += `✅ **No performance regressions detected.**\n\n`;
+                  }
+                } else {
+                  comment += `⚠️ **Unable to calculate performance metrics**\n\n`;
+                }
+              }
+              
+              comment += `📊 [View Detailed Dashboard](https://your-org.github.io/rst/performance/${context.sha}/performance_dashboard.html)\n\n`;
+              comment += `---\n*Performance test completed at ${new Date().toISOString()}*`;
+              
+            } catch (error) {
+              comment += `❌ **Error reading performance results**\n\n`;
+              comment += `Error: ${error.message}\n\n`;
+              comment += `Check the workflow logs for more details.`;
+            }
+            
+            // Post comment
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+      
+      - name: Create issue for performance regression
+        if: needs.generate-dashboard.outputs.regression_detected == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `⚠️ Performance Regression Detected - ${context.sha.substring(0, 8)}`;
+            const body = `
+            A performance regression has been detected in commit ${context.sha}.
+            
+            **Details:**
+            - Branch: ${context.ref}
+            - Workflow: ${context.workflow}
+            - Run ID: ${context.runId}
+            
+            **Next Steps:**
+            1. Review the performance dashboard: [Performance Results](https://your-org.github.io/rst/performance/${context.sha}/performance_dashboard.html)
+            2. Investigate the changes in this commit
+            3. Consider reverting or optimizing the changes
+            
+            **Automated Performance Monitoring**
+            This issue was created automatically by the SuperDARN RST performance testing workflow.
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['performance', 'regression', 'automated', 'priority-high']
+            });
+
+  # ============================================================================
+  # Cleanup
+  # ============================================================================
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: [deploy-and-report]
+    if: always()
+    
+    steps:
+      - name: Clean up old artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Clean up old artifacts to save storage space
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - ${{ env.RESULTS_RETENTION_DAYS }});
+            
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            let deletedCount = 0;
+            for (const artifact of artifacts.data.artifacts) {
+              const createdAt = new Date(artifact.created_at);
+              if (createdAt < cutoffDate && artifact.name.startsWith('performance-results-')) {
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id
+                });
+                deletedCount++;
+              }
+            }
+            
+            console.log(`Cleaned up ${deletedCount} old performance artifacts`);

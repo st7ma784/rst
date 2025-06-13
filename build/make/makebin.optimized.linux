@@ -1,0 +1,75 @@
+# Enhanced Makefile for binaries with optimization support
+# =======================================================
+# by R.J.Barnes (Original), SuperDARN Optimization Framework (Enhanced)
+#
+# Linux (GCC) with dynamic optimization support
+#
+
+# Base compiler flags
+BASE_CFLAGS = -Wall -pedantic -D_GNU_SOURCE -D_LINUX $(INCLUDE)
+BASE_LFLAGS = -lm -lz
+
+# Apply optimization flags based on environment variables
+ifdef OPTIMIZATION_FLAGS
+CFLAGS += $(BASE_CFLAGS) $(OPTIMIZATION_FLAGS)
+else
+CFLAGS += $(BASE_CFLAGS) -O2
+endif
+
+# OpenMP support
+ifdef OPENMP
+CFLAGS += -fopenmp
+LFLAGS += $(BASE_LFLAGS) -fopenmp
+else
+LFLAGS += $(BASE_LFLAGS)
+endif
+
+# SIMD/AVX2 support
+ifdef AVX2
+CFLAGS += -mavx2 -mfma -DAVX2_ENABLED
+endif
+
+# CUDA support flags
+ifdef CUDA
+CFLAGS += -DCUDA_ENABLED
+LFLAGS += -lcuda -lcudart
+endif
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+ifdef OUTPUT
+$(OUTPUT): $(OBJS)
+	mkdir -p $(DSTPATH)
+	$(CC) $(LFLAGS) -o $(DSTPATH)/$(OUTPUT) $(OBJS) \
+              -L$(LIBPATH) $(LIBS) $(SLIB) $(XLIB)
+
+install:
+	cp $(DSTPATH)/$(OUTPUT) $(BINPATH)
+
+else
+dummy:
+	@echo "No output target specified"
+
+endif
+
+# Enhanced optimization-aware targets
+opt-info:
+	@echo "Binary Optimization Configuration:"
+	@echo "  OPENMP: $(OPENMP)"
+	@echo "  AVX2: $(AVX2)"
+	@echo "  CUDA: $(CUDA)"
+	@echo "  OPTIMIZATION_FLAGS: $(OPTIMIZATION_FLAGS)"
+	@echo "  CFLAGS: $(CFLAGS)"
+
+performance-test: $(OUTPUT)
+	@echo "Building performance test for $(OUTPUT)..."
+	@if [ -f "$(DSTPATH)/$(OUTPUT)" ]; then \
+		echo "Binary ready for performance testing: $(DSTPATH)/$(OUTPUT)"; \
+		if [ -f "../test/performance_test.sh" ]; then \
+			../test/performance_test.sh $(DSTPATH)/$(OUTPUT); \
+		fi; \
+	fi
+
+clean:
+	rm -f *.o

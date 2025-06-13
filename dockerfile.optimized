@@ -1,0 +1,329 @@
+# Multi-stage Dockerfile for SuperDARN RST with Optimization Support
+# =================================================================
+
+# Stage 1: Base RST Environment
+# ==============================
+FROM ubuntu:20.04 AS rst_base
+
+# Install system dependencies
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    libhdf5-serial-dev \
+    build-essential \
+    gcc \
+    g++ \
+    make \
+    cmake \
+    pkg-config \
+    # OpenMP and parallel processing
+    libomp-dev \
+    # Advanced optimization support
+    libnuma-dev \
+    hwloc \
+    # System libraries
+    libc6-dev \
+    libz-dev \
+    libssl-dev \
+    # Utilities and testing tools
+    dos2unix \
+    python3 \
+    python3-pip \
+    libncurses-dev \
+    libnetcdf-dev \
+    libpng-dev \
+    libx11-dev \
+    libxext-dev \
+    netpbm \
+    git \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    # Performance analysis tools
+    valgrind \
+    perf-tools-unstable \
+    time \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install CDF package
+ADD https://spdf.gsfc.nasa.gov/pub/software/cdf/dist/latest/linux/cdf39_1-dist-cdf.tar.gz ./app/cdf39_1-dist-cdf.tar.gz
+WORKDIR /app
+SHELL ["/bin/bash", "-c"]
+RUN tar -xzvf /app/cdf39_1-dist-cdf.tar.gz && \
+    cd cdf39_1-dist && \
+    make OS=linux ENV=gnu all && \
+    make test && \
+    make INSTALLDIR=/usr/local/cdf install && \
+    cd /app && \
+    rm -rf cdf39_1-dist && \
+    rm cdf39_1-dist-cdf.tar.gz
+
+ENV CDF_PATH=/usr/local/cdf
+
+# Stage 2: Standard RST Build
+# ============================
+FROM rst_base AS rst_standard
+
+# Copy RST source code
+COPY . /app/rst
+
+# Convert line endings and set permissions
+RUN find /app/rst -name "*.bash" -type f -exec dos2unix {} \; && \
+    find /app/rst -name "*.sh" -type f -exec dos2unix {} \; && \
+    find /app/rst/build/script -type f -exec dos2unix {} \; && \
+    find /app/rst -type f -executable -exec dos2unix {} \; && \
+    dos2unix /app/rst/.profile.bash && \
+    chmod +x /app/rst/build/script/* && \
+    find /app/rst -name "*.sh" -type f -exec chmod +x {} \; && \
+    find /app/rst -name "*.bash" -type f -exec chmod +x {} \;
+
+# Configure RST environment
+RUN sed -i 's|XPATH=.*|XPATH=/usr/local|' /app/rst/.profile/base.bash && \
+    sed -i 's|NETCDF_PATH=.*|NETCDF_PATH=/usr|' /app/rst/.profile/base.bash && \
+    sed -i 's|CDF_PATH=.*|CDF_PATH=/usr/local/cdf|' /app/rst/.profile/base.bash
+
+# Set RST environment variables
+ENV RSTPATH=/app/rst
+ENV BUILD="/app/rst/build"
+ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/local/bin:/usr/bin/:/root/bin:/root/script:/app/rst/build/bin:/app/rst/build/script:/app/rst/bin:/app/rst/script"
+
+WORKDIR /app/rst/build/script
+
+# Create necessary directories
+RUN mkdir -p /app/rst/build/lib /app/rst/build/bin /app/rst/build/include/base
+
+# Build standard RST
+RUN echo "Building standard RST..." && \
+    source /app/rst/.profile.bash && \
+    make.build && \
+    make.code
+
+# Configure additional environment variables
+ENV MAPDATA=/app/rst/tables/general/map_data
+ENV BNDDATA=/app/rst/tables/general/bnd_data
+ENV ISTP_PATH="/data/istp"
+ENV SD_HDWPATH=/app/rst/tables/superdarn/hdw/
+ENV SD_TDIFFPATH=/app/rst/tables/superdarn/tdiff/
+ENV SD_RADAR=/app/rst/tables/superdarn/radar.dat
+ENV AACGM_DAT_PREFIX=/app/rst/tables/analysis/aacgm/aacgm_coeffs
+ENV IGRF_PATH=/app/rst/tables/analysis/mag/
+ENV SD_MODEL_TABLE=/app/rst/tables/superdarn/model
+ENV AACGM_v2_DAT_PREFIX=/app/rst/tables/analysis/aacgm/aacgm_coeffs-13-
+ENV IGRF_COEFFS=/app/rst/tables/analysis/mag/magmodel_1590-2020.txt
+ENV COLOR_TABLE_PATH=/app/rst/tables/base/key/
+
+# Add RST profile to bashrc
+RUN echo "source /app/rst/.profile.bash" >> ~/.bashrc
+
+WORKDIR /app
+
+# Stage 3: Optimized RST Build  
+# =============================
+FROM rst_base AS rst_optimized
+
+# Install additional optimization dependencies
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    # Advanced compiler support
+    gcc-10 \
+    g++-10 \
+    gfortran-10 \
+    # SIMD and vectorization support
+    libc6-dev \
+    # Performance profiling tools
+    google-perftools \
+    libgoogle-perftools-dev \
+    # CPU feature detection
+    cpuid \
+    lscpu \
+    # Build optimization tools
+    ccache \
+    ninja-build \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up modern compiler as default
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 60 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 60
+
+# Copy RST source code
+COPY . /app/rst
+
+# Convert line endings and set permissions  
+RUN find /app/rst -name "*.bash" -type f -exec dos2unix {} \; && \
+    find /app/rst -name "*.sh" -type f -exec dos2unix {} \; && \
+    find /app/rst/build/script -type f -exec dos2unix {} \; && \
+    find /app/rst -type f -executable -exec dos2unix {} \; && \
+    dos2unix /app/rst/.profile.bash && \
+    chmod +x /app/rst/build/script/* && \
+    find /app/rst -name "*.sh" -type f -exec chmod +x {} \; && \
+    find /app/rst -name "*.bash" -type f -exec chmod +x {} \; && \
+    # Make the optimization scripts executable
+    chmod +x /app/rst/validate_optimization_system.sh
+
+# Configure RST environment
+RUN sed -i 's|XPATH=.*|XPATH=/usr/local|' /app/rst/.profile/base.bash && \
+    sed -i 's|NETCDF_PATH=.*|NETCDF_PATH=/usr|' /app/rst/.profile/base.bash && \
+    sed -i 's|CDF_PATH=.*|CDF_PATH=/usr/local/cdf|' /app/rst/.profile/base.bash
+
+# Set RST environment variables  
+ENV RSTPATH=/app/rst
+ENV BUILD="/app/rst/build"
+ENV CODEBASE="/app/rst/codebase"
+ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/local/bin:/usr/bin/:/root/bin:/root/script:/app/rst/build/bin:/app/rst/build/script:/app/rst/bin:/app/rst/script"
+
+WORKDIR /app/rst/build/script
+
+# Create necessary directories
+RUN mkdir -p /app/rst/build/lib /app/rst/build/bin /app/rst/build/include/base
+
+# Build optimized RST with auto-detection
+RUN echo "Building optimized RST with hardware detection..." && \
+    source /app/rst/.profile.bash && \
+    make.build && \
+    echo "Hardware capabilities:" && \
+    ./make.code.optimized --hardware-info && \
+    echo "Available optimized modules:" && \
+    ./make.code.optimized --list-optimizations && \
+    echo "Building with auto-detected optimization level..." && \
+    ./make.code.optimized --auto-optimize -v
+
+# Set optimization environment variables for runtime
+ENV OMP_NUM_THREADS=""
+ENV OMP_SCHEDULE="dynamic"
+ENV OMP_PROC_BIND="spread"
+ENV OMP_PLACES="cores"
+
+# Configure additional RST environment variables
+ENV MAPDATA=/app/rst/tables/general/map_data
+ENV BNDDATA=/app/rst/tables/general/bnd_data
+ENV ISTP_PATH="/data/istp"
+ENV SD_HDWPATH=/app/rst/tables/superdarn/hdw/
+ENV SD_TDIFFPATH=/app/rst/tables/superdarn/tdiff/
+ENV SD_RADAR=/app/rst/tables/superdarn/radar.dat
+ENV AACGM_DAT_PREFIX=/app/rst/tables/analysis/aacgm/aacgm_coeffs
+ENV IGRF_PATH=/app/rst/tables/analysis/mag/
+ENV SD_MODEL_TABLE=/app/rst/tables/superdarn/model
+ENV AACGM_v2_DAT_PREFIX=/app/rst/tables/analysis/aacgm/aacgm_coeffs-13-
+ENV IGRF_COEFFS=/app/rst/tables/analysis/mag/magmodel_1590-2020.txt
+ENV COLOR_TABLE_PATH=/app/rst/tables/base/key/
+
+# Add RST profile to bashrc with optimization info
+RUN echo "source /app/rst/.profile.bash" >> ~/.bashrc && \
+    echo "echo '🚀 SuperDARN RST Optimized Environment Loaded'" >> ~/.bashrc && \
+    echo "echo 'Optimization Level: Auto-detected'" >> ~/.bashrc && \
+    echo "echo 'Available commands: make.code.optimized, validate_optimization_system.sh'" >> ~/.bashrc
+
+# Create optimization validation script
+RUN echo '#!/bin/bash' > /usr/local/bin/check-optimization && \
+    echo 'echo "🔍 RST Optimization Status Check"' >> /usr/local/bin/check-optimization && \
+    echo 'echo "================================"' >> /usr/local/bin/check-optimization && \
+    echo 'cd $RSTPATH' >> /usr/local/bin/check-optimization && \
+    echo './validate_optimization_system.sh' >> /usr/local/bin/check-optimization && \
+    chmod +x /usr/local/bin/check-optimization
+
+WORKDIR /app
+
+# Stage 4: Development Environment with Both Builds
+# =================================================  
+FROM rst_base AS rst_development
+
+# Copy both standard and optimized builds
+COPY --from=rst_standard /app/rst /app/rst_standard
+COPY --from=rst_optimized /app/rst /app/rst_optimized
+
+# Install development tools
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    # Development and debugging tools
+    gdb \
+    strace \
+    ltrace \
+    # Performance analysis
+    htop \
+    iotop \
+    sysstat \
+    # Text editors and utilities  
+    vim \
+    nano \
+    tree \
+    wget \
+    curl \
+    # Python development
+    python3-dev \
+    python3-venv \
+    python3-matplotlib \
+    python3-numpy \
+    python3-scipy \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up development environment
+ENV RSTPATH_STANDARD=/app/rst_standard
+ENV RSTPATH_OPTIMIZED=/app/rst_optimized
+ENV RSTPATH=/app/rst_optimized
+ENV BUILD="/app/rst_optimized/build"
+ENV CODEBASE="/app/rst_optimized/codebase"
+ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/app/rst_optimized/build/bin:/app/rst_optimized/build/script:/app/rst_optimized/bin:/app/rst_optimized/script"
+
+# Configure environment variables
+ENV MAPDATA=/app/rst_optimized/tables/general/map_data
+ENV BNDDATA=/app/rst_optimized/tables/general/bnd_data
+ENV ISTP_PATH="/data/istp"
+ENV SD_HDWPATH=/app/rst_optimized/tables/superdarn/hdw/
+ENV SD_TDIFFPATH=/app/rst_optimized/tables/superdarn/tdiff/
+ENV SD_RADAR=/app/rst_optimized/tables/superdarn/radar.dat
+ENV AACGM_DAT_PREFIX=/app/rst_optimized/tables/analysis/aacgm/aacgm_coeffs
+ENV IGRF_PATH=/app/rst_optimized/tables/analysis/mag/
+ENV SD_MODEL_TABLE=/app/rst_optimized/tables/superdarn/model
+ENV AACGM_v2_DAT_PREFIX=/app/rst_optimized/tables/analysis/aacgm/aacgm_coeffs-13-
+ENV IGRF_COEFFS=/app/rst_optimized/tables/analysis/mag/magmodel_1590-2020.txt
+ENV COLOR_TABLE_PATH=/app/rst_optimized/tables/base/key/
+
+# Create environment switching scripts
+RUN echo '#!/bin/bash' > /usr/local/bin/switch-to-standard && \
+    echo 'export RSTPATH=/app/rst_standard' >> /usr/local/bin/switch-to-standard && \
+    echo 'export BUILD=/app/rst_standard/build' >> /usr/local/bin/switch-to-standard && \
+    echo 'export CODEBASE=/app/rst_standard/codebase' >> /usr/local/bin/switch-to-standard && \
+    echo 'export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/app/rst_standard/build/bin:/app/rst_standard/build/script"' >> /usr/local/bin/switch-to-standard && \
+    echo 'source /app/rst_standard/.profile.bash' >> /usr/local/bin/switch-to-standard && \
+    echo 'echo "📦 Switched to Standard RST build"' >> /usr/local/bin/switch-to-standard && \
+    chmod +x /usr/local/bin/switch-to-standard
+
+RUN echo '#!/bin/bash' > /usr/local/bin/switch-to-optimized && \
+    echo 'export RSTPATH=/app/rst_optimized' >> /usr/local/bin/switch-to-optimized && \
+    echo 'export BUILD=/app/rst_optimized/build' >> /usr/local/bin/switch-to-optimized && \
+    echo 'export CODEBASE=/app/rst_optimized/codebase' >> /usr/local/bin/switch-to-optimized && \
+    echo 'export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/app/rst_optimized/build/bin:/app/rst_optimized/build/script"' >> /usr/local/bin/switch-to-optimized && \
+    echo 'source /app/rst_optimized/.profile.bash' >> /usr/local/bin/switch-to-optimized && \
+    echo 'echo "🚀 Switched to Optimized RST build"' >> /usr/local/bin/switch-to-optimized && \
+    chmod +x /usr/local/bin/switch-to-optimized
+
+# Create comparison script
+RUN echo '#!/bin/bash' > /usr/local/bin/compare-builds && \
+    echo 'echo "🔬 SuperDARN RST Build Comparison"' >> /usr/local/bin/compare-builds && \
+    echo 'echo "================================="' >> /usr/local/bin/compare-builds && \
+    echo 'echo "Standard RST: /app/rst_standard"' >> /usr/local/bin/compare-builds && \
+    echo 'echo "Optimized RST: /app/rst_optimized"' >> /usr/local/bin/compare-builds && \
+    echo 'echo ""' >> /usr/local/bin/compare-builds && \
+    echo 'echo "Standard build size:"' >> /usr/local/bin/compare-builds && \
+    echo 'du -sh /app/rst_standard/build' >> /usr/local/bin/compare-builds && \
+    echo 'echo "Optimized build size:"' >> /usr/local/bin/compare-builds && \
+    echo 'du -sh /app/rst_optimized/build' >> /usr/local/bin/compare-builds && \
+    echo 'echo ""' >> /usr/local/bin/compare-builds && \
+    echo 'echo "Available commands:"' >> /usr/local/bin/compare-builds && \
+    echo 'echo "  switch-to-standard   - Use standard RST build"' >> /usr/local/bin/compare-builds && \
+    echo 'echo "  switch-to-optimized  - Use optimized RST build"' >> /usr/local/bin/compare-builds && \
+    echo 'echo "  check-optimization   - Validate optimization system"' >> /usr/local/bin/compare-builds && \
+    chmod +x /usr/local/bin/compare-builds
+
+# Set up shell environment
+RUN echo "source /app/rst_optimized/.profile.bash" >> ~/.bashrc && \
+    echo "echo '🐳 SuperDARN RST Development Environment'" >> ~/.bashrc && \
+    echo "echo 'Type: compare-builds for build information'" >> ~/.bashrc && \
+    echo "echo 'Default: Optimized RST (switch-to-standard to change)'" >> ~/.bashrc
+
+WORKDIR /app
+
+# Default target is the optimized build
+FROM rst_optimized AS default

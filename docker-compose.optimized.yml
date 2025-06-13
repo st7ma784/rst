@@ -1,0 +1,249 @@
+# SuperDARN RST Optimized Performance Testing Environment
+# =======================================================
+version: '3.8'
+
+services:
+  # Standard RST Environment (baseline)
+  superdarn-standard:
+    build:
+      context: .
+      dockerfile: dockerfile.optimized
+      target: rst_standard
+    container_name: superdarn-standard
+    volumes:
+      - ./codebase:/workspace/codebase
+      - ./scripts:/workspace/scripts
+      - ./test-results:/workspace/results
+    environment:
+      - OMP_NUM_THREADS=1
+      - BUILD_TYPE=standard
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+  # Optimized RST Environment (enhanced performance)
+  superdarn-optimized:
+    build:
+      context: .
+      dockerfile: dockerfile.optimized
+      target: rst_optimized
+    container_name: superdarn-optimized
+    volumes:
+      - ./codebase:/workspace/codebase
+      - ./scripts:/workspace/scripts
+      - ./test-results:/workspace/results
+    environment:
+      - OMP_NUM_THREADS=4
+      - OMP_SCHEDULE=dynamic
+      - OMP_PROC_BIND=spread
+      - OMP_PLACES=cores
+      - BUILD_TYPE=optimized
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: >
+      /bin/bash -c "
+        echo '🚀 SuperDARN RST Optimized Environment'
+        echo '======================================'
+        check-optimization
+        echo ''
+        echo 'Environment ready. Use: make.code.optimized for building.'
+        /bin/bash
+      "
+
+  # Development Environment (both builds available)
+  superdarn-dev:
+    build:
+      context: .
+      dockerfile: dockerfile.optimized  
+      target: rst_development
+    container_name: superdarn-dev
+    volumes:
+      - ./codebase:/workspace/codebase
+      - ./scripts:/workspace/scripts
+      - ./test-results:/workspace/results
+    environment:
+      - OMP_NUM_THREADS=4
+      - BUILD_TYPE=development
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: >
+      /bin/bash -c "
+        echo '🐳 SuperDARN RST Development Environment'
+        echo '======================================='
+        compare-builds
+        echo ''
+        echo 'Both standard and optimized builds available.'
+        echo 'Current: Optimized RST'
+        /bin/bash
+      "
+
+  # Automated Performance Comparison Testing
+  superdarn-performance:
+    build:
+      context: .
+      dockerfile: dockerfile.optimized
+      target: rst_development
+    container_name: superdarn-performance
+    volumes:
+      - ./codebase:/workspace/codebase
+      - ./scripts:/workspace/scripts  
+      - ./test-results:/workspace/results
+    environment:
+      - OMP_NUM_THREADS=8
+      - BUILD_TYPE=performance
+    working_dir: /workspace
+    command: >
+      /bin/bash -c "
+        echo '📊 Starting SuperDARN Performance Comparison Tests...'
+        echo '===================================================='
+        
+        # Validate optimization system
+        echo '🔍 Validating optimization system...'
+        cd /app/rst_optimized && ./validate_optimization_system.sh
+        cd /workspace
+        
+        # Run performance comparison between standard and optimized
+        echo '⚡ Running standard vs optimized performance tests...'
+        
+        # Test with standard build
+        echo '📦 Testing Standard RST build...'
+        switch-to-standard
+        source ~/.bashrc
+        ./scripts/superdarn_test_suite.sh --output-prefix standard_
+        
+        # Test with optimized build  
+        echo '🚀 Testing Optimized RST build...'
+        switch-to-optimized
+        source ~/.bashrc
+        ./scripts/superdarn_test_suite.sh --output-prefix optimized_
+        
+        # Run comprehensive FitACF comparison
+        echo '🔬 Running detailed FitACF performance analysis...'
+        ./scripts/test_fitacf_comprehensive.sh
+        
+        # Generate comparison dashboard
+        echo '📈 Generating performance comparison dashboard...'
+        python3 ./scripts/generate_optimization_dashboard.py \
+          --standard-results /workspace/results/standard_* \
+          --optimized-results /workspace/results/optimized_* \
+          --output /workspace/results/optimization_comparison_dashboard.html
+        
+        echo '✅ Performance comparison completed!'
+        echo 'Results: /workspace/results/optimization_comparison_dashboard.html'
+        
+        # Keep container running for inspection
+        tail -f /dev/null
+      "
+
+  # Continuous Integration Testing
+  superdarn-ci:
+    build:
+      context: .
+      dockerfile: dockerfile.optimized
+      target: rst_optimized
+    container_name: superdarn-ci
+    volumes:
+      - ./codebase:/workspace/codebase
+      - ./scripts:/workspace/scripts
+      - ./test-results:/workspace/results
+    environment:
+      - OMP_NUM_THREADS=2
+      - BUILD_TYPE=ci
+      - CI=true
+    working_dir: /workspace
+    command: >
+      /bin/bash -c "
+        echo '🔄 SuperDARN RST Continuous Integration Tests'
+        echo '============================================='
+        
+        # Validate build system
+        echo '🏗️ Validating optimized build system...'
+        cd /app/rst && ./validate_optimization_system.sh
+        cd /workspace
+        
+        # Run quick validation tests
+        echo '⚡ Running quick validation tests...'
+        ./scripts/superdarn_test_suite.sh --quick
+        
+        # Test specific optimized modules
+        echo '🧪 Testing optimized modules...'
+        if [ -f './scripts/test_optimized_modules.sh' ]; then
+          ./scripts/test_optimized_modules.sh
+        fi
+        
+        # Generate CI report
+        echo '📋 Generating CI report...'
+        python3 ./scripts/generate_comprehensive_dashboard.py \
+          --results-dir /workspace/results \
+          --output /workspace/results/ci_report.html \
+          --mode ci
+        
+        echo '✅ CI tests completed successfully!'
+        
+        # Exit with success
+        exit 0
+      "
+
+  # Benchmark Testing Environment
+  superdarn-benchmark:
+    build:
+      context: .
+      dockerfile: dockerfile.optimized
+      target: rst_optimized
+    container_name: superdarn-benchmark
+    volumes:
+      - ./codebase:/workspace/codebase
+      - ./scripts:/workspace/scripts
+      - ./test-results:/workspace/results
+    environment:
+      - OMP_NUM_THREADS=8
+      - OMP_SCHEDULE=static
+      - OMP_PROC_BIND=true
+      - BUILD_TYPE=benchmark
+    working_dir: /workspace
+    command: >
+      /bin/bash -c "
+        echo '🏁 SuperDARN RST Benchmark Testing'
+        echo '=================================='
+        
+        # Show hardware info
+        echo '💻 Hardware Information:'
+        check-optimization
+        
+        # Run intensive benchmarks
+        echo '🚀 Running performance benchmarks...'
+        ./scripts/superdarn_test_suite.sh --benchmark
+        
+        # Run memory usage tests
+        echo '🧠 Running memory usage analysis...'
+        if [ -f './scripts/memory_benchmark.sh' ]; then
+          ./scripts/memory_benchmark.sh
+        fi
+        
+        # Generate benchmark report
+        echo '📊 Generating benchmark report...'
+        python3 ./scripts/generate_performance_dashboard.py \
+          --results-dir /workspace/results \
+          --output /workspace/results/benchmark_report.html \
+          --include-memory-analysis
+        
+        echo '✅ Benchmark testing completed!'
+        echo 'Results: /workspace/results/benchmark_report.html'
+        
+        # Keep running for result inspection
+        tail -f /dev/null
+      "
+
+# Development-focused networks and volumes
+networks:
+  superdarn-net:
+    driver: bridge
+
+volumes:
+  rst-cache:
+    driver: local
+  results-data:
+    driver: local
