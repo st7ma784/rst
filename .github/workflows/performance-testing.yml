@@ -19,12 +19,7 @@ on:
       - 'build/**'
       - 'dockerfile.optimized'
   
-  schedule:
-    # Run comprehensive tests nightly at 2 AM UTC
-    - cron: '0 2 * * *'
-    # Run benchmark tests weekly on Sunday at 4 AM UTC
-    - cron: '0 4 * * 0'
-  
+
   workflow_dispatch:
     inputs:
       test_suite:
