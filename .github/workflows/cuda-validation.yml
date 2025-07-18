@@ -11,11 +11,11 @@ on:
     paths:
       - 'codebase/superdarn/src.lib/tk/fitacf_v3.0/**'
       - '.github/workflows/cuda-validation.yml'
-  schedule:
-    # Run daily at 2 AM UTC for performance regression detection
-    - cron: '0 2 * * *'
-    # Run weekly comprehensive benchmarks on Sundays at 4 AM UTC
-    - cron: '0 4 * * 0'
+  # schedule:
+    # Scheduled runs disabled to conserve GitHub Actions credits
+    # Re-enable if needed for production monitoring
+    # - cron: '0 2 * * *'  # Daily validation tests
+    # - cron: '0 4 * * 0'  # Weekly comprehensive benchmarks
   workflow_dispatch:
     inputs:
       run_benchmarks:

@@ -1,0 +1,4 @@
+$(DSTPATH)/lib$(OUTPUT).a: $(OBJS)
+	ar -rc $@ $(OBJS)
+	ranlib $@
+	if [ -d "$(INC)" ]; then cp $(INC)/*.h $(IPATH)/superdarn/ 2>/dev/null || true; fi

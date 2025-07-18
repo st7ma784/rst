@@ -1,0 +1,57 @@
+# GitHub Pages Configuration for SuperDARN RST Documentation
+# This file ensures proper deployment to GitHub Pages
+
+# Site settings
+title: "SuperDARN RST Documentation"
+description: "Comprehensive documentation for the SuperDARN Radar Software Toolkit with CUDA acceleration"
+url: "https://superdarn.github.io"
+baseurl: "/rst"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Exclude files from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - _build/
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
+
+# Include files that start with underscores
+include:
+  - _static
+  - _templates
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+
+# Default front matter
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "default"

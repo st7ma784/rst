@@ -1,0 +1,78 @@
+/* Custom CSS for SuperDARN RST Documentation */
+
+/* CUDA-specific styling */
+.cuda-highlight {
+    background: linear-gradient(135deg, #76b900, #4c8c00);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.performance-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 20px 0;
+}
+
+.performance-table th,
+.performance-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+}
+
+.performance-table th {
+    background-color: #2980B9;
+    color: white;
+}
+
+.speedup-highlight {
+    font-weight: bold;
+    color: #27ae60;
+}
+
+/* Code block improvements */
+.highlight pre {
+    background-color: #f8f8f8;
+    border: 1px solid #e1e4e5;
+    border-radius: 4px;
+    padding: 12px;
+    overflow-x: auto;
+}
+
+/* Navigation improvements */
+.wy-nav-side {
+    background: #2c3e50;
+}
+
+.wy-menu-vertical a {
+    color: #ecf0f1;
+}
+
+.wy-menu-vertical a:hover {
+    background-color: #34495e;
+}
+
+/* Admonition styling */
+.admonition.cuda-note {
+    background-color: #e8f5e8;
+    border-left: 4px solid #76b900;
+}
+
+.admonition.performance-tip {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .performance-table {
+        font-size: 12px;
+    }
+    
+    .performance-table th,
+    .performance-table td {
+        padding: 8px 4px;
+    }
+}

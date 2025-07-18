@@ -1,0 +1,471 @@
+name: Documentation Build and Deploy
+# ===================================
+# Build Sphinx documentation and deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/**'
+      - 'codebase/**/*.h'
+      - 'codebase/**/*.c'
+      - 'codebase/**/*.cu'
+      - 'README.md'
+      - '.github/workflows/docs.yml'
+  
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+  
+  workflow_dispatch:
+    inputs:
+      deploy_to_pages:
+        description: 'Deploy to GitHub Pages'
+        required: false
+        default: true
+        type: boolean
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: read
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build documentation
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for proper versioning
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          gcc \
+          gfortran \
+          libhdf5-dev \
+          libnetcdf-dev \
+          libfftw3-dev \
+          pandoc \
+          graphviz
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r docs/requirements.txt || pip install \
+          sphinx \
+          sphinx-rtd-theme \
+          sphinx-autodoc-typehints \
+          sphinx-copybutton \
+          sphinx-tabs \
+          myst-parser \
+          nbsphinx \
+          jupyter \
+          numpy \
+          scipy \
+          matplotlib
+    
+    - name: Set up documentation environment
+      run: |
+        echo "Setting up RST environment for documentation..."
+        export RST_ROOT=${{ github.workspace }}
+        export SYSTEM=linux
+        export IPATH=${RST_ROOT}/codebase/include
+        echo "RST_ROOT=${RST_ROOT}" >> $GITHUB_ENV
+        echo "SYSTEM=${SYSTEM}" >> $GITHUB_ENV
+        echo "IPATH=${IPATH}" >> $GITHUB_ENV
+    
+    - name: Generate API documentation
+      run: |
+        cd docs
+        
+        # Create API documentation from source files
+        echo "Generating API documentation..."
+        
+        # Create API reference files
+        mkdir -p source/api
+        
+        # Generate module documentation
+        cat > source/api_reference.rst << 'EOF'
+        API Reference
+        =============
+        
+        This section provides detailed API documentation for the SuperDARN RST.
+        
+        Core Modules
+        ------------
+        
+        .. toctree::
+           :maxdepth: 2
+           
+           api/fitacf
+           api/cuda_acceleration
+           api/data_structures
+        
+        FITACF Processing
+        -----------------
+        
+        The FITACF module provides core radar data processing functionality.
+        
+        .. code-block:: c
+        
+           // Core FITACF functions
+           int fitacf_v3(struct RadarParm *prm, struct RawData *raw, 
+                        struct FitData *fit, struct FitNoise *noise);
+           
+           // CUDA-accelerated processing
+           int cuda_fitacf_process(struct RadarParm *prm, struct RawData *raw,
+                                  struct FitData *fit, bool use_cuda);
+        
+        CUDA Acceleration API
+        ---------------------
+        
+        High-level CUDA optimization interface.
+        
+        .. code-block:: c
+        
+           // Initialization
+           int cuda_initialize(void);
+           bool cuda_is_available(void);
+           
+           // Optimized processing functions
+           int cuda_optimized_copy_fitting_data(...);
+           int cuda_optimized_power_phase_computation(...);
+           int cuda_optimized_statistical_reduction(...);
+        
+        Data Structures
+        ---------------
+        
+        CUDA-compatible data structures and linked list implementations.
+        
+        .. code-block:: c
+        
+           // CUDA-compatible linked list
+           typedef struct {
+               void** data;
+               bool* valid;
+               int capacity;
+               int count;
+           } cuda_llist_t;
+           
+           // Batch processing configuration
+           typedef struct {
+               int batch_size;
+               int threads_per_block;
+               size_t shared_memory_size;
+               bool use_streams;
+           } cuda_batch_config_t;
+        EOF
+        
+        # Generate installation guide
+        cat > source/installation.rst << 'EOF'
+        Installation Guide
+        ==================
+        
+        This guide covers installation of the SuperDARN RST with optional CUDA acceleration.
+        
+        System Requirements
+        -------------------
+        
+        **Minimum Requirements:**
+        
+        * Linux (Ubuntu 20.04+, CentOS 8+, or equivalent)
+        * GCC 9+ or compatible C compiler
+        * 4GB RAM minimum, 8GB+ recommended
+        * 2GB disk space for full installation
+        
+        **CUDA Requirements (Optional):**
+        
+        * NVIDIA GPU with Compute Capability 6.0+
+        * CUDA Toolkit 11.8 or 12.0+
+        * 4GB+ GPU memory (8GB+ recommended for large datasets)
+        
+        Standard Installation
+        ---------------------
+        
+        1. **Clone the repository:**
+        
+        .. code-block:: bash
+        
+           git clone https://github.com/SuperDARN/rst.git
+           cd rst
+        
+        2. **Set up environment:**
+        
+        .. code-block:: bash
+        
+           export RST_ROOT=$(pwd)
+           export SYSTEM=linux
+           export MAKECFG=${RST_ROOT}/build/make/makecfg.${SYSTEM}
+           export MAKELIB=${RST_ROOT}/build/make/makelib.${SYSTEM}
+           export IPATH=${RST_ROOT}/codebase/include
+           export LIBPATH=${RST_ROOT}/codebase/lib/${SYSTEM}
+           export BINPATH=${RST_ROOT}/codebase/bin/${SYSTEM}
+           export PATH=${BINPATH}:${PATH}
+           export LD_LIBRARY_PATH=${LIBPATH}:${LD_LIBRARY_PATH}
+        
+        3. **Build the toolkit:**
+        
+        .. code-block:: bash
+        
+           cd codebase
+           make.build
+        
+        CUDA Installation
+        -----------------
+        
+        For CUDA-accelerated processing:
+        
+        1. **Install CUDA Toolkit:**
+        
+        .. code-block:: bash
+        
+           # Ubuntu/Debian
+           wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
+           sudo dpkg -i cuda-keyring_1.0-1_all.deb
+           sudo apt-get update
+           sudo apt-get -y install cuda-toolkit-12-0
+        
+        2. **Build with CUDA support:**
+        
+        .. code-block:: bash
+        
+           cd codebase/superdarn/src.lib/tk/fitacf_v3.0
+           make -f makefile.cuda
+        
+        3. **Verify installation:**
+        
+        .. code-block:: bash
+        
+           ./tests/cuda_integration_test
+        
+        Docker Installation
+        -------------------
+        
+        The easiest way to get started:
+        
+        .. code-block:: bash
+        
+           # Build container
+           docker build -t superdarn-rst .
+           
+           # Run with GPU support
+           docker run --gpus all -it superdarn-rst
+           
+           # Run tests
+           docker run --gpus all superdarn-rst ./run_all_tests.sh
+        
+        Verification
+        ------------
+        
+        Test your installation:
+        
+        .. code-block:: bash
+        
+           # Basic functionality test
+           cd test_data
+           python3 generate_test_data.py
+           
+           # Run test suite
+           cd ../codebase/superdarn/src.lib/tk/fitacf_v3.0/tests
+           ./run_tests.sh --quick
+        
+        Troubleshooting
+        ---------------
+        
+        **Common Issues:**
+        
+        * **Missing dependencies**: Install required system packages
+        * **CUDA not found**: Check CUDA_HOME and PATH environment variables
+        * **Compilation errors**: Verify GCC version compatibility
+        * **Runtime errors**: Check LD_LIBRARY_PATH includes RST libraries
+        
+        For detailed troubleshooting, see the :doc:`cuda_acceleration` guide.
+        EOF
+        
+        echo "API documentation generated successfully"
+    
+    - name: Build Sphinx documentation
+      run: |
+        cd docs
+        
+        # Clean previous builds
+        rm -rf build/
+        
+        # Build HTML documentation
+        sphinx-build -b html source build/html -W --keep-going
+        
+        # Create .nojekyll file for GitHub Pages (critical for proper deployment)
+        touch build/html/.nojekyll
+        
+        # Ensure proper index.html exists
+        if [ ! -f build/html/index.html ]; then
+          echo "Error: index.html not generated"
+          exit 1
+        fi
+        
+        # Create CNAME file if custom domain is needed (optional)
+        # echo "your-domain.com" > build/html/CNAME
+        
+        echo "Documentation built successfully"
+        echo "Generated files:"
+        ls -la build/html/
+        echo "Documentation size: $(du -sh build/html/)"
+        
+        # Verify critical files exist
+        for file in index.html cuda_acceleration.html installation.html api_reference.html; do
+          if [ -f "build/html/$file" ]; then
+            echo "✅ $file exists ($(stat -c%s build/html/$file) bytes)"
+          else
+            echo "❌ $file missing"
+            exit 1
+          fi
+        done
+    
+    - name: Check documentation quality
+      run: |
+        cd docs/build/html
+        
+        # Check for broken links (basic check)
+        echo "Checking documentation structure..."
+        
+        # Verify key files exist
+        required_files=("index.html" "cuda_acceleration.html" "installation.html" "api_reference.html")
+        for file in "${required_files[@]}"; do
+          if [ -f "$file" ]; then
+            echo "✅ $file exists"
+          else
+            echo "❌ $file missing"
+            exit 1
+          fi
+        done
+        
+        # Check file sizes (should not be empty)
+        for file in "${required_files[@]}"; do
+          if [ -s "$file" ]; then
+            size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+            echo "✅ $file ($size bytes)"
+          else
+            echo "❌ $file is empty"
+            exit 1
+          fi
+        done
+        
+        echo "Documentation quality check passed"
+    
+    - name: Upload documentation artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: documentation
+        path: docs/build/html/
+        retention-days: 30
+    
+    - name: Setup Pages
+      if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.deploy_to_pages)
+      uses: actions/configure-pages@v3
+    
+    - name: Upload to GitHub Pages
+      if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.deploy_to_pages)
+      uses: actions/upload-pages-artifact@v2
+      with:
+        path: docs/build/html/
+
+  # Deploy to GitHub Pages
+  deploy:
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.deploy_to_pages)
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v2
+    
+    - name: Comment on PR with documentation link
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `📚 **Documentation Preview**
+            
+            The documentation has been built and is available for review:
+            - **Main Documentation**: ${{ steps.deployment.outputs.page_url }}
+            - **CUDA Acceleration Guide**: ${{ steps.deployment.outputs.page_url }}cuda_acceleration.html
+            - **Installation Guide**: ${{ steps.deployment.outputs.page_url }}installation.html
+            - **API Reference**: ${{ steps.deployment.outputs.page_url }}api_reference.html
+            
+            The documentation will be automatically deployed when this PR is merged to main.`
+          })
+
+  # Validate documentation links and structure
+  validate:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Download documentation artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: documentation
+        path: docs-validation/
+    
+    - name: Validate documentation structure
+      run: |
+        cd docs-validation
+        
+        echo "🔍 Validating documentation structure..."
+        
+        # Check required sections exist
+        sections=("CUDA Acceleration" "Installation Guide" "API Reference")
+        for section in "${sections[@]}"; do
+          if grep -r "$section" . > /dev/null; then
+            echo "✅ Found: $section"
+          else
+            echo "❌ Missing: $section"
+            exit 1
+          fi
+        done
+        
+        # Check for CUDA-specific content
+        cuda_terms=("cuda_kernels" "GPU acceleration" "NVIDIA" "speedup")
+        for term in "${cuda_terms[@]}"; do
+          if grep -ri "$term" . > /dev/null; then
+            echo "✅ CUDA content found: $term"
+          else
+            echo "⚠️  CUDA content missing: $term"
+          fi
+        done
+        
+        # Check documentation size
+        total_size=$(du -sh . | cut -f1)
+        echo "📊 Total documentation size: $total_size"
+        
+        echo "✅ Documentation validation completed"

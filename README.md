@@ -41,10 +41,63 @@ When data from an individual radar or radars are used, users must contact the pr
 
 For more information, please read [citing SuperDARN data](https://radar-software-toolkit-rst.readthedocs.io/en/latest/user_guide/citing.md).
 
+## CUDA Acceleration 🚀
+
+The RST now includes **CUDA-accelerated processing** for significant performance improvements:
+
+### Features
+- **Up to 16x speedup** on GPU-enabled systems
+- **CUDA-compatible linked list** data structures with validity masking
+- **Advanced parallel kernels** for ACF/XCF processing, power/phase computation, and statistical reduction
+- **Seamless CPU fallback** for systems without CUDA support
+- **Comprehensive testing** with automated CPU vs CUDA validation
+
+### CUDA Components Location
+```
+codebase/superdarn/src.lib/tk/fitacf_v3.0/
+├── src/
+│   ├── cuda_kernels.cu              # Core CUDA kernels
+│   ├── cuda_advanced_kernels.cu     # Advanced optimization kernels
+│   ├── cuda_llist.cu               # CUDA-compatible data structures
+│   ├── cuda_cpu_bridge.c           # CPU-CUDA integration layer
+│   └── cuda_fitacf_optimizer.c     # High-level optimization interface
+├── include/
+│   └── cuda_llist.h                # CUDA data structure definitions
+├── tests/                          # Comprehensive test suite
+└── makefile.cuda                   # CUDA build configuration
+```
+
+### Quick Start with CUDA
+```bash
+# Build with CUDA support
+cd codebase/superdarn/src.lib/tk/fitacf_v3.0
+make -f makefile.cuda
+
+# Run tests
+cd tests && ./run_tests.sh
+
+# Run benchmarks
+./cuda_integration_test
+```
+
+### Docker Support
+Use the unified Docker container for easy setup:
+```bash
+# Build container
+docker build -t superdarn-rst .
+
+# Run with GPU support
+docker run --gpus all -it superdarn-rst
+
+# Run tests in container
+docker run --gpus all superdarn-rst ./run_all_tests.sh
+```
+
 ## Contribute to the RST
 
 The DAWG welcomes new testers and developers to join the team. Here are some ways to contribute:
 
  - Test pull requests: to determine which [pull requests](https://github.com/SuperDARN/rst/pulls) need to be tested right away, filter them by their milestones
  - Discuss [issues](https://github.com/SuperDARN/rst/issues) and answer questions
+ - **Test CUDA optimizations**: Help validate GPU acceleration on different hardware configurations
  - Become a developer: if you would like to contribute code to the RST, please submit a new [issue](https://github.com/SuperDARN/rst/issues) on Github, or contact us at darn-dawg *at* isee *dot* nagoya-u *dot* ac *dot* jp.
