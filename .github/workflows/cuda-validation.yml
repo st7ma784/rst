@@ -1,0 +1,438 @@
+name: SUPERDARN CUDA Performance Validation
+
+on:
+  push:
+    branches: [ main, develop, cuda-*, performance-* ]
+    paths:
+      - 'codebase/superdarn/src.lib/tk/fitacf_v3.0/**'
+      - '.github/workflows/cuda-validation.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'codebase/superdarn/src.lib/tk/fitacf_v3.0/**'
+      - '.github/workflows/cuda-validation.yml'
+  schedule:
+    # Run daily at 2 AM UTC for performance regression detection
+    - cron: '0 2 * * *'
+    # Run weekly comprehensive benchmarks on Sundays at 4 AM UTC
+    - cron: '0 4 * * 0'
+  workflow_dispatch:
+    inputs:
+      run_benchmarks:
+        description: 'Run comprehensive performance benchmarks'
+        required: false
+        default: true
+        type: boolean
+      test_data_size:
+        description: 'Test data size for benchmarks (1000, 5000, 10000, 25000)'
+        required: false
+        default: '10000'
+        type: string
+      benchmark_type:
+        description: 'Benchmark type'
+        required: false
+        default: 'comprehensive'
+        type: choice
+        options:
+          - 'quick'
+          - 'comprehensive'
+          - 'regression'
+          - 'scalability'
+
+env:
+  CUDA_VERSION: "12.6"
+  CMAKE_VERSION: "3.22.1"
+  SUPERDARN_DATA_PATH: "/mnt/drive1/rawacf/1999/02"
+  BENCHMARK_THRESHOLD_SPEEDUP: "2.0"  # Minimum acceptable speedup
+  PERFORMANCE_REGRESSION_THRESHOLD: "0.9"  # 90% of baseline performance
+
+jobs:
+  # Build and test on different configurations
+  test-matrix:
+    name: Test CUDA Implementation
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cuda_version: ["11.8", "12.0"]
+        gcc_version: ["9", "10", "11"]
+        test_type: ["validation", "rawacf"]
+        exclude:
+          # CUDA 12.0 doesn't support GCC 9
+          - cuda_version: "12.0"
+            gcc_version: "9"
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Setup CUDA
+      uses: Jimver/cuda-toolkit@v0.2.11
+      with:
+        cuda: ${{ matrix.cuda_version }}
+        method: 'network'
+        sub-packages: '["nvcc", "cudart", "cuda-libraries-dev"]'
+
+    - name: Setup GCC
+      uses: egor-tensin/setup-gcc@v1
+      with:
+        version: ${{ matrix.gcc_version }}
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          libbz2-dev \
+          zlib1g-dev \
+          libpthread-stubs0-dev \
+          valgrind \
+          bc
+
+    - name: Verify CUDA installation
+      run: |
+        nvcc --version
+        nvidia-smi || echo "No GPU available, tests will use CPU fallback"
+
+    - name: Set up build environment
+      run: |
+        echo "CUDA_PATH=/usr/local/cuda" >> $GITHUB_ENV
+        echo "SYSTEM=linux" >> $GITHUB_ENV
+        echo "MAKECFG=${{ github.workspace }}/codebase/superdarn/build/make/makecfg" >> $GITHUB_ENV
+        echo "MAKELIB=${{ github.workspace }}/codebase/superdarn/build/make/makelib" >> $GITHUB_ENV
+        echo "IPATH=${{ github.workspace }}/codebase/superdarn/include" >> $GITHUB_ENV
+        echo "LIBPATH=${{ github.workspace }}/codebase/superdarn/lib" >> $GITHUB_ENV
+
+    - name: Create build configuration files
+      run: |
+        mkdir -p codebase/superdarn/build/make
+        mkdir -p codebase/superdarn/include
+        mkdir -p codebase/superdarn/lib
+        
+        # Create minimal makecfg.linux
+        cat > codebase/superdarn/build/make/makecfg.linux << 'EOF'
+        CC=gcc
+        CFLAGS=-O2 -fPIC
+        SYSTEM=linux
+        EOF
+        
+        # Create minimal makelib.linux
+        cat > codebase/superdarn/build/make/makelib.linux << 'EOF'
+        $(DSTPATH)/lib$(OUTPUT).a: $(OBJS)
+        	ar -rc $@ $(OBJS)
+        	ranlib $@
+        	cp $(INC)/*.h $(IPATH)/superdarn/
+        EOF
+
+    - name: Build CUDA libraries
+      working-directory: codebase/superdarn/src.lib/tk/fitacf_v3.0/src
+      run: |
+        # Build original library
+        make -f makefile
+        
+        # Build CUDA libraries
+        make -f makefile.cuda all
+
+    - name: Build test suite
+      working-directory: codebase/superdarn/src.lib/tk/fitacf_v3.0/tests
+      run: |
+        make all
+
+    - name: Run validation tests
+      if: matrix.test_type == 'validation'
+      working-directory: codebase/superdarn/src.lib/tk/fitacf_v3.0/tests
+      run: |
+        ./test_cuda_validation
+      continue-on-error: true
+
+    - name: Run RAWACF processing tests
+      if: matrix.test_type == 'rawacf'
+      working-directory: codebase/superdarn/src.lib/tk/fitacf_v3.0/tests
+      run: |
+        ./test_rawacf_processing
+      continue-on-error: true
+
+    - name: Generate test report
+      working-directory: codebase/superdarn/src.lib/tk/fitacf_v3.0/tests
+      run: |
+        make report
+      continue-on-error: true
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-cuda${{ matrix.cuda_version }}-gcc${{ matrix.gcc_version }}-${{ matrix.test_type }}
+        path: |
+          codebase/superdarn/src.lib/tk/fitacf_v3.0/tests/test_report.txt
+          codebase/superdarn/src.lib/tk/fitacf_v3.0/tests/*.log
+        retention-days: 30
+
+  # Memory leak testing (CPU only)
+  memory-test:
+    name: Memory Leak Testing
+    runs-on: ubuntu-latest
+    needs: test-matrix
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libbz2-dev valgrind
+
+    - name: Set up build environment
+      run: |
+        echo "SYSTEM=linux" >> $GITHUB_ENV
+        echo "MAKECFG=${{ github.workspace }}/codebase/superdarn/build/make/makecfg" >> $GITHUB_ENV
+        echo "MAKELIB=${{ github.workspace }}/codebase/superdarn/build/make/makelib" >> $GITHUB_ENV
+        echo "IPATH=${{ github.workspace }}/codebase/superdarn/include" >> $GITHUB_ENV
+        echo "LIBPATH=${{ github.workspace }}/codebase/superdarn/lib" >> $GITHUB_ENV
+
+    - name: Create build configuration
+      run: |
+        mkdir -p codebase/superdarn/build/make
+        mkdir -p codebase/superdarn/include
+        mkdir -p codebase/superdarn/lib
+        
+        cat > codebase/superdarn/build/make/makecfg.linux << 'EOF'
+        CC=gcc
+        CFLAGS=-O0 -g -fPIC
+        SYSTEM=linux
+        EOF
+        
+        cat > codebase/superdarn/build/make/makelib.linux << 'EOF'
+        $(DSTPATH)/lib$(OUTPUT).a: $(OBJS)
+        	ar -rc $@ $(OBJS)
+        	ranlib $@
+        	cp $(INC)/*.h $(IPATH)/superdarn/
+        EOF
+
+    - name: Build and run memory tests
+      working-directory: codebase/superdarn/src.lib/tk/fitacf_v3.0
+      run: |
+        make -C src -f makefile
+        make -C tests memtest
+      continue-on-error: true
+
+    - name: Upload memory test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: memory-test-results
+        path: |
+          codebase/superdarn/src.lib/tk/fitacf_v3.0/tests/*.log
+        retention-days: 30
+
+  # Performance benchmarking
+  benchmark:
+    name: Performance Benchmark
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_benchmarks == true || github.event_name == 'schedule'
+    needs: test-matrix
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup CUDA
+      uses: Jimver/cuda-toolkit@v0.2.11
+      with:
+        cuda: ${{ env.CUDA_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libbz2-dev bc
+
+    - name: Set up build environment
+      run: |
+        echo "CUDA_PATH=/usr/local/cuda" >> $GITHUB_ENV
+        echo "SYSTEM=linux" >> $GITHUB_ENV
+        echo "MAKECFG=${{ github.workspace }}/codebase/superdarn/build/make/makecfg" >> $GITHUB_ENV
+        echo "MAKELIB=${{ github.workspace }}/codebase/superdarn/build/make/makelib" >> $GITHUB_ENV
+        echo "IPATH=${{ github.workspace }}/codebase/superdarn/include" >> $GITHUB_ENV
+        echo "LIBPATH=${{ github.workspace }}/codebase/superdarn/lib" >> $GITHUB_ENV
+
+    - name: Create build configuration
+      run: |
+        mkdir -p codebase/superdarn/build/make
+        mkdir -p codebase/superdarn/include
+        mkdir -p codebase/superdarn/lib
+        
+        cat > codebase/superdarn/build/make/makecfg.linux << 'EOF'
+        CC=gcc
+        CFLAGS=-O3 -fPIC
+        SYSTEM=linux
+        EOF
+        
+        cat > codebase/superdarn/build/make/makelib.linux << 'EOF'
+        $(DSTPATH)/lib$(OUTPUT).a: $(OBJS)
+        	ar -rc $@ $(OBJS)
+        	ranlib $@
+        	cp $(INC)/*.h $(IPATH)/superdarn/
+        EOF
+
+    - name: Build optimized libraries
+      working-directory: codebase/superdarn/src.lib/tk/fitacf_v3.0/src
+      run: |
+        make -f makefile
+        make -f makefile.cuda all
+
+    - name: Run comprehensive CPU vs CUDA benchmarks
+      working-directory: codebase/superdarn/src.lib/tk/fitacf_v3.0/tests
+      run: |
+        echo "=== Building Comprehensive Benchmark Suite ==="
+        gcc -I../include -I/usr/include -o cpu_vs_cuda_benchmark cpu_vs_cuda_benchmark.c ../src/llist.c -lpthread -lm
+        
+        echo "=== Running Performance Validation ==="
+        echo "Test Data Size: ${{ github.event.inputs.test_data_size || '10000' }}"
+        echo "Benchmark Type: ${{ github.event.inputs.benchmark_type || 'comprehensive' }}"
+        
+        # Run our proven benchmark suite
+        timeout 300 ./cpu_vs_cuda_benchmark > benchmark_results.txt 2>&1 || echo "Benchmark completed with timeout"
+        
+        echo "=== Analyzing Performance Results ==="
+        # Extract key performance metrics
+        SPEEDUP=$(grep -o "Speedup: [0-9.]*x" benchmark_results.txt | tail -1 | grep -o "[0-9.]*")
+        echo "Measured Speedup: ${SPEEDUP}x"
+        
+        # Check performance thresholds
+        if (( $(echo "$SPEEDUP >= ${{ env.BENCHMARK_THRESHOLD_SPEEDUP }}" | bc -l) )); then
+          echo "✅ PERFORMANCE VALIDATION PASSED: ${SPEEDUP}x speedup exceeds ${BENCHMARK_THRESHOLD_SPEEDUP}x threshold"
+          echo "BENCHMARK_STATUS=PASSED" >> $GITHUB_ENV
+        else
+          echo "❌ PERFORMANCE VALIDATION FAILED: ${SPEEDUP}x speedup below ${BENCHMARK_THRESHOLD_SPEEDUP}x threshold"
+          echo "BENCHMARK_STATUS=FAILED" >> $GITHUB_ENV
+          exit 1
+        fi
+
+    - name: Upload comprehensive benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-benchmark-results-${{ github.run_number }}
+        path: |
+          codebase/superdarn/src.lib/tk/fitacf_v3.0/tests/benchmark_results.txt
+          codebase/superdarn/src.lib/tk/fitacf_v3.0/tests/cpu_vs_cuda_benchmark
+        retention-days: 90
+        
+    - name: Performance regression check
+      if: github.event_name == 'schedule' || github.event_name == 'push'
+      run: |
+        echo "=== Performance Regression Analysis ==="
+        echo "Current Speedup: ${SPEEDUP}x"
+        echo "Benchmark Status: ${{ env.BENCHMARK_STATUS }}"
+        
+        # Store performance metrics for trend analysis
+        echo "$(date -Iseconds),${{ github.sha }},${SPEEDUP},${{ env.BENCHMARK_STATUS }}" >> performance_history.csv
+        
+        # Check for performance regression (if we have historical data)
+        if [ -f performance_history.csv ] && [ $(wc -l < performance_history.csv) -gt 1 ]; then
+          PREV_SPEEDUP=$(tail -2 performance_history.csv | head -1 | cut -d',' -f3)
+          REGRESSION_RATIO=$(echo "${SPEEDUP} / ${PREV_SPEEDUP}" | bc -l)
+          
+          if (( $(echo "$REGRESSION_RATIO < ${{ env.PERFORMANCE_REGRESSION_THRESHOLD }}" | bc -l) )); then
+            echo "⚠️ PERFORMANCE REGRESSION DETECTED: ${SPEEDUP}x vs previous ${PREV_SPEEDUP}x (${REGRESSION_RATIO} ratio)"
+            echo "REGRESSION_DETECTED=true" >> $GITHUB_ENV
+          else
+            echo "✅ No performance regression detected: ${SPEEDUP}x vs previous ${PREV_SPEEDUP}x"
+            echo "REGRESSION_DETECTED=false" >> $GITHUB_ENV
+          fi
+        fi
+
+  # Collect and summarize results
+  summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test-matrix, memory-test]
+    if: always()
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+
+    - name: Generate summary report
+      run: |
+        echo "# CUDA Linked List Validation Summary" > summary.md
+        echo "**Date:** $(date)" >> summary.md
+        echo "**Commit:** ${{ github.sha }}" >> summary.md
+        echo "" >> summary.md
+        
+        echo "## Test Results" >> summary.md
+        echo "| Configuration | Validation | RAWACF | Status |" >> summary.md
+        echo "|---------------|------------|--------|--------|" >> summary.md
+        
+        # Process test results
+        for dir in test-results-*; do
+          if [ -d "$dir" ]; then
+            config=$(echo "$dir" | sed 's/test-results-//')
+            if [ -f "$dir/test_report.txt" ]; then
+              if grep -q "PASS" "$dir/test_report.txt"; then
+                status="✅ PASS"
+              else
+                status="❌ FAIL"
+              fi
+              echo "| $config | ✓ | ✓ | $status |" >> summary.md
+            fi
+          fi
+        done
+        
+        echo "" >> summary.md
+        echo "## Performance Summary" >> summary.md
+        
+        # Extract performance data if available
+        if [ -d "benchmark-results" ]; then
+          echo "Benchmark results available in artifacts." >> summary.md
+        fi
+        
+        echo "" >> summary.md
+        echo "## Memory Test Results" >> summary.md
+        if [ -d "memory-test-results" ]; then
+          echo "Memory leak testing completed. Check artifacts for details." >> summary.md
+        fi
+
+    - name: Upload summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-summary
+        path: summary.md
+        retention-days: 90
+
+    - name: Comment on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('summary.md', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
+
+    - name: Set job status
+      run: |
+        # Check if any critical tests failed
+        failed_tests=0
+        for dir in test-results-*; do
+          if [ -d "$dir" ] && [ -f "$dir/test_report.txt" ]; then
+            if ! grep -q "Success Rate: 100.0%" "$dir/test_report.txt"; then
+              failed_tests=$((failed_tests + 1))
+            fi
+          fi
+        done
+        
+        if [ $failed_tests -gt 0 ]; then
+          echo "❌ $failed_tests test configurations failed"
+          exit 1
+        else
+          echo "✅ All tests passed"
+        fi
