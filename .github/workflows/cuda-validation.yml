@@ -162,7 +162,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results-cuda${{ matrix.cuda_version }}-gcc${{ matrix.gcc_version }}-${{ matrix.test_type }}
@@ -221,7 +221,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload memory test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: memory-test-results
@@ -313,7 +313,7 @@ jobs:
         fi
 
     - name: Upload comprehensive benchmark results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: performance-benchmark-results-${{ github.run_number }}
         path: |
@@ -397,11 +397,11 @@ jobs:
         fi
 
     - name: Upload summary
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-summary
         path: summary.md
-        retention-days: 90
+        retention-days: 1
 
     - name: Comment on PR
       if: github.event_name == 'pull_request'

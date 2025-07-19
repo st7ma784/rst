@@ -374,11 +374,11 @@ jobs:
         echo "Documentation quality check passed"
     
     - name: Upload documentation artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: documentation
         path: docs/build/html/
-        retention-days: 30
+        retention-days: 2
     
     - name: Setup Pages
       if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.deploy_to_pages)

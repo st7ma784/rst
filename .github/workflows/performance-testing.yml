@@ -156,7 +156,7 @@ jobs:
           outputs: type=docker,dest=/tmp/rst-${{ matrix.build_type }}.tar
       
       - name: Upload container artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rst-${{ matrix.build_type }}-container
           path: /tmp/rst-${{ matrix.build_type }}.tar
@@ -244,7 +244,7 @@ jobs:
           EOF
       
       - name: Upload test data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-data
           path: test-data/
@@ -379,7 +379,7 @@ jobs:
             /app/run_performance_tests.sh
       
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: performance-results-${{ matrix.build_type }}
           path: results/${{ matrix.build_type }}/
@@ -687,7 +687,7 @@ jobs:
           EOF
       
       - name: Upload dashboard
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: performance-dashboard
           path: dashboard/
