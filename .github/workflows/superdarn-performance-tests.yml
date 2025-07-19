@@ -5,9 +5,7 @@ on:
     branches: [ "main", "develop" ]
   pull_request:
     branches: [ "main" ]
-  schedule:
-    # Run daily at 2 AM UTC for continuous performance monitoring
-    - cron: '0 2 * * *'
+  
   workflow_dispatch:
     inputs:
       test_type:
