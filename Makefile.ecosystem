@@ -1,0 +1,28 @@
+# Makefile for CUDA Ecosystem Performance Benchmark
+
+CC = gcc
+CFLAGS = -O3 -march=native -std=c99 -Wall -Wextra
+LDFLAGS = -lm
+
+TARGET = cuda_ecosystem_benchmark
+SOURCE = cuda_ecosystem_benchmark.c
+
+.PHONY: all clean run
+
+all: $(TARGET)
+
+$(TARGET): $(SOURCE)
+	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
+
+run: $(TARGET)
+	./$(TARGET)
+
+clean:
+	rm -f $(TARGET)
+
+help:
+	@echo "CUDA Ecosystem Performance Benchmark"
+	@echo "Available targets:"
+	@echo "  all   - Build benchmark"
+	@echo "  run   - Build and run benchmark"
+	@echo "  clean - Clean build artifacts"

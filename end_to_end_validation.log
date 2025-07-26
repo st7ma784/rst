@@ -1,0 +1,14 @@
+End-to-End CUDA Ecosystem Validation
+Started: Fri Jul 25 11:36:51 PM BST 2025
+Total CUDA Modules: 42
+=========================================
+[INFO] Starting end-to-end CUDA ecosystem validation...
+[INFO] Validating 42 CUDA-enabled modules...
+[SUCCESS] CUDA toolkit detected - ready for validation
+[INFO] NVCC version: 12.6.85
+[INFO] Comprehensive validation for acf.1.16_optimized.2.0...
+[TEST] Validating build system for acf.1.16_optimized.2.0...
+[WARNING] acf.1.16_optimized.2.0 missing CUDA header
+[ERROR] acf.1.16_optimized.2.0 CUDA header not found
+[WARNING] acf.1.16_optimized.2.0 missing compatibility layer
+[ERROR] acf.1.16_optimized.2.0: POOR (0/5 - 0%)

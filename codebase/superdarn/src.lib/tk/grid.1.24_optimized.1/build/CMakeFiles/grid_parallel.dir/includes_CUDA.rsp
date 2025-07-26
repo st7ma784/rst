@@ -1,0 +1,1 @@
+-I/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/include -I/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/../../../base/src.lib/misc/include -isystem "/usr/local/cuda-12.6/targets/x86_64-linux/include"

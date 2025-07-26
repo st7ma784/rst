@@ -1,0 +1,138 @@
+# CUDA Common Utilities Makefile
+# Provides standardized CUDA datatypes and utilities for all SuperDARN modules
+#
+# Author: CUDA Conversion Project
+# Date: 2025
+
+include $(MAKECFG).$(SYSTEM)
+
+# Detect CUDA installation
+CUDA_PATH ?= /usr/local/cuda
+NVCC := $(CUDA_PATH)/bin/nvcc
+
+# Check if CUDA is available
+CUDA_AVAILABLE := $(shell command -v $(NVCC) 2> /dev/null)
+
+# Library names
+LIBNAME_CPU = cuda_common
+LIBNAME_CUDA = cuda_common.cuda
+LIBNAME_COMPAT = cuda_common.compat
+
+# Source files
+CPU_SOURCES = src/cuda_datatypes.c
+CUDA_SOURCES = src/cuda_datatypes.cu src/cuda_kernels.cu
+COMPAT_SOURCES = src/cuda_datatypes.c
+
+# Object files
+CPU_OBJECTS = $(CPU_SOURCES:.c=.o)
+CUDA_OBJECTS = $(CUDA_SOURCES:.cu=.o)
+COMPAT_OBJECTS = $(COMPAT_SOURCES:.c=.compat.o)
+
+# Header files
+HEADERS = include/cuda_datatypes.h
+CUDA_HEADERS = include/cuda_kernels.h
+
+# Compiler flags
+INCLUDE = -I$(IPATH)/base -I$(IPATH)/general -I$(IPATH)/superdarn -I./include
+CFLAGS += $(INCLUDE) -fPIC -fopenmp
+NVCCFLAGS = $(INCLUDE) -arch=sm_50 -std=c++11 --compiler-options -fPIC
+
+ifdef CUDA_AVAILABLE
+    TARGETS = $(LIBPATH)/lib$(LIBNAME_CPU).a $(LIBPATH)/lib$(LIBNAME_CUDA).a $(LIBPATH)/lib$(LIBNAME_COMPAT).a
+    CUDA_ENABLED = 1
+else
+    TARGETS = $(LIBPATH)/lib$(LIBNAME_CPU).a $(LIBPATH)/lib$(LIBNAME_COMPAT).a
+    CUDA_ENABLED = 0
+endif
+
+# Default target
+all: check-deps $(TARGETS) install-headers
+
+# Check dependencies and CUDA availability
+check-deps:
+	@echo "=== CUDA Common Utilities Build ==="
+	@echo "Build path: $(BUILD)"
+	@echo "Library path: $(LIBPATH)"
+ifdef CUDA_AVAILABLE
+	@echo "CUDA detected: $(NVCC)"
+	@echo "CUDA path: $(CUDA_PATH)"
+	@$(NVCC) --version | head -1
+	@echo "Building: CPU + CUDA + Compatibility versions"
+else
+	@echo "CUDA not detected - building CPU + Compatibility versions only"
+endif
+	@echo "===================================="
+
+# CPU-only version
+$(LIBPATH)/lib$(LIBNAME_CPU).a: $(CPU_OBJECTS)
+	@echo "Building CPU-only library: $@"
+	$(AR) $(ARFLAGS) $@ $(CPU_OBJECTS)
+
+# CUDA-accelerated version
+ifdef CUDA_AVAILABLE
+$(LIBPATH)/lib$(LIBNAME_CUDA).a: $(CUDA_OBJECTS)
+	@echo "Building CUDA-accelerated library: $@"
+	$(AR) $(ARFLAGS) $@ $(CUDA_OBJECTS)
+
+src/cuda_datatypes.o: src/cuda_datatypes.cu $(CUDA_HEADERS)
+	@echo "Compiling CUDA datatypes: $<"
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+
+src/cuda_kernels.o: src/cuda_kernels.cu $(CUDA_HEADERS)
+	@echo "Compiling CUDA kernels: $<"
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+endif
+
+# Compatibility version
+$(LIBPATH)/lib$(LIBNAME_COMPAT).a: $(COMPAT_OBJECTS)
+	@echo "Building compatibility library: $@"
+	$(AR) $(ARFLAGS) $@ $(COMPAT_OBJECTS)
+
+# Special compilation for compatibility objects
+%.compat.o: %.c $(HEADERS)
+	@echo "Compiling compatibility version: $<"
+	$(CC) $(CFLAGS) -DUSE_CUDA_COMPAT -c $< -o $@
+
+# Standard C compilation
+%.o: %.c $(HEADERS)
+	@echo "Compiling: $<"
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Install headers
+install-headers: $(HEADERS) $(CUDA_HEADERS)
+	@echo "Installing headers to $(IPATH)..."
+	@mkdir -p $(IPATH)/superdarn/cuda_common
+	@cp $(HEADERS) $(IPATH)/superdarn/cuda_common/
+ifdef CUDA_AVAILABLE
+	@cp $(CUDA_HEADERS) $(IPATH)/superdarn/cuda_common/ 2>/dev/null || true
+endif
+	@echo "Headers installed successfully"
+
+# Clean targets
+clean:
+	@echo "Cleaning build artifacts..."
+	@rm -f $(CPU_OBJECTS) $(CUDA_OBJECTS) $(COMPAT_OBJECTS)
+	@rm -f $(LIBPATH)/lib$(LIBNAME_CPU).a
+	@rm -f $(LIBPATH)/lib$(LIBNAME_CUDA).a  
+	@rm -f $(LIBPATH)/lib$(LIBNAME_COMPAT).a
+	@echo "Clean complete"
+
+# Help target
+help:
+	@echo "CUDA Common Utilities Build System"
+	@echo ""
+	@echo "Targets:"
+	@echo "  all           - Build all available library variants"
+	@echo "  clean         - Remove all build artifacts"
+	@echo "  check-deps    - Check build dependencies and CUDA availability"
+	@echo "  install-headers - Install headers to include directory"
+	@echo "  help          - Show this help message"
+	@echo ""
+	@echo "Library Variants:"
+	@echo "  $(LIBNAME_CPU)     - CPU-only implementation"
+ifdef CUDA_AVAILABLE
+	@echo "  $(LIBNAME_CUDA)    - CUDA-accelerated implementation"
+endif
+	@echo "  $(LIBNAME_COMPAT)  - Compatibility layer"
+
+.PHONY: all clean check-deps install-headers help

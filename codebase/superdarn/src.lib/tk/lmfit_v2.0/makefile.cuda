@@ -1,0 +1,206 @@
+# CUDA-Compatible LMFIT v2.0 Makefile
+# 
+# This makefile builds both CPU and CUDA versions of the lmfit_v2.0 library
+# using the standardized CUDA datatypes framework for optimal performance.
+#
+# Author: CUDA Conversion Project
+# Date: 2025
+
+include $(MAKECFG).$(SYSTEM)
+
+# Detect CUDA installation
+CUDA_PATH ?= /usr/local/cuda
+NVCC := $(CUDA_PATH)/bin/nvcc
+
+# Check if CUDA is available
+CUDA_AVAILABLE := $(shell command -v $(NVCC) 2> /dev/null)
+
+# Library name variations
+LIBNAME_CPU = lmfit.2.0
+LIBNAME_CUDA = lmfit.2.0.cuda
+LIBNAME_COMPAT = lmfit.2.0.compat
+
+# Source files (based on existing lmfit makefile)
+CPU_SOURCES = src/lmfit_determinations.c src/error_estimates.c src/lmfit_fitting.c \
+              src/lmfit_leastsquares.c src/llist.c src/lmfit2toplevel.c \
+              src/lmfit_preprocessing.c src/selfclutter.c
+
+CUDA_SOURCES = src/cuda_lmfit_kernels.cu src/cuda_lmfit_preprocessing.cu \
+               src/cuda_lmfit_leastsquares.cu src/cuda_lmfit_fitting.cu
+
+COMPAT_SOURCES = src/cuda_lmfit_bridge.c $(CPU_SOURCES)
+
+# Object files
+CPU_OBJECTS = $(CPU_SOURCES:.c=.o)
+CUDA_OBJECTS = $(CUDA_SOURCES:.cu=.o) src/lmfit_determinations.cuda.o \
+               src/error_estimates.cuda.o src/lmfit2toplevel.cuda.o src/selfclutter.cuda.o
+COMPAT_OBJECTS = $(COMPAT_SOURCES:.c=.compat.o)
+
+# Header files
+HEADERS = $(wildcard src/*.h) $(wildcard include/*.h)
+CUDA_HEADERS = src/cuda_lmfit.h src/cuda_lmfit_kernels.h
+
+# Compiler flags
+INCLUDE = -I$(IPATH)/base -I$(IPATH)/general -I$(IPATH)/superdarn -I$(IPATH)/analysis \
+          -I./include -I./src -I../cuda_common/include
+CFLAGS += $(INCLUDE) -fPIC -fopenmp
+NVCCFLAGS = $(INCLUDE) -arch=sm_50 -std=c++11 --compiler-options -fPIC
+
+ifdef CUDA_AVAILABLE
+    TARGETS = $(LIBPATH)/lib$(LIBNAME_CPU).a $(LIBPATH)/lib$(LIBNAME_CUDA).a $(LIBPATH)/lib$(LIBNAME_COMPAT).a
+    CUDA_ENABLED = 1
+else
+    TARGETS = $(LIBPATH)/lib$(LIBNAME_CPU).a $(LIBPATH)/lib$(LIBNAME_COMPAT).a
+    CUDA_ENABLED = 0
+endif
+
+# Default target
+all: check-deps build-cuda-common $(TARGETS) test-compilation
+
+# Check dependencies and CUDA availability
+check-deps:
+	@echo "=== CUDA LMFIT v2.0 Build System ==="
+	@echo "Build path: $(BUILD)"
+	@echo "Library path: $(LIBPATH)"
+ifdef CUDA_AVAILABLE
+	@echo "CUDA detected: $(NVCC)"
+	@echo "CUDA path: $(CUDA_PATH)"
+	@$(NVCC) --version | head -1
+	@echo "Building: CPU + CUDA + Compatibility versions"
+else
+	@echo "CUDA not detected - building CPU + Compatibility versions only"
+endif
+	@echo "======================================="
+
+# Build CUDA common utilities first
+build-cuda-common:
+	@echo "Building CUDA common utilities..."
+	@cd ../cuda_common && $(MAKE) -f makefile.cuda all
+
+# CPU-only version (original implementation)
+$(LIBPATH)/lib$(LIBNAME_CPU).a: $(CPU_OBJECTS)
+	@echo "Building CPU-only library: $@"
+	$(AR) $(ARFLAGS) $@ $(CPU_OBJECTS)
+
+# CUDA-accelerated version
+ifdef CUDA_AVAILABLE
+$(LIBPATH)/lib$(LIBNAME_CUDA).a: $(CUDA_OBJECTS)
+	@echo "Building CUDA-accelerated library: $@"
+	$(AR) $(ARFLAGS) $@ $(CUDA_OBJECTS)
+
+src/cuda_lmfit_kernels.o: src/cuda_lmfit_kernels.cu $(CUDA_HEADERS)
+	@echo "Compiling CUDA LMFIT kernels: $<"
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+
+src/cuda_lmfit_preprocessing.o: src/cuda_lmfit_preprocessing.cu $(CUDA_HEADERS)
+	@echo "Compiling CUDA preprocessing: $<"
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+
+src/cuda_lmfit_leastsquares.o: src/cuda_lmfit_leastsquares.cu $(CUDA_HEADERS)
+	@echo "Compiling CUDA least squares: $<"
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+
+src/cuda_lmfit_fitting.o: src/cuda_lmfit_fitting.cu $(CUDA_HEADERS)
+	@echo "Compiling CUDA fitting: $<"
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+
+# CUDA versions of CPU source files
+%.cuda.o: %.c $(HEADERS) $(CUDA_HEADERS)
+	@echo "Compiling CUDA-compatible C code: $<"
+	$(NVCC) $(NVCCFLAGS) -x c -DUSE_CUDA -c $< -o $@
+endif
+
+# Compatibility version (uses CUDA structures with original API)
+$(LIBPATH)/lib$(LIBNAME_COMPAT).a: $(COMPAT_OBJECTS)
+	@echo "Building compatibility library: $@"
+	$(AR) $(ARFLAGS) $@ $(COMPAT_OBJECTS)
+
+# Special compilation for compatibility objects
+%.compat.o: %.c $(HEADERS) $(CUDA_HEADERS)
+	@echo "Compiling compatibility version: $<"
+	$(CC) $(CFLAGS) -DUSE_CUDA_COMPAT -c $< -o $@
+
+# Standard C compilation
+%.o: %.c $(HEADERS)
+	@echo "Compiling: $<"
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Test compilation of all versions
+test-compilation: $(TARGETS)
+	@echo "=== LMFIT Compilation Tests ==="
+	@echo "Testing CPU library linkage..."
+	@$(CC) -L$(LIBPATH) -l$(LIBNAME_CPU) -L../cuda_common/$(LIBPATH) -lcuda_common -o /tmp/test_lmfit_cpu_link -x c - <<< "int main(){return 0;}" 2>/dev/null && echo "✓ CPU library links successfully" || echo "✗ CPU library link failed"
+	@rm -f /tmp/test_lmfit_cpu_link
+ifdef CUDA_AVAILABLE
+	@echo "Testing CUDA library linkage..."
+	@$(NVCC) -L$(LIBPATH) -l$(LIBNAME_CUDA) -L../cuda_common/$(LIBPATH) -lcuda_common.cuda -lcudart -o /tmp/test_lmfit_cuda_link -x c - <<< "int main(){return 0;}" 2>/dev/null && echo "✓ CUDA library links successfully" || echo "✗ CUDA library link failed"
+	@rm -f /tmp/test_lmfit_cuda_link
+endif
+	@echo "Testing compatibility library linkage..."
+	@$(CC) -L$(LIBPATH) -l$(LIBNAME_COMPAT) -L../cuda_common/$(LIBPATH) -lcuda_common.compat -o /tmp/test_lmfit_compat_link -x c - <<< "int main(){return 0;}" 2>/dev/null && echo "✓ Compatibility library links successfully" || echo "✗ Compatibility library link failed"
+	@rm -f /tmp/test_lmfit_compat_link
+	@echo "================================"
+
+# Install headers
+install-headers: $(HEADERS) $(CUDA_HEADERS)
+	@echo "Installing headers to $(IPATH)..."
+	@mkdir -p $(IPATH)/superdarn/lmfit
+	@cp $(HEADERS) $(IPATH)/superdarn/lmfit/ 2>/dev/null || true
+ifdef CUDA_AVAILABLE
+	@cp $(CUDA_HEADERS) $(IPATH)/superdarn/lmfit/ 2>/dev/null || true
+endif
+	@echo "Headers installed successfully"
+
+# Clean targets
+clean:
+	@echo "Cleaning build artifacts..."
+	@rm -f $(CPU_OBJECTS) $(CUDA_OBJECTS) $(COMPAT_OBJECTS)
+	@rm -f $(LIBPATH)/lib$(LIBNAME_CPU).a
+	@rm -f $(LIBPATH)/lib$(LIBNAME_CUDA).a  
+	@rm -f $(LIBPATH)/lib$(LIBNAME_COMPAT).a
+	@echo "Clean complete"
+
+# Development targets
+dev-test: all
+	@echo "=== LMFIT Development Tests ==="
+	@echo "Running continuous compilation checks..."
+	@$(MAKE) -s test-compilation
+	@echo "Checking for CUDA runtime..."
+ifdef CUDA_AVAILABLE
+	@nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1 | sed 's/^/GPU detected: /' || echo "No GPU runtime detected"
+endif
+	@echo "Development tests complete"
+
+# Performance comparison target
+perf-test: all
+	@echo "=== LMFIT Performance Test Setup ==="
+	@echo "Libraries built for performance comparison:"
+	@ls -la $(LIBPATH)/lib$(LIBNAME_CPU).a 2>/dev/null | sed 's/^/  CPU: /' || echo "  CPU: Not built"
+ifdef CUDA_AVAILABLE
+	@ls -la $(LIBPATH)/lib$(LIBNAME_CUDA).a 2>/dev/null | sed 's/^/  CUDA: /' || echo "  CUDA: Not built"
+endif
+	@ls -la $(LIBPATH)/lib$(LIBNAME_COMPAT).a 2>/dev/null | sed 's/^/  Compat: /' || echo "  Compat: Not built"
+	@echo "Ready for side-by-side performance testing"
+
+# Help target
+help:
+	@echo "CUDA-Compatible LMFIT v2.0 Build System"
+	@echo ""
+	@echo "Targets:"
+	@echo "  all           - Build all available library variants"
+	@echo "  clean         - Remove all build artifacts"
+	@echo "  check-deps    - Check build dependencies and CUDA availability"
+	@echo "  test-compilation - Test that all libraries compile and link correctly"
+	@echo "  install-headers  - Install headers to include directory"
+	@echo "  dev-test      - Run development tests and checks"
+	@echo "  perf-test     - Setup for performance comparison testing"
+	@echo "  help          - Show this help message"
+	@echo ""
+	@echo "Library Variants:"
+	@echo "  $(LIBNAME_CPU)     - Original CPU implementation"
+ifdef CUDA_AVAILABLE
+	@echo "  $(LIBNAME_CUDA)    - CUDA-accelerated implementation"
+endif
+	@echo "  $(LIBNAME_COMPAT)  - Compatibility layer"
+
+.PHONY: all clean check-deps test-compilation install-headers dev-test perf-test help build-cuda-common

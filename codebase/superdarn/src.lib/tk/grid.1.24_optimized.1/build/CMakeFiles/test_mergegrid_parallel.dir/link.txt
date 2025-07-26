@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -Wextra -march=native -mtune=native -O3 -ffast-math -DNDEBUG CMakeFiles/test_mergegrid_parallel.dir/test/test_mergegrid_parallel.c.o -o test/test_mergegrid_parallel  -Wl,-rpath,/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/build libgrid_parallel.so.1.24.0 

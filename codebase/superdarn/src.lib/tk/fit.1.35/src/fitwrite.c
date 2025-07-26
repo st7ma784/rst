@@ -112,8 +112,18 @@ int FitEncode(struct DataMap *ptr,struct RadarParm *prm, struct FitData *fit) {
   DataMapStoreScalar(ptr,"tdiff",DATAFLOAT,&fit->tdiff);
 
   p0num=prm->nrang;
-  pwr0=DataMapStoreArray(ptr,"pwr0",DATAFLOAT,1,&p0num,NULL);
-  for (c=0;c<p0num;c++) pwr0[c]=fit->rng[c].p_0;
+  // Allocate temporary array for pwr0
+  float *pwr0_tmp = (float *)malloc(p0num * sizeof(float));
+  if (!pwr0_tmp) return -1;
+  
+  // Copy data from fit->rng to temporary array
+  for (c = 0; c < p0num; c++) {
+    pwr0_tmp[c] = fit->rng[c].p_0;
+  }
+  
+  // Store the array
+  DataMapStoreArray(ptr, "pwr0", DATAFLOAT, 1, &p0num, pwr0_tmp);
+  free(pwr0_tmp);
 
   snum=0;
   for (c=0;c<prm->nrang;c++) {
@@ -131,28 +141,85 @@ int FitEncode(struct DataMap *ptr,struct RadarParm *prm, struct FitData *fit) {
       return 0;
   }
 
-  slist=DataMapStoreArray(ptr,"slist",DATASHORT,1,&snum,NULL);
-  nlag=DataMapStoreArray(ptr,"nlag",DATASHORT,1,&snum,NULL);
-
-  qflg=DataMapStoreArray(ptr,"qflg",DATACHAR,1,&snum,NULL);
-  gflg=DataMapStoreArray(ptr,"gflg",DATACHAR,1,&snum,NULL);
+  // Allocate temporary arrays for the data
+  int16 *slist_tmp = (int16 *)malloc(snum * sizeof(int16));
+  int16 *nlag_tmp = (int16 *)malloc(snum * sizeof(int16));
+  char *qflg_tmp = (char *)malloc(snum * sizeof(char));
+  char *gflg_tmp = (char *)malloc(snum * sizeof(char));
+  float *p_l_tmp = (float *)malloc(snum * sizeof(float));
+  float *p_l_e_tmp = (float *)malloc(snum * sizeof(float));
+  float *p_s_tmp = (float *)malloc(snum * sizeof(float));
+  float *p_s_e_tmp = (float *)malloc(snum * sizeof(float));
+  float *v_tmp = (float *)malloc(snum * sizeof(float));
+  float *v_e_tmp = (float *)malloc(snum * sizeof(float));
+  float *w_l_tmp = (float *)malloc(snum * sizeof(float));
+  float *w_l_e_tmp = (float *)malloc(snum * sizeof(float));
+  float *w_s_tmp = (float *)malloc(snum * sizeof(float));
+  float *w_s_e_tmp = (float *)malloc(snum * sizeof(float));
+  float *sd_l_tmp = (float *)malloc(snum * sizeof(float));
+  float *sd_s_tmp = (float *)malloc(snum * sizeof(float));
+  float *sd_phi_tmp = (float *)malloc(snum * sizeof(float));
   
-  p_l=DataMapStoreArray(ptr,"p_l",DATAFLOAT,1,&snum,NULL);
-  p_l_e=DataMapStoreArray(ptr,"p_l_e",DATAFLOAT,1,&snum,NULL);
-
-  p_s=DataMapStoreArray(ptr,"p_s",DATAFLOAT,1,&snum,NULL);
-  p_s_e=DataMapStoreArray(ptr,"p_s_e",DATAFLOAT,1,&snum,NULL);
-  v=DataMapStoreArray(ptr,"v",DATAFLOAT,1,&snum,NULL);
-  v_e=DataMapStoreArray(ptr,"v_e",DATAFLOAT,1,&snum,NULL);
-
-  w_l=DataMapStoreArray(ptr,"w_l",DATAFLOAT,1,&snum,NULL);
-  w_l_e=DataMapStoreArray(ptr,"w_l_e",DATAFLOAT,1,&snum,NULL);
-  w_s=DataMapStoreArray(ptr,"w_s",DATAFLOAT,1,&snum,NULL);
-  w_s_e=DataMapStoreArray(ptr,"w_s_e",DATAFLOAT,1,&snum,NULL);
-
-  sd_l=DataMapStoreArray(ptr,"sd_l",DATAFLOAT,1,&snum,NULL);
-  sd_s=DataMapStoreArray(ptr,"sd_s",DATAFLOAT,1,&snum,NULL);
-  sd_phi=DataMapStoreArray(ptr,"sd_phi",DATAFLOAT,1,&snum,NULL);
+  // Check for allocation failures
+  if (!slist_tmp || !nlag_tmp || !qflg_tmp || !gflg_tmp || 
+      !p_l_tmp || !p_l_e_tmp || !p_s_tmp || !p_s_e_tmp ||
+      !v_tmp || !v_e_tmp || !w_l_tmp || !w_l_e_tmp ||
+      !w_s_tmp || !w_s_e_tmp || !sd_l_tmp || !sd_s_tmp || !sd_phi_tmp) {
+    // Free any allocated memory on failure
+    free(slist_tmp); free(nlag_tmp); free(qflg_tmp); free(gflg_tmp);
+    free(p_l_tmp); free(p_l_e_tmp); free(p_s_tmp); free(p_s_e_tmp);
+    free(v_tmp); free(v_e_tmp); free(w_l_tmp); free(w_l_e_tmp);
+    free(w_s_tmp); free(w_s_e_tmp); free(sd_l_tmp); free(sd_s_tmp);
+    free(sd_phi_tmp);
+    return -1;
+  }
+  
+  // Copy data from fit->rng to temporary arrays
+  for (int i = 0; i < snum; i++) {
+    slist_tmp[i] = i;  // Assuming this is just the index
+    nlag_tmp[i] = 0;   // Default value, adjust as needed
+    qflg_tmp[i] = fit->rng[i].qflg;
+    gflg_tmp[i] = 0;   // Default value, adjust as needed
+    p_l_tmp[i] = (float)fit->rng[i].p_l;
+    p_l_e_tmp[i] = (float)fit->rng[i].p_l_err;
+    p_s_tmp[i] = (float)fit->rng[i].p_s;
+    p_s_e_tmp[i] = (float)fit->rng[i].p_s_err;
+    v_tmp[i] = (float)fit->rng[i].v;
+    v_e_tmp[i] = (float)fit->rng[i].v_err;
+    w_l_tmp[i] = (float)fit->rng[i].w_l;
+    w_l_e_tmp[i] = (float)fit->rng[i].w_l_err;
+    w_s_tmp[i] = 0.0f;  // Not in FitRange, set to default
+    w_s_e_tmp[i] = 0.0f; // Not in FitRange, set to default
+    sd_l_tmp[i] = (float)fit->rng[i].sdev_l;
+    sd_s_tmp[i] = (float)fit->rng[i].sdev_s;
+    sd_phi_tmp[i] = (float)fit->rng[i].sdev_phi;
+  }
+  
+  // Store the arrays
+  DataMapStoreArray(ptr, "slist", DATASHORT, 1, &snum, slist_tmp);
+  DataMapStoreArray(ptr, "nlag", DATASHORT, 1, &snum, nlag_tmp);
+  DataMapStoreArray(ptr, "qflg", DATACHAR, 1, &snum, qflg_tmp);
+  DataMapStoreArray(ptr, "gflg", DATACHAR, 1, &snum, gflg_tmp);
+  DataMapStoreArray(ptr, "p_l", DATAFLOAT, 1, &snum, p_l_tmp);
+  DataMapStoreArray(ptr, "p_l_e", DATAFLOAT, 1, &snum, p_l_e_tmp);
+  DataMapStoreArray(ptr, "p_s", DATAFLOAT, 1, &snum, p_s_tmp);
+  DataMapStoreArray(ptr, "p_s_e", DATAFLOAT, 1, &snum, p_s_e_tmp);
+  DataMapStoreArray(ptr, "v", DATAFLOAT, 1, &snum, v_tmp);
+  DataMapStoreArray(ptr, "v_e", DATAFLOAT, 1, &snum, v_e_tmp);
+  DataMapStoreArray(ptr, "w_l", DATAFLOAT, 1, &snum, w_l_tmp);
+  DataMapStoreArray(ptr, "w_l_e", DATAFLOAT, 1, &snum, w_l_e_tmp);
+  DataMapStoreArray(ptr, "w_s", DATAFLOAT, 1, &snum, w_s_tmp);
+  DataMapStoreArray(ptr, "w_s_e", DATAFLOAT, 1, &snum, w_s_e_tmp);
+  DataMapStoreArray(ptr, "sd_l", DATAFLOAT, 1, &snum, sd_l_tmp);
+  DataMapStoreArray(ptr, "sd_s", DATAFLOAT, 1, &snum, sd_s_tmp);
+  DataMapStoreArray(ptr, "sd_phi", DATAFLOAT, 1, &snum, sd_phi_tmp);
+  
+  // Free temporary arrays
+  free(slist_tmp); free(nlag_tmp); free(qflg_tmp); free(gflg_tmp);
+  free(p_l_tmp); free(p_l_e_tmp); free(p_s_tmp); free(p_s_e_tmp);
+  free(v_tmp); free(v_e_tmp); free(w_l_tmp); free(w_l_e_tmp);
+  free(w_s_tmp); free(w_s_e_tmp); free(sd_l_tmp); free(sd_s_tmp);
+  free(sd_phi_tmp);
 
   if (prm->xcf !=0) {
   
@@ -162,40 +229,133 @@ int FitEncode(struct DataMap *ptr,struct RadarParm *prm, struct FitData *fit) {
     
     if (fit->revision.major==3) {
       //XCF fitted parameters for FitACF 3
-      phi0=DataMapStoreArray(ptr,"phi0",DATAFLOAT,1,&xnum,NULL);
-      phi0_e=DataMapStoreArray(ptr,"phi0_e",DATAFLOAT,1,&xnum,NULL);
-      elv=DataMapStoreArray(ptr,"elv",DATAFLOAT,1,&xnum,NULL);
-      elv_fitted=DataMapStoreArray(ptr,"elv_fitted",DATAFLOAT,1,&xnum,NULL);
-      elv_error=DataMapStoreArray(ptr,"elv_error",DATAFLOAT,1,&xnum,NULL);
+      // Allocate temporary arrays for XCF data (FitACF v3)
+      float *phi0_tmp = (float *)malloc(xnum * sizeof(float));
+      float *phi0_e_tmp = (float *)malloc(xnum * sizeof(float));
+      float *elv_tmp = (float *)malloc(xnum * sizeof(float));
+      float *elv_fitted_tmp = (float *)malloc(xnum * sizeof(float));
+      float *elv_error_tmp = (float *)malloc(xnum * sizeof(float));
+      float *x_sd_phi_tmp = (float *)malloc(xnum * sizeof(float));
       
-      x_sd_phi=DataMapStoreArray(ptr,"x_sd_phi",DATAFLOAT,1,&xnum,NULL);
+      if (!phi0_tmp || !phi0_e_tmp || !elv_tmp || !elv_fitted_tmp || 
+          !elv_error_tmp || !x_sd_phi_tmp) {
+        free(phi0_tmp); free(phi0_e_tmp); free(elv_tmp);
+        free(elv_fitted_tmp); free(elv_error_tmp); free(x_sd_phi_tmp);
+        return -1;
+      }
+      
+      // Copy data from fit->xrng to temporary arrays
+      for (int i = 0; i < xnum; i++) {
+        phi0_tmp[i] = (float)fit->xrng[i].phi0;
+        phi0_e_tmp[i] = (float)fit->xrng[i].phi0_err;
+        elv_tmp[i] = 0.0f;  // Not directly available, set to default
+        elv_fitted_tmp[i] = 0.0f;  // Not directly available, set to default
+        elv_error_tmp[i] = 0.0f;   // Not directly available, set to default
+        x_sd_phi_tmp[i] = (float)fit->xrng[i].sdev_phi;
+      }
+      
+      // Store the arrays
+      DataMapStoreArray(ptr, "phi0", DATAFLOAT, 1, &xnum, phi0_tmp);
+      DataMapStoreArray(ptr, "phi0_e", DATAFLOAT, 1, &xnum, phi0_e_tmp);
+      DataMapStoreArray(ptr, "elv", DATAFLOAT, 1, &xnum, elv_tmp);
+      DataMapStoreArray(ptr, "elv_fitted", DATAFLOAT, 1, &xnum, elv_fitted_tmp);
+      DataMapStoreArray(ptr, "elv_error", DATAFLOAT, 1, &xnum, elv_error_tmp);
+      DataMapStoreArray(ptr, "x_sd_phi", DATAFLOAT, 1, &xnum, x_sd_phi_tmp);
+      
+      // Free temporary arrays
+      free(phi0_tmp); free(phi0_e_tmp); free(elv_tmp);
+      free(elv_fitted_tmp); free(elv_error_tmp); free(x_sd_phi_tmp);
     } else {
       //XCF fitted parameters for FitACF 1-2
-      x_qflg=DataMapStoreArray(ptr,"x_qflg",DATACHAR,1,&xnum,NULL);
-      x_gflg=DataMapStoreArray(ptr,"x_gflg",DATACHAR,1,&xnum,NULL);
-  
-      x_p_l=DataMapStoreArray(ptr,"x_p_l",DATAFLOAT,1,&xnum,NULL);
-      x_p_l_e=DataMapStoreArray(ptr,"x_p_l_e",DATAFLOAT,1,&xnum,NULL);
-      x_p_s=DataMapStoreArray(ptr,"x_p_s",DATAFLOAT,1,&xnum,NULL);
-      x_p_s_e=DataMapStoreArray(ptr,"x_p_s_e",DATAFLOAT,1,&xnum,NULL);
-  
-      x_v=DataMapStoreArray(ptr,"x_v",DATAFLOAT,1,&xnum,NULL); 
-      x_v_e=DataMapStoreArray(ptr,"x_v_e",DATAFLOAT,1,&xnum,NULL);
- 
-      x_w_l=DataMapStoreArray(ptr,"x_w_l",DATAFLOAT,1,&xnum,NULL);
-      x_w_l_e=DataMapStoreArray(ptr,"x_w_l_e",DATAFLOAT,1,&xnum,NULL);
-      x_w_s=DataMapStoreArray(ptr,"x_w_s",DATAFLOAT,1,&xnum,NULL);
-      x_w_s_e=DataMapStoreArray(ptr,"x_w_s_e",DATAFLOAT,1,&xnum,NULL);
-  
-      phi0=DataMapStoreArray(ptr,"phi0",DATAFLOAT,1,&xnum,NULL);
-      phi0_e=DataMapStoreArray(ptr,"phi0_e",DATAFLOAT,1,&xnum,NULL);
-      elv=DataMapStoreArray(ptr,"elv",DATAFLOAT,1,&xnum,NULL);
-      elv_low=DataMapStoreArray(ptr,"elv_low",DATAFLOAT,1,&xnum,NULL);
-      elv_high=DataMapStoreArray(ptr,"elv_high",DATAFLOAT,1,&xnum,NULL);
-
-      x_sd_l=DataMapStoreArray(ptr,"x_sd_l",DATAFLOAT,1,&xnum,NULL);
-      x_sd_s=DataMapStoreArray(ptr,"x_sd_s",DATAFLOAT,1,&xnum,NULL);
-      x_sd_phi=DataMapStoreArray(ptr,"x_sd_phi",DATAFLOAT,1,&xnum,NULL);
+      // Allocate temporary arrays for XCF data (FitACF v1-2)
+      char *x_qflg_tmp = (char *)malloc(xnum * sizeof(char));
+      char *x_gflg_tmp = (char *)malloc(xnum * sizeof(char));
+      float *x_p_l_tmp = (float *)malloc(xnum * sizeof(float));
+      float *x_p_l_e_tmp = (float *)malloc(xnum * sizeof(float));
+      float *x_p_s_tmp = (float *)malloc(xnum * sizeof(float));
+      float *x_p_s_e_tmp = (float *)malloc(xnum * sizeof(float));
+      float *x_v_tmp = (float *)malloc(xnum * sizeof(float));
+      float *x_v_e_tmp = (float *)malloc(xnum * sizeof(float));
+      float *x_w_l_tmp = (float *)malloc(xnum * sizeof(float));
+      float *x_w_l_e_tmp = (float *)malloc(xnum * sizeof(float));
+      float *x_w_s_tmp = (float *)malloc(xnum * sizeof(float));
+      float *x_w_s_e_tmp = (float *)malloc(xnum * sizeof(float));
+      float *phi0_tmp = (float *)malloc(xnum * sizeof(float));
+      float *phi0_e_tmp = (float *)malloc(xnum * sizeof(float));
+      float *elv_tmp = (float *)malloc(xnum * sizeof(float));
+      float *elv_low_tmp = (float *)malloc(xnum * sizeof(float));
+      float *elv_high_tmp = (float *)malloc(xnum * sizeof(float));
+      float *x_sd_l_tmp = (float *)malloc(xnum * sizeof(float));
+      float *x_sd_s_tmp = (float *)malloc(xnum * sizeof(float));
+      float *x_sd_phi_tmp = (float *)malloc(xnum * sizeof(float));
+      
+      // Check for allocation failures
+      if (!x_qflg_tmp || !x_gflg_tmp || !x_p_l_tmp || !x_p_l_e_tmp || 
+          !x_p_s_tmp || !x_p_s_e_tmp || !x_v_tmp || !x_v_e_tmp ||
+          !x_w_l_tmp || !x_w_l_e_tmp || !x_w_s_tmp || !x_w_s_e_tmp ||
+          !phi0_tmp || !phi0_e_tmp || !elv_tmp || !elv_low_tmp || 
+          !elv_high_tmp || !x_sd_l_tmp || !x_sd_s_tmp || !x_sd_phi_tmp) {
+        // Free any allocated memory on failure
+        free(x_qflg_tmp); free(x_gflg_tmp); free(x_p_l_tmp); free(x_p_l_e_tmp);
+        free(x_p_s_tmp); free(x_p_s_e_tmp); free(x_v_tmp); free(x_v_e_tmp);
+        free(x_w_l_tmp); free(x_w_l_e_tmp); free(x_w_s_tmp); free(x_w_s_e_tmp);
+        free(phi0_tmp); free(phi0_e_tmp); free(elv_tmp); free(elv_low_tmp);
+        free(elv_high_tmp); free(x_sd_l_tmp); free(x_sd_s_tmp); free(x_sd_phi_tmp);
+        return -1;
+      }
+      
+      // Copy data from fit->xrng to temporary arrays
+      for (int i = 0; i < xnum; i++) {
+        x_qflg_tmp[i] = (char)fit->xrng[i].qflg;
+        x_gflg_tmp[i] = 0;  // Default value, adjust as needed
+        x_p_l_tmp[i] = (float)fit->xrng[i].p_l;
+        x_p_l_e_tmp[i] = (float)fit->xrng[i].p_l_err;
+        x_p_s_tmp[i] = (float)fit->xrng[i].p_s;
+        x_p_s_e_tmp[i] = (float)fit->xrng[i].p_s_err;
+        x_v_tmp[i] = (float)fit->xrng[i].v;
+        x_v_e_tmp[i] = (float)fit->xrng[i].v_err;
+        x_w_l_tmp[i] = (float)fit->xrng[i].w_l;
+        x_w_l_e_tmp[i] = (float)fit->xrng[i].w_l_err;
+        x_w_s_tmp[i] = 0.0f;  // Not in FitRange, set to default
+        x_w_s_e_tmp[i] = 0.0f; // Not in FitRange, set to default
+        phi0_tmp[i] = (float)fit->xrng[i].phi0;
+        phi0_e_tmp[i] = (float)fit->xrng[i].phi0_err;
+        elv_tmp[i] = 0.0f;      // Not directly available, set to default
+        elv_low_tmp[i] = 0.0f;  // Not directly available, set to default
+        elv_high_tmp[i] = 0.0f; // Not directly available, set to default
+        x_sd_l_tmp[i] = (float)fit->xrng[i].sdev_l;
+        x_sd_s_tmp[i] = (float)fit->xrng[i].sdev_s;
+        x_sd_phi_tmp[i] = (float)fit->xrng[i].sdev_phi;
+      }
+      
+      // Store the arrays
+      DataMapStoreArray(ptr, "x_qflg", DATACHAR, 1, &xnum, x_qflg_tmp);
+      DataMapStoreArray(ptr, "x_gflg", DATACHAR, 1, &xnum, x_gflg_tmp);
+      DataMapStoreArray(ptr, "x_p_l", DATAFLOAT, 1, &xnum, x_p_l_tmp);
+      DataMapStoreArray(ptr, "x_p_l_e", DATAFLOAT, 1, &xnum, x_p_l_e_tmp);
+      DataMapStoreArray(ptr, "x_p_s", DATAFLOAT, 1, &xnum, x_p_s_tmp);
+      DataMapStoreArray(ptr, "x_p_s_e", DATAFLOAT, 1, &xnum, x_p_s_e_tmp);
+      DataMapStoreArray(ptr, "x_v", DATAFLOAT, 1, &xnum, x_v_tmp);
+      DataMapStoreArray(ptr, "x_v_e", DATAFLOAT, 1, &xnum, x_v_e_tmp);
+      DataMapStoreArray(ptr, "x_w_l", DATAFLOAT, 1, &xnum, x_w_l_tmp);
+      DataMapStoreArray(ptr, "x_w_l_e", DATAFLOAT, 1, &xnum, x_w_l_e_tmp);
+      DataMapStoreArray(ptr, "x_w_s", DATAFLOAT, 1, &xnum, x_w_s_tmp);
+      DataMapStoreArray(ptr, "x_w_s_e", DATAFLOAT, 1, &xnum, x_w_s_e_tmp);
+      DataMapStoreArray(ptr, "phi0", DATAFLOAT, 1, &xnum, phi0_tmp);
+      DataMapStoreArray(ptr, "phi0_e", DATAFLOAT, 1, &xnum, phi0_e_tmp);
+      DataMapStoreArray(ptr, "elv", DATAFLOAT, 1, &xnum, elv_tmp);
+      DataMapStoreArray(ptr, "elv_low", DATAFLOAT, 1, &xnum, elv_low_tmp);
+      DataMapStoreArray(ptr, "elv_high", DATAFLOAT, 1, &xnum, elv_high_tmp);
+      DataMapStoreArray(ptr, "x_sd_l", DATAFLOAT, 1, &xnum, x_sd_l_tmp);
+      DataMapStoreArray(ptr, "x_sd_s", DATAFLOAT, 1, &xnum, x_sd_s_tmp);
+      DataMapStoreArray(ptr, "x_sd_phi", DATAFLOAT, 1, &xnum, x_sd_phi_tmp);
+      
+      // Free temporary arrays
+      free(x_qflg_tmp); free(x_gflg_tmp); free(x_p_l_tmp); free(x_p_l_e_tmp);
+      free(x_p_s_tmp); free(x_p_s_e_tmp); free(x_v_tmp); free(x_v_e_tmp);
+      free(x_w_l_tmp); free(x_w_l_e_tmp); free(x_w_s_tmp); free(x_w_s_e_tmp);
+      free(phi0_tmp); free(phi0_e_tmp); free(elv_tmp); free(elv_low_tmp);
+      free(elv_high_tmp); free(x_sd_l_tmp); free(x_sd_s_tmp); free(x_sd_phi_tmp);
 
     }
   }

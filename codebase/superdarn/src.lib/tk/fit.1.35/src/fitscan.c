@@ -29,11 +29,15 @@ Modifications:
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <zlib.h>
+
+/* Include rprm.h first to ensure RadarParm is defined */
+#include "rprm.h"
+
+/* Then include other headers */
 #include "rtypes.h"
 #include "option.h"
 #include "rtime.h"
 #include "dmap.h"
-#include "rprm.h"
 #include "fitdata.h"
 #include "scandata.h"
 #include "fitread.h"
@@ -97,13 +101,20 @@ int FitReadRadarScan(int fid, int *state,
      * the RadarScan structure with parameters from the prm structure */
     if (*state !=2) {
 
-        ptr->stid=prm->stid;
-        ptr->version.major=prm->revision.major;
-        ptr->version.minor=prm->revision.minor;
-        ptr->st_time=TimeYMDHMSToEpoch(prm->time.yr,prm->time.mo,
-                      prm->time.dy,
-                      prm->time.hr,prm->time.mt,
-                      prm->time.sc+prm->time.us/1.0e6);
+        ptr->stid = prm->stid;
+        ptr->version.major = (int)prm->revision.major;  /* Cast char to int */
+        ptr->version.minor = (int)prm->revision.minor;  /* Cast char to int */
+        
+        /* Use TimeYMDHMSToEpoch with the correct time structure fields */
+        ptr->st_time = TimeYMDHMSToEpoch(
+            prm->time.yr,      /* year */
+            prm->time.mo,      /* month */
+            prm->time.dy,      /* day */
+            prm->time.hr,      /* hour */
+            prm->time.mt,      /* minute */
+            prm->time.sc,      /* second */
+            0                  /* microseconds */
+        );
 
         /* If scan flag is being ignored and assuming scan boundaries are fixed
          * relative to start of day, then recalculate scan start time */
@@ -129,10 +140,15 @@ int FitReadRadarScan(int fid, int *state,
         }
 
         /* Calculate time of radar beam sounding */
-        bm->time=TimeYMDHMSToEpoch(prm->time.yr,prm->time.mo,
-                  prm->time.dy,
-                  prm->time.hr,prm->time.mt,
-                  prm->time.sc+prm->time.us/1.0e6);
+        bm->time = TimeYMDHMSToEpoch(
+            prm->time.yr,      /* year */
+            prm->time.mo,      /* month */
+            prm->time.dy,      /* day */
+            prm->time.hr,      /* hour */
+            prm->time.mt,      /* minute */
+            prm->time.sc,      /* second */
+            0                  /* microseconds */
+        );
 
         /* Load radar operating parameters into RadarBeam structure */
         bm->scan=prm->scan;
@@ -174,10 +190,15 @@ int FitReadRadarScan(int fid, int *state,
         }
 
         /* Calculate end time of radar scan */
-        ptr->ed_time=TimeYMDHMSToEpoch(prm->time.yr,prm->time.mo,
-                      prm->time.dy,
-                      prm->time.hr,prm->time.mt,
-                      prm->time.sc+prm->time.us/1.0e6);
+        ptr->ed_time = TimeYMDHMSToEpoch(
+            prm->time.yr,      /* year */
+            prm->time.mo,      /* month */
+            prm->time.dy,      /* day */
+            prm->time.hr,      /* hour */
+            prm->time.mt,      /* minute */
+            prm->time.sc,      /* second */
+            0                  /* microseconds */
+        );
 
         /* Error check if too many beams were included in RadarScan structure */
         if (ptr->num>1000) {
@@ -265,12 +286,19 @@ int FitToRadarScan(struct RadarScan *ptr,
   
   ptr->stid=prm->stid;
 
-  bm=RadarScanAddBeam(ptr,prm->nrang);
-  if (bm==NULL) return -1;  
-  bm->time=TimeYMDHMSToEpoch(prm->time.yr,prm->time.mo,
-			      prm->time.dy,
-			      prm->time.hr,prm->time.mt,
-			      prm->time.sc+prm->time.us/1.0e6); 
+  bm = RadarScanAddBeam(ptr, prm->nrang);
+  if (bm == NULL) return -1;
+  
+  /* Calculate time using the correct time structure fields */
+  bm->time = TimeYMDHMSToEpoch(
+      prm->time.yr,      /* year */
+      prm->time.mo,      /* month */
+      prm->time.dy,      /* day */
+      prm->time.hr,      /* hour */
+      prm->time.mt,      /* minute */
+      prm->time.sc,      /* second */
+      0                  /* microseconds */
+  );
  
   bm->scan=prm->scan;  
   bm->bm=prm->bmnum;

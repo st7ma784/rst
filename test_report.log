@@ -1,0 +1,712 @@
+SuperDARN Module Test Report
+Generated: Fri Jul 25 10:46:49 PM BST 2025
+============================
+
+make: Entering directory '/home/user/rst/codebase/superdarn/src.lib/tk/fitacf_v3.0/tests'
+cc -DCUDA_ENABLED -std=c99 -Wall -Wextra -I/home/user/rst/build/include/base -I/home/user/rst/build/include/general -I/home/user/rst/build/include/superdarn/fit -I/home/user/rst/build/include/superdarn -I../include -I/usr/local/cuda/include -c test_cuda_validation.c -o test_cuda_validation.o
+In file included from test_cuda_validation.c:26:
+../include/llist_compat.h:22:23: error: conflicting types for ‘llist’; have ‘llist_cuda_t *’
+   22 | typedef llist_cuda_t* llist;
+      |                       ^~~~~
+In file included from test_cuda_validation.c:24:
+../include/llist.h:68:16: note: previous declaration of ‘llist’ with type ‘llist’ {aka ‘void *’}
+   68 | typedef void * llist;
+      |                ^~~~~
+../include/llist_compat.h:27:5: error: redeclaration of enumerator ‘LLIST_SUCCESS’
+   27 |     LLIST_SUCCESS = LLIST_CUDA_SUCCESS,
+      |     ^~~~~~~~~~~~~
+../include/llist.h:38:9: note: previous definition of ‘LLIST_SUCCESS’ with type ‘enum <anonymous>’
+   38 |         LLIST_SUCCESS = 0x00,                   /**< Operating success */
+      |         ^~~~~~~~~~~~~
+../include/llist_compat.h:28:5: error: redeclaration of enumerator ‘LLIST_NODE_NOT_FOUND’
+   28 |     LLIST_NODE_NOT_FOUND = LLIST_CUDA_NODE_NOT_FOUND,
+      |     ^~~~~~~~~~~~~~~~~~~~
+../include/llist.h:39:9: note: previous definition of ‘LLIST_NODE_NOT_FOUND’ with type ‘enum <anonymous>’
+   39 |         LLIST_NODE_NOT_FOUND,                   /**< Error: No matching node found*/
+      |         ^~~~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:29:5: error: redeclaration of enumerator ‘LLIST_EQUAL_MISSING’
+   29 |     LLIST_EQUAL_MISSING = LLIST_CUDA_EQUAL_MISSING,
+      |     ^~~~~~~~~~~~~~~~~~~
+../include/llist.h:40:9: note: previous definition of ‘LLIST_EQUAL_MISSING’ with type ‘enum <anonymous>’
+   40 |         LLIST_EQUAL_MISSING,                    /**< Error: Equal function is missing*/
+      |         ^~~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:30:5: error: redeclaration of enumerator ‘LLIST_COMPERATOR_MISSING’
+   30 |     LLIST_COMPERATOR_MISSING = LLIST_CUDA_COMPARATOR_MISSING,
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~
+../include/llist.h:41:9: note: previous definition of ‘LLIST_COMPERATOR_MISSING’ with type ‘enum <anonymous>’
+   41 |         LLIST_COMPERATOR_MISSING,               /**< Error: Comparator function is missing*/
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:31:5: error: redeclaration of enumerator ‘LLIST_NULL_ARGUMENT’
+   31 |     LLIST_NULL_ARGUMENT = LLIST_CUDA_NULL_ARGUMENT,
+      |     ^~~~~~~~~~~~~~~~~~~
+../include/llist.h:42:9: note: previous definition of ‘LLIST_NULL_ARGUMENT’ with type ‘enum <anonymous>’
+   42 |         LLIST_NULL_ARGUMENT,                    /**< Error: NULL argument*/
+      |         ^~~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:32:5: error: redeclaration of enumerator ‘LLIST_MALLOC_ERROR’
+   32 |     LLIST_MALLOC_ERROR = LLIST_CUDA_MALLOC_ERROR,
+      |     ^~~~~~~~~~~~~~~~~~
+../include/llist.h:43:9: note: previous definition of ‘LLIST_MALLOC_ERROR’ with type ‘enum <anonymous>’
+   43 |         LLIST_MALLOC_ERROR,                             /**< Error: Memory allocation error*/
+      |         ^~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:33:5: error: redeclaration of enumerator ‘LLIST_NOT_IMPLEMENTED’
+   33 |     LLIST_NOT_IMPLEMENTED = LLIST_CUDA_ERROR,
+      |     ^~~~~~~~~~~~~~~~~~~~~
+../include/llist.h:44:5: note: previous definition of ‘LLIST_NOT_IMPLEMENTED’ with type ‘enum <anonymous>’
+   44 |     LLIST_NOT_IMPLEMENTED,          /**< Error: Implementation missing*/
+      |     ^~~~~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:34:5: error: redeclaration of enumerator ‘LLIST_MULTITHREAD_ISSUE’
+   34 |     LLIST_MULTITHREAD_ISSUE = LLIST_CUDA_ERROR,
+      |     ^~~~~~~~~~~~~~~~~~~~~~~
+../include/llist.h:45:5: note: previous definition of ‘LLIST_MULTITHREAD_ISSUE’ with type ‘enum <anonymous>’
+   45 |     LLIST_MULTITHREAD_ISSUE,        /**< Error: Multithreading issue*/
+      |     ^~~~~~~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:35:5: error: redeclaration of enumerator ‘LLIST_ERROR’
+   35 |     LLIST_ERROR = LLIST_CUDA_ERROR,
+      |     ^~~~~~~~~~~
+../include/llist.h:46:9: note: previous definition of ‘LLIST_ERROR’ with type ‘enum <anonymous>’
+   46 |         LLIST_ERROR,                                            /**< Error: Generic error*/
+      |         ^~~~~~~~~~~
+../include/llist_compat.h:36:5: error: redeclaration of enumerator ‘LLIST_END_OF_LIST’
+   36 |     LLIST_END_OF_LIST = LLIST_CUDA_ERROR
+      |     ^~~~~~~~~~~~~~~~~
+../include/llist.h:47:9: note: previous definition of ‘LLIST_END_OF_LIST’ with type ‘enum <anonymous>’
+   47 |         LLIST_END_OF_LIST
+      |         ^~~~~~~~~~~~~~~~~
+../include/llist_compat.h:37:3: error: conflicting types for ‘E_LLIST’; have ‘enum <anonymous>’
+   37 | } E_LLIST;
+      |   ^~~~~~~
+../include/llist.h:48:3: note: previous declaration of ‘E_LLIST’ with type ‘E_LLIST’
+   48 | } E_LLIST;
+      |   ^~~~~~~
+../include/llist_compat.h:40: warning: "ADD_NODE_FRONT" redefined
+   40 | #define ADD_NODE_FRONT      LLIST_CUDA_ADD_FRONT
+      | 
+../include/llist.h:50: note: this is the location of the previous definition
+   50 | #define ADD_NODE_FRONT          (1 << 0)
+      | 
+../include/llist_compat.h:41: warning: "ADD_NODE_REAR" redefined
+   41 | #define ADD_NODE_REAR       LLIST_CUDA_ADD_REAR
+      | 
+../include/llist.h:51: note: this is the location of the previous definition
+   51 | #define ADD_NODE_REAR           ~ADD_NODE_FRONT
+      | 
+../include/llist_compat.h:42: warning: "ADD_NODE_BEFORE" redefined
+   42 | #define ADD_NODE_BEFORE     LLIST_CUDA_ADD_FRONT
+      | 
+../include/llist.h:53: note: this is the location of the previous definition
+   53 | #define ADD_NODE_BEFORE    ( 1<<0 )
+      | 
+../include/llist_compat.h:43: warning: "ADD_NODE_AFTER" redefined
+   43 | #define ADD_NODE_AFTER      LLIST_CUDA_ADD_REAR
+      | 
+../include/llist.h:54: note: this is the location of the previous definition
+   54 | #define ADD_NODE_AFTER      ~ADD_NODE_BEFORE
+      | 
+../include/llist_compat.h:44: warning: "SORT_LIST_ASCENDING" redefined
+   44 | #define SORT_LIST_ASCENDING LLIST_CUDA_SORT_ASC
+      | 
+../include/llist.h:56: note: this is the location of the previous definition
+   56 | #define SORT_LIST_ASCENDING ( 1<<0 )
+      | 
+../include/llist_compat.h:45: warning: "SORT_LIST_DESCENDING" redefined
+   45 | #define SORT_LIST_DESCENDING LLIST_CUDA_SORT_DESC
+      | 
+../include/llist.h:57: note: this is the location of the previous definition
+   57 | #define SORT_LIST_DESCENDING ~SORT_LIST_ASCENDING
+      | 
+../include/llist_compat.h:54:31: error: conflicting types for ‘comperator’; have ‘llist_cuda_comparator’ {aka ‘int (*)(const void *, const void *)’}
+   54 | typedef llist_cuda_comparator comperator;  // Note: original had typo "comperator"
+      |                               ^~~~~~~~~~
+../include/llist.h:84:17: note: previous declaration of ‘comperator’ with type ‘comperator’ {aka ‘int (*)(void *, void *)’}
+   84 | typedef int ( * comperator ) ( llist_node first,llist_node second );
+      |                 ^~~~~~~~~~
+../include/llist_compat.h:55:26: error: conflicting types for ‘equal’; have ‘llist_cuda_equal’ {aka ‘_Bool (*)(const void *, const void *)’}
+   55 | typedef llist_cuda_equal equal;
+      |                          ^~~~~
+../include/llist.h:92:18: note: previous declaration of ‘equal’ with type ‘equal’ {aka ‘_Bool (*)(void *, void *)’}
+   92 | typedef bool ( * equal ) ( llist_node, llist_node );
+      |                  ^~~~~
+../include/llist_compat.h:62:21: error: conflicting types for ‘llist_create’; have ‘llist_cuda_t *(int (*)(const void *, const void *), _Bool (*)(const void *, const void *), unsigned int)’
+   62 | static inline llist llist_create(comperator compare_func, equal equal_func, unsigned flags) {
+      |                     ^~~~~~~~~~~~
+../include/llist.h:103:7: note: previous declaration of ‘llist_create’ with type ‘void *(int (*)(void *, void *), _Bool (*)(void *, void *), unsigned int)’
+  103 | llist llist_create ( comperator compare_func, equal equal_func, unsigned flags );
+      |       ^~~~~~~~~~~~
+../include/llist_compat.h: In function ‘llist_create’:
+../include/llist_compat.h:62:86: warning: unused parameter ‘flags’ [-Wunused-parameter]
+   62 | static inline llist llist_create(comperator compare_func, equal equal_func, unsigned flags) {
+      |                                                                             ~~~~~~~~~^~~~~
+../include/llist_compat.h: At top level:
+../include/llist_compat.h:70:20: error: conflicting types for ‘llist_destroy’; have ‘void(llist_cuda_t *, _Bool,  void (*)(void *))’
+   70 | static inline void llist_destroy(llist list, bool destroy_nodes, node_func destructor) {
+      |                    ^~~~~~~~~~~~~
+../include/llist.h:114:6: note: previous declaration of ‘llist_destroy’ with type ‘void(void *, _Bool,  void (*)(void *))’
+  114 | void llist_destroy ( llist list, bool destroy_nodes, node_func destructor );
+      |      ^~~~~~~~~~~~~
+../include/llist_compat.h:77:19: error: conflicting types for ‘llist_add_node’; have ‘int(llist_cuda_t *, void *, int)’
+   77 | static inline int llist_add_node(llist list, llist_node node, int flags) {
+      |                   ^~~~~~~~~~~~~~
+../include/llist.h:124:5: note: previous declaration of ‘llist_add_node’ with type ‘int(void *, void *, int)’
+  124 | int llist_add_node ( llist list, llist_node node, int flags );
+      |     ^~~~~~~~~~~~~~
+../include/llist_compat.h:84:19: error: conflicting types for ‘llist_delete_node’; have ‘int(llist_cuda_t *, void *, _Bool,  void (*)(void *))’
+   84 | static inline int llist_delete_node(llist list, llist_node node, bool destroy_node, node_func destructor) {
+      |                   ^~~~~~~~~~~~~~~~~
+../include/llist.h:145:5: note: previous declaration of ‘llist_delete_node’ with type ‘int(void *, void *, _Bool,  void (*)(void *))’
+  145 | int llist_delete_node ( llist list, llist_node node, bool destroy_node, node_func destructor );
+      |     ^~~~~~~~~~~~~~~~~
+../include/llist_compat.h:91:19: error: conflicting types for ‘llist_find_node’; have ‘int(llist_cuda_t *, void *, void **)’
+   91 | static inline int llist_find_node(llist list, void* data, llist_node* found) {
+      |                   ^~~~~~~~~~~~~~~
+../include/llist.h:155:5: note: previous declaration of ‘llist_find_node’ with type ‘int(void *, void *, void **)’
+  155 | int llist_find_node ( llist list, void * data, llist_node * found );
+      |     ^~~~~~~~~~~~~~~
+../include/llist_compat.h:98:19: error: conflicting types for ‘llist_size’; have ‘int(llist_cuda_t *)’
+   98 | static inline int llist_size(llist list) {
+      |                   ^~~~~~~~~~
+../include/llist.h:223:5: note: previous declaration of ‘llist_size’ with type ‘int(void *)’
+  223 | int llist_size( llist list );
+      |     ^~~~~~~~~~
+../include/llist_compat.h:105:20: error: conflicting types for ‘llist_is_empty’; have ‘_Bool(llist_cuda_t *)’
+  105 | static inline bool llist_is_empty(llist list) {
+      |                    ^~~~~~~~~~~~~~
+../include/llist.h:273:6: note: previous declaration of ‘llist_is_empty’ with type ‘_Bool(void *)’
+  273 | bool llist_is_empty( llist list );
+      |      ^~~~~~~~~~~~~~
+../include/llist_compat.h:112:26: error: conflicting types for ‘llist_get_head’; have ‘void *(llist_cuda_t *)’
+  112 | static inline llist_node llist_get_head(llist list) {
+      |                          ^~~~~~~~~~~~~~
+../include/llist.h:186:12: note: previous declaration of ‘llist_get_head’ with type ‘void *(void *)’
+  186 | llist_node llist_get_head ( llist list );
+      |            ^~~~~~~~~~~~~~
+../include/llist_compat.h:119:26: error: conflicting types for ‘llist_get_tail’; have ‘void *(llist_cuda_t *)’
+  119 | static inline llist_node llist_get_tail(llist list) {
+      |                          ^~~~~~~~~~~~~~
+../include/llist.h:193:12: note: previous declaration of ‘llist_get_tail’ with type ‘void *(void *)’
+  193 | llist_node llist_get_tail ( llist list );
+      |            ^~~~~~~~~~~~~~
+../include/llist_compat.h:127:19: error: conflicting types for ‘llist_push’; have ‘int(llist_cuda_t *, void *)’
+  127 | static inline int llist_push(llist list, llist_node node) {
+      |                   ^~~~~~~~~~
+../include/llist.h:202:5: note: previous declaration of ‘llist_push’ with type ‘int(void *, void *)’
+  202 | int llist_push ( llist list, llist_node node );
+      |     ^~~~~~~~~~
+../include/llist_compat.h:134:26: error: conflicting types for ‘llist_peek’; have ‘void *(llist_cuda_t *)’
+  134 | static inline llist_node llist_peek(llist list) {
+      |                          ^~~~~~~~~~
+../include/llist.h:209:12: note: previous declaration of ‘llist_peek’ with type ‘void *(void *)’
+  209 | llist_node llist_peek( llist list );
+      |            ^~~~~~~~~~
+../include/llist_compat.h:141:26: error: conflicting types for ‘llist_pop’; have ‘void *(llist_cuda_t *)’
+  141 | static inline llist_node llist_pop(llist list) {
+      |                          ^~~~~~~~~
+../include/llist.h:216:12: note: previous declaration of ‘llist_pop’ with type ‘void *(void *)’
+  216 | llist_node llist_pop( llist list );
+      |            ^~~~~~~~~
+../include/llist_compat.h:152:19: error: conflicting types for ‘llist_reset_iter’; have ‘int(llist_cuda_t *)’
+  152 | static inline int llist_reset_iter(llist list) {
+      |                   ^~~~~~~~~~~~~~~~
+../include/llist.h:282:5: note: previous declaration of ‘llist_reset_iter’ with type ‘int(void *)’
+  282 | int llist_reset_iter(llist list);
+      |     ^~~~~~~~~~~~~~~~
+../include/llist_compat.h:159:19: error: conflicting types for ‘llist_go_next’; have ‘int(llist_cuda_t *)’
+  159 | static inline int llist_go_next(llist list) {
+      |                   ^~~~~~~~~~~~~
+../include/llist.h:291:5: note: previous declaration of ‘llist_go_next’ with type ‘int(void *)’
+  291 | int llist_go_next(llist list);
+      |     ^~~~~~~~~~~~~
+../include/llist_compat.h:166:19: error: conflicting types for ‘llist_get_iter’; have ‘int(llist_cuda_t *, void **)’
+  166 | static inline int llist_get_iter(llist list, void** item) {
+      |                   ^~~~~~~~~~~~~~
+../include/llist.h:301:5: note: previous declaration of ‘llist_get_iter’ with type ‘int(void *, void **)’
+  301 | int llist_get_iter(llist list,void** item);
+      |     ^~~~~~~~~~~~~~
+../include/llist_compat.h:178:19: error: conflicting types for ‘llist_for_each’; have ‘int(llist_cuda_t *, void (*)(void *))’
+  178 | static inline int llist_for_each(llist list, node_func func) {
+      |                   ^~~~~~~~~~~~~~
+../include/llist.h:163:5: note: previous declaration of ‘llist_for_each’ with type ‘int(void *, void (*)(void *))’
+  163 | int llist_for_each ( llist list, node_func func );
+      |     ^~~~~~~~~~~~~~
+../include/llist_compat.h:197:19: error: conflicting types for ‘llist_for_each_arg’; have ‘int(llist_cuda_t *, void (*)(void *, void *, void *), void *, void *)’
+  197 | static inline int llist_for_each_arg(llist list, node_func_arg func, void* arg1, void* arg2) {
+      |                   ^~~~~~~~~~~~~~~~~~
+../include/llist.h:172:5: note: previous declaration of ‘llist_for_each_arg’ with type ‘int(void *, void (*)(void *, void *, void *), void *, void *)’
+  172 | int llist_for_each_arg ( llist list, node_func_arg func, void * arg1, void* arg2 );
+      |     ^~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:212:19: error: conflicting types for ‘llist_sort’; have ‘int(llist_cuda_t *, int)’
+  212 | static inline int llist_sort(llist list, int flags) {
+      |                   ^~~~~~~~~~
+../include/llist.h:179:5: note: previous declaration of ‘llist_sort’ with type ‘int(void *, int)’
+  179 | int llist_sort ( llist list, int flags );
+      |     ^~~~~~~~~~
+../include/llist_compat.h:219:19: error: conflicting types for ‘llist_get_max’; have ‘int(llist_cuda_t *, void **)’
+  219 | static inline int llist_get_max(llist list, llist_node* max) {
+      |                   ^~~~~~~~~~~~~
+../include/llist.h:251:5: note: previous declaration of ‘llist_get_max’ with type ‘int(void *, void **)’
+  251 | int llist_get_max( llist list, llist_node * max);
+      |     ^~~~~~~~~~~~~
+../include/llist_compat.h:239:19: error: conflicting types for ‘llist_get_min’; have ‘int(llist_cuda_t *, void **)’
+  239 | static inline int llist_get_min(llist list, llist_node* min) {
+      |                   ^~~~~~~~~~~~~
+../include/llist.h:259:5: note: previous declaration of ‘llist_get_min’ with type ‘int(void *, void **)’
+  259 | int llist_get_min(llist list, llist_node * min);
+      |     ^~~~~~~~~~~~~
+../include/llist_compat.h:259:19: error: conflicting types for ‘llist_reverse’; have ‘int(llist_cuda_t *)’
+  259 | static inline int llist_reverse(llist list) {
+      |                   ^~~~~~~~~~~~~
+../include/llist.h:266:5: note: previous declaration of ‘llist_reverse’ with type ‘int(void *)’
+  266 | int llist_reverse( llist list );
+      |     ^~~~~~~~~~~~~
+../include/llist_compat.h:274:19: error: conflicting types for ‘llist_concat’; have ‘int(llist_cuda_t *, llist_cuda_t *)’
+  274 | static inline int llist_concat(llist first, llist second) {
+      |                   ^~~~~~~~~~~~
+../include/llist.h:233:5: note: previous declaration of ‘llist_concat’ with type ‘int(void *, void *)’
+  233 | int llist_concat( llist first, llist second );
+      |     ^~~~~~~~~~~~
+../include/llist_compat.h:290:19: error: conflicting types for ‘llist_merge’; have ‘int(llist_cuda_t *, llist_cuda_t *)’
+  290 | static inline int llist_merge(llist first, llist second) {
+      |                   ^~~~~~~~~~~
+../include/llist.h:243:5: note: previous declaration of ‘llist_merge’ with type ‘int(void *, void *)’
+  243 | int llist_merge( llist first, llist second );
+      |     ^~~~~~~~~~~
+../include/llist_compat.h: In function ‘llist_merge’:
+../include/llist_compat.h:290:37: warning: unused parameter ‘first’ [-Wunused-parameter]
+  290 | static inline int llist_merge(llist first, llist second) {
+      |                               ~~~~~~^~~~~
+../include/llist_compat.h:290:50: warning: unused parameter ‘second’ [-Wunused-parameter]
+  290 | static inline int llist_merge(llist first, llist second) {
+      |                                            ~~~~~~^~~~~~
+../include/llist_compat.h: In function ‘llist_cuda_acceleration_available’:
+../include/llist_compat.h:299:60: warning: unused parameter ‘list’ [-Wunused-parameter]
+  299 | static inline bool llist_cuda_acceleration_available(llist list) {
+      |                                                      ~~~~~~^~~~
+In file included from test_cuda_validation.c:30:
+../include/fitacftoplevel.h: At top level:
+../include/fitacftoplevel.h:41:10: fatal error: dmap.h: No such file or directory
+   41 | #include "dmap.h"
+      |          ^~~~~~~~
+compilation terminated.
+make: *** [makefile:54: test_cuda_validation.o] Error 1
+make: Leaving directory '/home/user/rst/codebase/superdarn/src.lib/tk/fitacf_v3.0/tests'
+make: Entering directory '/home/user/rst/codebase/superdarn/src.lib/tk/fitacf_v3.0/tests'
+cc -DCUDA_ENABLED -std=c99 -Wall -Wextra -I/home/user/rst/build/include/base -I/home/user/rst/build/include/general -I/home/user/rst/build/include/superdarn/fit -I/home/user/rst/build/include/superdarn -I../include -I/usr/local/cuda/include -c test_cuda_validation.c -o test_cuda_validation.o
+In file included from test_cuda_validation.c:26:
+../include/llist_compat.h:22:23: error: conflicting types for ‘llist’; have ‘llist_cuda_t *’
+   22 | typedef llist_cuda_t* llist;
+      |                       ^~~~~
+In file included from test_cuda_validation.c:24:
+../include/llist.h:68:16: note: previous declaration of ‘llist’ with type ‘llist’ {aka ‘void *’}
+   68 | typedef void * llist;
+      |                ^~~~~
+../include/llist_compat.h:27:5: error: redeclaration of enumerator ‘LLIST_SUCCESS’
+   27 |     LLIST_SUCCESS = LLIST_CUDA_SUCCESS,
+      |     ^~~~~~~~~~~~~
+../include/llist.h:38:9: note: previous definition of ‘LLIST_SUCCESS’ with type ‘enum <anonymous>’
+   38 |         LLIST_SUCCESS = 0x00,                   /**< Operating success */
+      |         ^~~~~~~~~~~~~
+../include/llist_compat.h:28:5: error: redeclaration of enumerator ‘LLIST_NODE_NOT_FOUND’
+   28 |     LLIST_NODE_NOT_FOUND = LLIST_CUDA_NODE_NOT_FOUND,
+      |     ^~~~~~~~~~~~~~~~~~~~
+../include/llist.h:39:9: note: previous definition of ‘LLIST_NODE_NOT_FOUND’ with type ‘enum <anonymous>’
+   39 |         LLIST_NODE_NOT_FOUND,                   /**< Error: No matching node found*/
+      |         ^~~~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:29:5: error: redeclaration of enumerator ‘LLIST_EQUAL_MISSING’
+   29 |     LLIST_EQUAL_MISSING = LLIST_CUDA_EQUAL_MISSING,
+      |     ^~~~~~~~~~~~~~~~~~~
+../include/llist.h:40:9: note: previous definition of ‘LLIST_EQUAL_MISSING’ with type ‘enum <anonymous>’
+   40 |         LLIST_EQUAL_MISSING,                    /**< Error: Equal function is missing*/
+      |         ^~~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:30:5: error: redeclaration of enumerator ‘LLIST_COMPERATOR_MISSING’
+   30 |     LLIST_COMPERATOR_MISSING = LLIST_CUDA_COMPARATOR_MISSING,
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~
+../include/llist.h:41:9: note: previous definition of ‘LLIST_COMPERATOR_MISSING’ with type ‘enum <anonymous>’
+   41 |         LLIST_COMPERATOR_MISSING,               /**< Error: Comparator function is missing*/
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:31:5: error: redeclaration of enumerator ‘LLIST_NULL_ARGUMENT’
+   31 |     LLIST_NULL_ARGUMENT = LLIST_CUDA_NULL_ARGUMENT,
+      |     ^~~~~~~~~~~~~~~~~~~
+../include/llist.h:42:9: note: previous definition of ‘LLIST_NULL_ARGUMENT’ with type ‘enum <anonymous>’
+   42 |         LLIST_NULL_ARGUMENT,                    /**< Error: NULL argument*/
+      |         ^~~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:32:5: error: redeclaration of enumerator ‘LLIST_MALLOC_ERROR’
+   32 |     LLIST_MALLOC_ERROR = LLIST_CUDA_MALLOC_ERROR,
+      |     ^~~~~~~~~~~~~~~~~~
+../include/llist.h:43:9: note: previous definition of ‘LLIST_MALLOC_ERROR’ with type ‘enum <anonymous>’
+   43 |         LLIST_MALLOC_ERROR,                             /**< Error: Memory allocation error*/
+      |         ^~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:33:5: error: redeclaration of enumerator ‘LLIST_NOT_IMPLEMENTED’
+   33 |     LLIST_NOT_IMPLEMENTED = LLIST_CUDA_ERROR,
+      |     ^~~~~~~~~~~~~~~~~~~~~
+../include/llist.h:44:5: note: previous definition of ‘LLIST_NOT_IMPLEMENTED’ with type ‘enum <anonymous>’
+   44 |     LLIST_NOT_IMPLEMENTED,          /**< Error: Implementation missing*/
+      |     ^~~~~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:34:5: error: redeclaration of enumerator ‘LLIST_MULTITHREAD_ISSUE’
+   34 |     LLIST_MULTITHREAD_ISSUE = LLIST_CUDA_ERROR,
+      |     ^~~~~~~~~~~~~~~~~~~~~~~
+../include/llist.h:45:5: note: previous definition of ‘LLIST_MULTITHREAD_ISSUE’ with type ‘enum <anonymous>’
+   45 |     LLIST_MULTITHREAD_ISSUE,        /**< Error: Multithreading issue*/
+      |     ^~~~~~~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:35:5: error: redeclaration of enumerator ‘LLIST_ERROR’
+   35 |     LLIST_ERROR = LLIST_CUDA_ERROR,
+      |     ^~~~~~~~~~~
+../include/llist.h:46:9: note: previous definition of ‘LLIST_ERROR’ with type ‘enum <anonymous>’
+   46 |         LLIST_ERROR,                                            /**< Error: Generic error*/
+      |         ^~~~~~~~~~~
+../include/llist_compat.h:36:5: error: redeclaration of enumerator ‘LLIST_END_OF_LIST’
+   36 |     LLIST_END_OF_LIST = LLIST_CUDA_ERROR
+      |     ^~~~~~~~~~~~~~~~~
+../include/llist.h:47:9: note: previous definition of ‘LLIST_END_OF_LIST’ with type ‘enum <anonymous>’
+   47 |         LLIST_END_OF_LIST
+      |         ^~~~~~~~~~~~~~~~~
+../include/llist_compat.h:37:3: error: conflicting types for ‘E_LLIST’; have ‘enum <anonymous>’
+   37 | } E_LLIST;
+      |   ^~~~~~~
+../include/llist.h:48:3: note: previous declaration of ‘E_LLIST’ with type ‘E_LLIST’
+   48 | } E_LLIST;
+      |   ^~~~~~~
+../include/llist_compat.h:40: warning: "ADD_NODE_FRONT" redefined
+   40 | #define ADD_NODE_FRONT      LLIST_CUDA_ADD_FRONT
+      | 
+../include/llist.h:50: note: this is the location of the previous definition
+   50 | #define ADD_NODE_FRONT          (1 << 0)
+      | 
+../include/llist_compat.h:41: warning: "ADD_NODE_REAR" redefined
+   41 | #define ADD_NODE_REAR       LLIST_CUDA_ADD_REAR
+      | 
+../include/llist.h:51: note: this is the location of the previous definition
+   51 | #define ADD_NODE_REAR           ~ADD_NODE_FRONT
+      | 
+../include/llist_compat.h:42: warning: "ADD_NODE_BEFORE" redefined
+   42 | #define ADD_NODE_BEFORE     LLIST_CUDA_ADD_FRONT
+      | 
+../include/llist.h:53: note: this is the location of the previous definition
+   53 | #define ADD_NODE_BEFORE    ( 1<<0 )
+      | 
+../include/llist_compat.h:43: warning: "ADD_NODE_AFTER" redefined
+   43 | #define ADD_NODE_AFTER      LLIST_CUDA_ADD_REAR
+      | 
+../include/llist.h:54: note: this is the location of the previous definition
+   54 | #define ADD_NODE_AFTER      ~ADD_NODE_BEFORE
+      | 
+../include/llist_compat.h:44: warning: "SORT_LIST_ASCENDING" redefined
+   44 | #define SORT_LIST_ASCENDING LLIST_CUDA_SORT_ASC
+      | 
+../include/llist.h:56: note: this is the location of the previous definition
+   56 | #define SORT_LIST_ASCENDING ( 1<<0 )
+      | 
+../include/llist_compat.h:45: warning: "SORT_LIST_DESCENDING" redefined
+   45 | #define SORT_LIST_DESCENDING LLIST_CUDA_SORT_DESC
+      | 
+../include/llist.h:57: note: this is the location of the previous definition
+   57 | #define SORT_LIST_DESCENDING ~SORT_LIST_ASCENDING
+      | 
+../include/llist_compat.h:54:31: error: conflicting types for ‘comperator’; have ‘llist_cuda_comparator’ {aka ‘int (*)(const void *, const void *)’}
+   54 | typedef llist_cuda_comparator comperator;  // Note: original had typo "comperator"
+      |                               ^~~~~~~~~~
+../include/llist.h:84:17: note: previous declaration of ‘comperator’ with type ‘comperator’ {aka ‘int (*)(void *, void *)’}
+   84 | typedef int ( * comperator ) ( llist_node first,llist_node second );
+      |                 ^~~~~~~~~~
+../include/llist_compat.h:55:26: error: conflicting types for ‘equal’; have ‘llist_cuda_equal’ {aka ‘_Bool (*)(const void *, const void *)’}
+   55 | typedef llist_cuda_equal equal;
+      |                          ^~~~~
+../include/llist.h:92:18: note: previous declaration of ‘equal’ with type ‘equal’ {aka ‘_Bool (*)(void *, void *)’}
+   92 | typedef bool ( * equal ) ( llist_node, llist_node );
+      |                  ^~~~~
+../include/llist_compat.h:62:21: error: conflicting types for ‘llist_create’; have ‘llist_cuda_t *(int (*)(const void *, const void *), _Bool (*)(const void *, const void *), unsigned int)’
+   62 | static inline llist llist_create(comperator compare_func, equal equal_func, unsigned flags) {
+      |                     ^~~~~~~~~~~~
+../include/llist.h:103:7: note: previous declaration of ‘llist_create’ with type ‘void *(int (*)(void *, void *), _Bool (*)(void *, void *), unsigned int)’
+  103 | llist llist_create ( comperator compare_func, equal equal_func, unsigned flags );
+      |       ^~~~~~~~~~~~
+../include/llist_compat.h: In function ‘llist_create’:
+../include/llist_compat.h:62:86: warning: unused parameter ‘flags’ [-Wunused-parameter]
+   62 | static inline llist llist_create(comperator compare_func, equal equal_func, unsigned flags) {
+      |                                                                             ~~~~~~~~~^~~~~
+../include/llist_compat.h: At top level:
+../include/llist_compat.h:70:20: error: conflicting types for ‘llist_destroy’; have ‘void(llist_cuda_t *, _Bool,  void (*)(void *))’
+   70 | static inline void llist_destroy(llist list, bool destroy_nodes, node_func destructor) {
+      |                    ^~~~~~~~~~~~~
+../include/llist.h:114:6: note: previous declaration of ‘llist_destroy’ with type ‘void(void *, _Bool,  void (*)(void *))’
+  114 | void llist_destroy ( llist list, bool destroy_nodes, node_func destructor );
+      |      ^~~~~~~~~~~~~
+../include/llist_compat.h:77:19: error: conflicting types for ‘llist_add_node’; have ‘int(llist_cuda_t *, void *, int)’
+   77 | static inline int llist_add_node(llist list, llist_node node, int flags) {
+      |                   ^~~~~~~~~~~~~~
+../include/llist.h:124:5: note: previous declaration of ‘llist_add_node’ with type ‘int(void *, void *, int)’
+  124 | int llist_add_node ( llist list, llist_node node, int flags );
+      |     ^~~~~~~~~~~~~~
+../include/llist_compat.h:84:19: error: conflicting types for ‘llist_delete_node’; have ‘int(llist_cuda_t *, void *, _Bool,  void (*)(void *))’
+   84 | static inline int llist_delete_node(llist list, llist_node node, bool destroy_node, node_func destructor) {
+      |                   ^~~~~~~~~~~~~~~~~
+../include/llist.h:145:5: note: previous declaration of ‘llist_delete_node’ with type ‘int(void *, void *, _Bool,  void (*)(void *))’
+  145 | int llist_delete_node ( llist list, llist_node node, bool destroy_node, node_func destructor );
+      |     ^~~~~~~~~~~~~~~~~
+../include/llist_compat.h:91:19: error: conflicting types for ‘llist_find_node’; have ‘int(llist_cuda_t *, void *, void **)’
+   91 | static inline int llist_find_node(llist list, void* data, llist_node* found) {
+      |                   ^~~~~~~~~~~~~~~
+../include/llist.h:155:5: note: previous declaration of ‘llist_find_node’ with type ‘int(void *, void *, void **)’
+  155 | int llist_find_node ( llist list, void * data, llist_node * found );
+      |     ^~~~~~~~~~~~~~~
+../include/llist_compat.h:98:19: error: conflicting types for ‘llist_size’; have ‘int(llist_cuda_t *)’
+   98 | static inline int llist_size(llist list) {
+      |                   ^~~~~~~~~~
+../include/llist.h:223:5: note: previous declaration of ‘llist_size’ with type ‘int(void *)’
+  223 | int llist_size( llist list );
+      |     ^~~~~~~~~~
+../include/llist_compat.h:105:20: error: conflicting types for ‘llist_is_empty’; have ‘_Bool(llist_cuda_t *)’
+  105 | static inline bool llist_is_empty(llist list) {
+      |                    ^~~~~~~~~~~~~~
+../include/llist.h:273:6: note: previous declaration of ‘llist_is_empty’ with type ‘_Bool(void *)’
+  273 | bool llist_is_empty( llist list );
+      |      ^~~~~~~~~~~~~~
+../include/llist_compat.h:112:26: error: conflicting types for ‘llist_get_head’; have ‘void *(llist_cuda_t *)’
+  112 | static inline llist_node llist_get_head(llist list) {
+      |                          ^~~~~~~~~~~~~~
+../include/llist.h:186:12: note: previous declaration of ‘llist_get_head’ with type ‘void *(void *)’
+  186 | llist_node llist_get_head ( llist list );
+      |            ^~~~~~~~~~~~~~
+../include/llist_compat.h:119:26: error: conflicting types for ‘llist_get_tail’; have ‘void *(llist_cuda_t *)’
+  119 | static inline llist_node llist_get_tail(llist list) {
+      |                          ^~~~~~~~~~~~~~
+../include/llist.h:193:12: note: previous declaration of ‘llist_get_tail’ with type ‘void *(void *)’
+  193 | llist_node llist_get_tail ( llist list );
+      |            ^~~~~~~~~~~~~~
+../include/llist_compat.h:127:19: error: conflicting types for ‘llist_push’; have ‘int(llist_cuda_t *, void *)’
+  127 | static inline int llist_push(llist list, llist_node node) {
+      |                   ^~~~~~~~~~
+../include/llist.h:202:5: note: previous declaration of ‘llist_push’ with type ‘int(void *, void *)’
+  202 | int llist_push ( llist list, llist_node node );
+      |     ^~~~~~~~~~
+../include/llist_compat.h:134:26: error: conflicting types for ‘llist_peek’; have ‘void *(llist_cuda_t *)’
+  134 | static inline llist_node llist_peek(llist list) {
+      |                          ^~~~~~~~~~
+../include/llist.h:209:12: note: previous declaration of ‘llist_peek’ with type ‘void *(void *)’
+  209 | llist_node llist_peek( llist list );
+      |            ^~~~~~~~~~
+../include/llist_compat.h:141:26: error: conflicting types for ‘llist_pop’; have ‘void *(llist_cuda_t *)’
+  141 | static inline llist_node llist_pop(llist list) {
+      |                          ^~~~~~~~~
+../include/llist.h:216:12: note: previous declaration of ‘llist_pop’ with type ‘void *(void *)’
+  216 | llist_node llist_pop( llist list );
+      |            ^~~~~~~~~
+../include/llist_compat.h:152:19: error: conflicting types for ‘llist_reset_iter’; have ‘int(llist_cuda_t *)’
+  152 | static inline int llist_reset_iter(llist list) {
+      |                   ^~~~~~~~~~~~~~~~
+../include/llist.h:282:5: note: previous declaration of ‘llist_reset_iter’ with type ‘int(void *)’
+  282 | int llist_reset_iter(llist list);
+      |     ^~~~~~~~~~~~~~~~
+../include/llist_compat.h:159:19: error: conflicting types for ‘llist_go_next’; have ‘int(llist_cuda_t *)’
+  159 | static inline int llist_go_next(llist list) {
+      |                   ^~~~~~~~~~~~~
+../include/llist.h:291:5: note: previous declaration of ‘llist_go_next’ with type ‘int(void *)’
+  291 | int llist_go_next(llist list);
+      |     ^~~~~~~~~~~~~
+../include/llist_compat.h:166:19: error: conflicting types for ‘llist_get_iter’; have ‘int(llist_cuda_t *, void **)’
+  166 | static inline int llist_get_iter(llist list, void** item) {
+      |                   ^~~~~~~~~~~~~~
+../include/llist.h:301:5: note: previous declaration of ‘llist_get_iter’ with type ‘int(void *, void **)’
+  301 | int llist_get_iter(llist list,void** item);
+      |     ^~~~~~~~~~~~~~
+../include/llist_compat.h:178:19: error: conflicting types for ‘llist_for_each’; have ‘int(llist_cuda_t *, void (*)(void *))’
+  178 | static inline int llist_for_each(llist list, node_func func) {
+      |                   ^~~~~~~~~~~~~~
+../include/llist.h:163:5: note: previous declaration of ‘llist_for_each’ with type ‘int(void *, void (*)(void *))’
+  163 | int llist_for_each ( llist list, node_func func );
+      |     ^~~~~~~~~~~~~~
+../include/llist_compat.h:197:19: error: conflicting types for ‘llist_for_each_arg’; have ‘int(llist_cuda_t *, void (*)(void *, void *, void *), void *, void *)’
+  197 | static inline int llist_for_each_arg(llist list, node_func_arg func, void* arg1, void* arg2) {
+      |                   ^~~~~~~~~~~~~~~~~~
+../include/llist.h:172:5: note: previous declaration of ‘llist_for_each_arg’ with type ‘int(void *, void (*)(void *, void *, void *), void *, void *)’
+  172 | int llist_for_each_arg ( llist list, node_func_arg func, void * arg1, void* arg2 );
+      |     ^~~~~~~~~~~~~~~~~~
+../include/llist_compat.h:212:19: error: conflicting types for ‘llist_sort’; have ‘int(llist_cuda_t *, int)’
+  212 | static inline int llist_sort(llist list, int flags) {
+      |                   ^~~~~~~~~~
+../include/llist.h:179:5: note: previous declaration of ‘llist_sort’ with type ‘int(void *, int)’
+  179 | int llist_sort ( llist list, int flags );
+      |     ^~~~~~~~~~
+../include/llist_compat.h:219:19: error: conflicting types for ‘llist_get_max’; have ‘int(llist_cuda_t *, void **)’
+  219 | static inline int llist_get_max(llist list, llist_node* max) {
+      |                   ^~~~~~~~~~~~~
+../include/llist.h:251:5: note: previous declaration of ‘llist_get_max’ with type ‘int(void *, void **)’
+  251 | int llist_get_max( llist list, llist_node * max);
+      |     ^~~~~~~~~~~~~
+../include/llist_compat.h:239:19: error: conflicting types for ‘llist_get_min’; have ‘int(llist_cuda_t *, void **)’
+  239 | static inline int llist_get_min(llist list, llist_node* min) {
+      |                   ^~~~~~~~~~~~~
+../include/llist.h:259:5: note: previous declaration of ‘llist_get_min’ with type ‘int(void *, void **)’
+  259 | int llist_get_min(llist list, llist_node * min);
+      |     ^~~~~~~~~~~~~
+../include/llist_compat.h:259:19: error: conflicting types for ‘llist_reverse’; have ‘int(llist_cuda_t *)’
+  259 | static inline int llist_reverse(llist list) {
+      |                   ^~~~~~~~~~~~~
+../include/llist.h:266:5: note: previous declaration of ‘llist_reverse’ with type ‘int(void *)’
+  266 | int llist_reverse( llist list );
+      |     ^~~~~~~~~~~~~
+../include/llist_compat.h:274:19: error: conflicting types for ‘llist_concat’; have ‘int(llist_cuda_t *, llist_cuda_t *)’
+  274 | static inline int llist_concat(llist first, llist second) {
+      |                   ^~~~~~~~~~~~
+../include/llist.h:233:5: note: previous declaration of ‘llist_concat’ with type ‘int(void *, void *)’
+  233 | int llist_concat( llist first, llist second );
+      |     ^~~~~~~~~~~~
+../include/llist_compat.h:290:19: error: conflicting types for ‘llist_merge’; have ‘int(llist_cuda_t *, llist_cuda_t *)’
+  290 | static inline int llist_merge(llist first, llist second) {
+      |                   ^~~~~~~~~~~
+../include/llist.h:243:5: note: previous declaration of ‘llist_merge’ with type ‘int(void *, void *)’
+  243 | int llist_merge( llist first, llist second );
+      |     ^~~~~~~~~~~
+../include/llist_compat.h: In function ‘llist_merge’:
+../include/llist_compat.h:290:37: warning: unused parameter ‘first’ [-Wunused-parameter]
+  290 | static inline int llist_merge(llist first, llist second) {
+      |                               ~~~~~~^~~~~
+../include/llist_compat.h:290:50: warning: unused parameter ‘second’ [-Wunused-parameter]
+  290 | static inline int llist_merge(llist first, llist second) {
+      |                                            ~~~~~~^~~~~~
+../include/llist_compat.h: In function ‘llist_cuda_acceleration_available’:
+../include/llist_compat.h:299:60: warning: unused parameter ‘list’ [-Wunused-parameter]
+  299 | static inline bool llist_cuda_acceleration_available(llist list) {
+      |                                                      ~~~~~~^~~~
+In file included from test_cuda_validation.c:30:
+../include/fitacftoplevel.h: At top level:
+../include/fitacftoplevel.h:41:10: fatal error: dmap.h: No such file or directory
+   41 | #include "dmap.h"
+      |          ^~~~~~~~
+compilation terminated.
+make: *** [makefile:54: test_cuda_validation.o] Error 1
+make: Leaving directory '/home/user/rst/codebase/superdarn/src.lib/tk/fitacf_v3.0/tests'
+=== Phase Unwrapping Benchmark ===
+Ranges: 1000, Lags: 256, Iterations: 100, Warmup: 10
+
+Using 1 OpenMP threads
+
+Benchmarking implementations...
+Implementation          Time (ms)    Ranges/ms      Speedup
+--------------------------------------------------
+CPU (Single-thread) :  100 iterations,  1.015 ms/iter,    985.2 ranges/ms
+CPU (OpenMP)        :  100 iterations,  0.909 ms/iter,   1099.9 ranges/ms
+--------------------------------------------------
+Speedup (OMP/ST): 1.12x
+
+Verifying results...
+Single-threaded: PASSED
+OpenMP: PASSED
+=== SUPERDARN Linked List Diagnostic Test ===
+
+Step 1: Creating list...
+✓ List created successfully
+
+Step 2: Testing empty list...
+  Is empty: true
+  Size: 0
+
+Step 3: Adding single node...
+  Add result: 0 (0=success)
+✓ Node added successfully
+
+Step 4: Testing list after adding node...
+  Is empty: false
+  Size: 1
+
+Step 5: Testing iterator initialization...
+  Reset iter result: 0 (0=success)
+✓ Iterator reset successfully
+
+Step 6: Testing get_iter (using correct void** parameter)...
+  About to call llist_get_iter...
+  Get iter result: 0 (0=success)
+  Retrieved pointer: 0x5b46502d6330
+  Retrieved value: 42
+✓ Successfully retrieved first element
+
+Step 7: Testing iteration...
+  Go next result: 9
+  Next get iter result: 0
+  Next element: 0x5b46502d6330 (should be NULL for single item list)
+
+Step 8: Cleaning up...
+✓ List destroyed successfully
+
+=== All diagnostic tests completed successfully! ===
+========================================
+Simple SUPERDARN Linked List Test
+========================================
+
+Testing basic linked list operations...
+  Node 0: id=1, value=10.5, name=first
+  Node 1: id=2, value=20.3, name=second
+  Node 2: id=3, value=15.7, name=third
+✓ Basic operations test passed
+Testing performance with larger dataset...
+  Inserted 1000 items in 0.000 seconds (33333333 items/sec)
+  Iterated through 1000 items in 0.000 seconds (166666667 items/sec)
+  Sorted 1000 items in 0.000 seconds
+✓ Performance test passed
+
+========================================
+Test Results: 2/2 tests passed
+✓ All tests PASSED!
+=== Phase Unwrapping Benchmark ===
+Ranges: 1000, Lags: 256, Iterations: 100
+
+
+Benchmarking CPU implementation...
+CPU (Single-threaded): 100 iterations, 2.818 ms/iter, 354.8 ranges/ms
+
+Verifying results...
+Verification PASSED - All phase values unwrapped correctly
+=== Phase Unwrapping Benchmark ===
+Ranges: 1000, Lags: 256, Iterations: 100, Warmup: 10
+
+Using 1 OpenMP threads
+
+Benchmarking implementations...
+Implementation          Time (ms)    Ranges/ms      Speedup
+--------------------------------------------------
+CPU (Single-thread) :  100 iterations,  1.002 ms/iter,    998.3 ranges/ms
+CPU (OpenMP)        :  100 iterations,  0.960 ms/iter,   1041.4 ranges/ms
+--------------------------------------------------
+Speedup (OMP/ST): 1.04x
+
+Verifying results...
+Single-threaded: PASSED
+OpenMP: PASSED
+========================================
+CUDA Linked List Validation Test Suite
+========================================
+
+[0;34m[INFO][0m Checking prerequisites...
+[0;32m[SUCCESS][0m CUDA compiler found: nvcc: NVIDIA (R) Cuda compiler driver
+[0;32m[SUCCESS][0m GPU detected: NVIDIA GeForce RTX 3090
+[0;32m[SUCCESS][0m Found 2968 rawacf files in /mnt/drive1/rawacf/1999/02
+[0;32m[SUCCESS][0m gcc found
+[0;32m[SUCCESS][0m make found
+[0;32m[SUCCESS][0m ar found
+[0;32m[SUCCESS][0m ranlib found
+[0;34m[INFO][0m Setting up test environment...
+[0;32m[SUCCESS][0m Environment setup complete
+[0;34m[INFO][0m Building libraries...
+[0;34m[INFO][0m Building CPU library...
+gcc -O2 -fPIC -Wall   -c -o determinations.o determinations.c
+determinations.c:34:10: fatal error: llist.h: No such file or directory
+   34 | #include "llist.h"
+      |          ^~~~~~~~~
+compilation terminated.
+make: *** [<builtin>: determinations.o] Error 1
+[0;31m[ERROR][0m Failed to build CPU library
+[0;31m[ERROR][0m Library build failed
+=== Phase Unwrapping Benchmark ===
+Ranges: 1000, Lags: 256, Iterations: 100, Warmup: 10
+
+Using 1 OpenMP threads
+
+Benchmarking implementations...
+Implementation          Time (ms)    Ranges/ms      Speedup
+--------------------------------------------------
+CPU (Single-thread) :  100 iterations,  1.017 ms/iter,    983.5 ranges/ms
+CPU (OpenMP)        :  100 iterations,  0.990 ms/iter,   1010.0 ranges/ms
+--------------------------------------------------
+Speedup (OMP/ST): 1.03x
+
+Verifying results...
+Single-threaded: PASSED
+OpenMP: PASSED

@@ -1,0 +1,1939 @@
+SuperDARN Module Build and Test Report
+Generated: Fri Jul 25 10:46:49 PM BST 2025
+========================================
+
+[INFO] Starting SuperDARN Module Build and Test Process
+[INFO] Script directory: /home/user/rst
+[INFO] Codebase directory: /home/user/rst/codebase/superdarn/src.lib/tk
+[INFO] Checking CUDA availability...
+[SUCCESS] NVCC compiler found: version 12.6.85
+[SUCCESS] CUDA runtime available: NVIDIA GeForce RTX 3090
+[INFO] Building all modules...
+[INFO] Building module: raw.1.22
+[INFO] Building raw.1.22 with Makefile...
+[INFO] Building RST-style module in src/...
+[INFO] Cleaned previous build
+make: *** No rule to make target 'all'.  Stop.
+[SUCCESS] RST makefile build succeeded
+[SUCCESS] Module raw.1.22 built successfully
+[INFO] Building module: fitacf_v3.0
+[INFO] Building fitacf_v3.0 with Makefile...
+[INFO] Building RST-style module in src/...
+[INFO] Cleaned previous build
+make: *** No rule to make target 'all'.  Stop.
+[SUCCESS] RST makefile build succeeded
+[INFO] Building CUDA version...
+[INFO] Checking CUDA availability...
+[SUCCESS] NVCC compiler found: version 12.6.85
+[SUCCESS] CUDA runtime available: NVIDIA GeForce RTX 3090
+[INFO] Cleaned CUDA build
+=== CUDA Conversion Build System ===
+Build path: 
+Library path: /home/user/rst/build/lib
+CUDA detected: /usr/local/cuda/bin/nvcc
+CUDA path: /usr/local/cuda
+nvcc: NVIDIA (R) Cuda compiler driver
+Building: CPU + CUDA + Compatibility versions
+=======================================
+make: *** No rule to make target 'llist.o', needed by '/home/user/rst/build/lib/libfitacf.3.0.a'.  Stop.
+[SUCCESS] CUDA makefile build succeeded
+[SUCCESS] Module fitacf_v3.0 built successfully
+[INFO] Building module: radar.1.22
+[INFO] Building radar.1.22 with Makefile...
+[INFO] Building RST-style module in src/...
+[INFO] Cleaned previous build
+make: *** No rule to make target 'all'.  Stop.
+[SUCCESS] RST makefile build succeeded
+[SUCCESS] Module radar.1.22 built successfully
+[INFO] Building module: acf.1.16_optimized.2.0
+[INFO] Building acf.1.16_optimized.2.0 with Makefile...
+[INFO] Building RST-style module in src/...
+[INFO] Cleaned previous build
+make: *** No rule to make target 'all'.  Stop.
+[SUCCESS] RST makefile build succeeded
+[INFO] Building CUDA version...
+[INFO] Checking CUDA availability...
+[SUCCESS] NVCC compiler found: version 12.6.85
+[SUCCESS] CUDA runtime available: NVIDIA GeForce RTX 3090
+[INFO] Cleaned CUDA build
+cc -I/home/user/rst/build/include/base -I/home/user/rst/build/include/general -I/home/user/rst/build/include/superdarn -I./include -I../cuda_common/include -fPIC -fopenmp -O3 -c src/acfcalculate.c -o src/acfcalculate.o
+src/acfcalculate.c:44:10: fatal error: tsg.h: No such file or directory
+   44 | #include "tsg.h"
+      |          ^~~~~~~
+compilation terminated.
+make: *** [makefile.cuda:50: src/acfcalculate.o] Error 1
+[SUCCESS] CUDA makefile build succeeded
+[SUCCESS] Module acf.1.16_optimized.2.0 built successfully
+[INFO] Building module: fitacf.2.5
+[INFO] Building fitacf.2.5 with Makefile...
+[INFO] Building RST-style module in src/...
+[INFO] Cleaned previous build
+make: *** No rule to make target 'all'.  Stop.
+[SUCCESS] RST makefile build succeeded
+[INFO] Building CUDA version...
+[INFO] Checking CUDA availability...
+[SUCCESS] NVCC compiler found: version 12.6.85
+[SUCCESS] CUDA runtime available: NVIDIA GeForce RTX 3090
+[INFO] Cleaned CUDA build
+cc -I/home/user/rst/build/include/base -I/home/user/rst/build/include/general -I/home/user/rst/build/include/superdarn -I./include -I../cuda_common/include -fPIC -fopenmp -O3 -c src/acf_preproc.c -o src/acf_preproc.o
+cc -I/home/user/rst/build/include/base -I/home/user/rst/build/include/general -I/home/user/rst/build/include/superdarn -I./include -I../cuda_common/include -fPIC -fopenmp -O3 -c src/badlags.c -o src/badlags.o
+src/badlags.c:26:10: fatal error: fitblk.h: No such file or directory
+   26 | #include "fitblk.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+make: *** [makefile.cuda:50: src/badlags.o] Error 1
+[SUCCESS] CUDA makefile build succeeded
+[SUCCESS] Module fitacf.2.5 built successfully
+[INFO] Building module: grid.1.24_optimized.1
+[INFO] Building grid.1.24_optimized.1 with Makefile...
+[INFO] Building RST-style module in src/...
+[INFO] Cleaned previous build
+make: *** No rule to make target 'all'.  Stop.
+[SUCCESS] RST makefile build succeeded
+[INFO] Building grid.1.24_optimized.1 with CMake...
+[INFO] Configuring CMake for standard build...
+-- Grid Parallel Library Configuration:
+--   Version: 1.24.0
+--   Build type: Release
+--   OpenMP: ON
+--   CUDA: OFF
+--   AVX2: ON
+--   Testing: ON
+--   Benchmarks: ON
+--   Shared libs: ON
+--   LTO: OFF
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/build
+[INFO] Building standard version...
+[  6%] Building C object CMakeFiles/grid_parallel.dir/src/addgrid_parallel.c.o
+[  6%] Building C object CMakeFiles/grid_parallel.dir/src/grid_parallel_utils.c.o
+[ 18%] Building C object CMakeFiles/grid_parallel.dir/src/gridmerge_parallel.c.o
+[ 21%] Building C object CMakeFiles/grid_parallel.dir/src/gridseek_optimized.c.o
+[ 15%] Building C object CMakeFiles/grid_parallel.dir/src/filtergrid_parallel.c.o
+[ 24%] Building C object CMakeFiles/grid_parallel.dir/src/avggrid_parallel.c.o
+[ 24%] Building C object CMakeFiles/grid_parallel.dir/src/copygrid_parallel.c.o
+[ 15%] Building C object CMakeFiles/grid_parallel.dir/src/gridio_parallel.c.o
+[ 27%] Building C object CMakeFiles/grid_parallel.dir/src/gridseek_parallel.c.o
+[ 30%] Building C object CMakeFiles/grid_parallel.dir/src/integrategrid_parallel.c.o
+[ 36%] Building C object CMakeFiles/grid_parallel.dir/src/mergegrid_parallel.c.o
+[ 36%] Building C object CMakeFiles/grid_parallel.dir/src/sortgrid_parallel.c.o
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/gridio_parallel.c:34:10: fatal error: rtypes.h: No such file or directory
+   34 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/addgrid_parallel.c:18:10: fatal error: rtypes.h: No such file or directory
+   18 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/gridseek_parallel.c:36:10: fatal error: rtypes.h: No such file or directory
+   36 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/gridmerge_parallel.c:34:10: fatal error: rtypes.h: No such file or directory
+   34 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:76: CMakeFiles/grid_parallel.dir/src/addgrid_parallel.c.o] Error 1
+make[2]: *** Waiting for unfinished jobs....
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:146: CMakeFiles/grid_parallel.dir/src/gridio_parallel.c.o] Error 1
+compilation terminated.
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:188: CMakeFiles/grid_parallel.dir/src/gridseek_parallel.c.o] Error 1
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:160: CMakeFiles/grid_parallel.dir/src/gridmerge_parallel.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/avggrid_parallel.c:34:10: fatal error: rtypes.h: No such file or directory
+   34 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:90: CMakeFiles/grid_parallel.dir/src/avggrid_parallel.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/sortgrid_parallel.c:34:10: fatal error: rtypes.h: No such file or directory
+   34 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:59:37: error: unknown type name ‘GridGVec’
+   59 | static int copy_grid_cells_parallel(GridGVec *dest, const GridGVec *src, int count) {
+      |                                     ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:59:59: error: unknown type name ‘GridGVec’
+   59 | static int copy_grid_cells_parallel(GridGVec *dest, const GridGVec *src, int count) {
+      |                                                           ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:65:30: error: expected end of line before ‘for’
+   65 |         #pragma omp parallel for schedule(static)
+      |                              ^~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:92:39: error: unknown type name ‘GridSVec’
+   92 | static int copy_station_data_parallel(GridSVec *dest, const GridSVec *src, int count) {
+      |                                       ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:92:61: error: unknown type name ‘GridSVec’
+   92 | static int copy_station_data_parallel(GridSVec *dest, const GridSVec *src, int count) {
+      |                                                             ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:96:26: error: expected end of line before ‘for’
+   96 |     #pragma omp parallel for schedule(static)
+      |                          ^~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:110:1: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  110 | GridData* GridCopyParallel(const GridData *source) {
+      | ^~~~~~~~
+      | struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:110:34: error: unknown type name ‘GridData’
+  110 | GridData* GridCopyParallel(const GridData *source) {
+      |                                  ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘GridCopyParallel’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:114:5: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  114 |     GridData *dest = malloc(sizeof(GridData));
+      |     ^~~~~~~~
+      |     struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:114:36: error: ‘GridData’ undeclared (first use in this function)
+  114 |     GridData *dest = malloc(sizeof(GridData));
+      |                                    ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:114:36: note: each undeclared identifier is reported only once for each function it appears in
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:118:9: error: request for member ‘st_time’ in something not a structure or union
+  118 |     dest->st_time = source->st_time;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:118:27: error: request for member ‘st_time’ in something not a structure or union
+  118 |     dest->st_time = source->st_time;
+      |                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:119:9: error: request for member ‘ed_time’ in something not a structure or union
+  119 |     dest->ed_time = source->ed_time;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:119:27: error: request for member ‘ed_time’ in something not a structure or union
+  119 |     dest->ed_time = source->ed_time;
+      |                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:120:9: error: request for member ‘vcnum’ in something not a structure or union
+  120 |     dest->vcnum = source->vcnum;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:120:25: error: request for member ‘vcnum’ in something not a structure or union
+  120 |     dest->vcnum = source->vcnum;
+      |                         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:121:9: error: request for member ‘stnum’ in something not a structure or union
+  121 |     dest->stnum = source->stnum;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:121:25: error: request for member ‘stnum’ in something not a structure or union
+  121 |     dest->stnum = source->stnum;
+      |                         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:124:15: error: request for member ‘vcnum’ in something not a structure or union
+  124 |     if (source->vcnum > 0 && source->data) {
+      |               ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:124:36: error: request for member ‘data’ in something not a structure or union
+  124 |     if (source->vcnum > 0 && source->data) {
+      |                                    ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:125:13: error: request for member ‘data’ in something not a structure or union
+  125 |         dest->data = grid_aligned_malloc(source->vcnum * sizeof(GridGVec), 32);
+      |             ^~
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:230: CMakeFiles/grid_parallel.dir/src/sortgrid_parallel.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:125:22: warning: implicit declaration of function ‘grid_aligned_malloc’; did you mean ‘aligned_malloc’? [-Wimplicit-function-declaration]
+  125 |         dest->data = grid_aligned_malloc(source->vcnum * sizeof(GridGVec), 32);
+      |                      ^~~~~~~~~~~~~~~~~~~
+      |                      aligned_malloc
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:125:48: error: request for member ‘vcnum’ in something not a structure or union
+  125 |         dest->data = grid_aligned_malloc(source->vcnum * sizeof(GridGVec), 32);
+      |                                                ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/mergegrid_parallel.c:38:10: fatal error: rtypes.h: No such file or directory
+   38 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:125:65: error: ‘GridGVec’ undeclared (first use in this function)
+  125 |         dest->data = grid_aligned_malloc(source->vcnum * sizeof(GridGVec), 32);
+      |                                                                 ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:126:18: error: request for member ‘data’ in something not a structure or union
+  126 |         if (!dest->data) {
+      |                  ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/grid_parallel_utils.c:33:10: fatal error: rtypes.h: No such file or directory
+   33 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/filtergrid_parallel.c:34:10: fatal error: rtypes.h: No such file or directory
+   34 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:216: CMakeFiles/grid_parallel.dir/src/mergegrid_parallel.c.o] Error 1
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:132: CMakeFiles/grid_parallel.dir/src/grid_parallel_utils.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:131:13: warning: implicit declaration of function ‘copy_grid_cells_parallel’ [-Wimplicit-function-declaration]
+  131 |         if (copy_grid_cells_parallel(dest->data, source->data, source->vcnum) != 0) {
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:131:42: error: request for member ‘data’ in something not a structure or union
+  131 |         if (copy_grid_cells_parallel(dest->data, source->data, source->vcnum) != 0) {
+      |                                          ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:131:56: error: request for member ‘data’ in something not a structure or union
+  131 |         if (copy_grid_cells_parallel(dest->data, source->data, source->vcnum) != 0) {
+      |                                                        ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:131:70: error: request for member ‘vcnum’ in something not a structure or union
+  131 |         if (copy_grid_cells_parallel(dest->data, source->data, source->vcnum) != 0) {
+      |                                                                      ^~
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:118: CMakeFiles/grid_parallel.dir/src/filtergrid_parallel.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:132:13: warning: implicit declaration of function ‘grid_aligned_free’; did you mean ‘aligned_free’? [-Wimplicit-function-declaration]
+  132 |             grid_aligned_free(dest->data);
+      |             ^~~~~~~~~~~~~~~~~
+      |             aligned_free
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:132:35: error: request for member ‘data’ in something not a structure or union
+  132 |             grid_aligned_free(dest->data);
+      |                                   ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:137:13: error: request for member ‘data’ in something not a structure or union
+  137 |         dest->data = NULL;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:141:15: error: request for member ‘stnum’ in something not a structure or union
+  141 |     if (source->stnum > 0 && source->sdata) {
+      |               ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:141:36: error: request for member ‘sdata’ in something not a structure or union
+  141 |     if (source->stnum > 0 && source->sdata) {
+      |                                    ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:142:13: error: request for member ‘sdata’ in something not a structure or union
+  142 |         dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:142:49: error: request for member ‘stnum’ in something not a structure or union
+  142 |         dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+      |                                                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/integrategrid_parallel.c:34:10: fatal error: rtypes.h: No such file or directory
+   34 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:142:66: error: ‘GridSVec’ undeclared (first use in this function)
+  142 |         dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+      |                                                                  ^~~~~~~~
+compilation terminated.
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:143:18: error: request for member ‘sdata’ in something not a structure or union
+  143 |         if (!dest->sdata) {
+      |                  ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:144:35: error: request for member ‘data’ in something not a structure or union
+  144 |             grid_aligned_free(dest->data);
+      |                                   ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/gridseek_optimized.c:19:10: fatal error: rtypes.h: No such file or directory
+   19 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:202: CMakeFiles/grid_parallel.dir/src/integrategrid_parallel.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:149:13: warning: implicit declaration of function ‘copy_station_data_parallel’ [-Wimplicit-function-declaration]
+  149 |         if (copy_station_data_parallel(dest->sdata, source->sdata, source->stnum) != 0) {
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:149:44: error: request for member ‘sdata’ in something not a structure or union
+  149 |         if (copy_station_data_parallel(dest->sdata, source->sdata, source->stnum) != 0) {
+      |                                            ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:149:59: error: request for member ‘sdata’ in something not a structure or union
+  149 |         if (copy_station_data_parallel(dest->sdata, source->sdata, source->stnum) != 0) {
+      |                                                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:149:74: error: request for member ‘stnum’ in something not a structure or union
+  149 |         if (copy_station_data_parallel(dest->sdata, source->sdata, source->stnum) != 0) {
+      |                                                                          ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:150:35: error: request for member ‘sdata’ in something not a structure or union
+  150 |             grid_aligned_free(dest->sdata);
+      |                                   ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:151:35: error: request for member ‘data’ in something not a structure or union
+  151 |             grid_aligned_free(dest->data);
+      |                                   ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:156:13: error: request for member ‘sdata’ in something not a structure or union
+  156 |         dest->sdata = NULL;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:160:9: error: request for member ‘parallel_ctx’ in something not a structure or union
+  160 |     dest->parallel_ctx = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:161:9: error: request for member ‘spatial_index’ in something not a structure or union
+  161 |     dest->spatial_index = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:162:9: error: request for member ‘memory_pool’ in something not a structure or union
+  162 |     dest->memory_pool = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:163:9: error: request for member ‘metrics’ in something not a structure or union
+  163 |     dest->metrics = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: At top level:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:171:1: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  171 | GridData* GridCopySelectiveParallel(const GridData *source,
+      | ^~~~~~~~
+      | struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:171:43: error: unknown type name ‘GridData’
+  171 | GridData* GridCopySelectiveParallel(const GridData *source,
+      |                                           ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:172:62: error: unknown type name ‘GridGVec’
+  172 |                                     int (*filter_func)(const GridGVec*, void*),
+      |                                                              ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘GridCopySelectiveParallel’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:181:31: error: request for member ‘vcnum’ in something not a structure or union
+  181 |     for (int i = 0; i < source->vcnum; i++) {
+      |                               ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:182:32: error: request for member ‘data’ in something not a structure or union
+  182 |         if (filter_func(&source->data[i], filter_data)) {
+      |                                ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:181:14: error: invalid controlling predicate
+  181 |     for (int i = 0; i < source->vcnum; i++) {
+      |              ^
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:197:5: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  197 |     GridData *dest = malloc(sizeof(GridData));
+      |     ^~~~~~~~
+      |     struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:197:36: error: ‘GridData’ undeclared (first use in this function)
+  197 |     GridData *dest = malloc(sizeof(GridData));
+      |                                    ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:200:9: error: request for member ‘st_time’ in something not a structure or union
+  200 |     dest->st_time = source->st_time;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:200:27: error: request for member ‘st_time’ in something not a structure or union
+  200 |     dest->st_time = source->st_time;
+      |                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:201:9: error: request for member ‘ed_time’ in something not a structure or union
+  201 |     dest->ed_time = source->ed_time;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:201:27: error: request for member ‘ed_time’ in something not a structure or union
+  201 |     dest->ed_time = source->ed_time;
+      |                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:202:9: error: request for member ‘vcnum’ in something not a structure or union
+  202 |     dest->vcnum = filtered_count;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:203:9: error: request for member ‘stnum’ in something not a structure or union
+  203 |     dest->stnum = source->stnum;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:203:25: error: request for member ‘stnum’ in something not a structure or union
+  203 |     dest->stnum = source->stnum;
+      |                         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:206:9: error: request for member ‘data’ in something not a structure or union
+  206 |     dest->data = grid_aligned_malloc(filtered_count * sizeof(GridGVec), 32);
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:206:62: error: ‘GridGVec’ undeclared (first use in this function)
+  206 |     dest->data = grid_aligned_malloc(filtered_count * sizeof(GridGVec), 32);
+      |                                                              ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:207:14: error: request for member ‘data’ in something not a structure or union
+  207 |     if (!dest->data) {
+      |              ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:218:31: error: request for member ‘vcnum’ in something not a structure or union
+  218 |     for (int i = 0; i < source->vcnum; i++) {
+      |                               ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:219:32: error: request for member ‘data’ in something not a structure or union
+  219 |         if (filter_func(&source->data[i], filter_data)) {
+      |                                ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:225:17: error: request for member ‘data’ in something not a structure or union
+  225 |             dest->data[local_idx] = source->data[i];
+      |                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:225:43: error: request for member ‘data’ in something not a structure or union
+  225 |             dest->data[local_idx] = source->data[i];
+      |                                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:220:17: warning: variable ‘local_idx’ set but not used [-Wunused-but-set-variable]
+  220 |             int local_idx;
+      |                 ^~~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:218:14: error: invalid controlling predicate
+  218 |     for (int i = 0; i < source->vcnum; i++) {
+      |              ^
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:237:15: error: request for member ‘stnum’ in something not a structure or union
+  237 |     if (source->stnum > 0 && source->sdata) {
+      |               ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:237:36: error: request for member ‘sdata’ in something not a structure or union
+  237 |     if (source->stnum > 0 && source->sdata) {
+      |                                    ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:238:13: error: request for member ‘sdata’ in something not a structure or union
+  238 |         dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:238:49: error: request for member ‘stnum’ in something not a structure or union
+  238 |         dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+      |                                                 ^~
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:174: CMakeFiles/grid_parallel.dir/src/gridseek_optimized.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:238:66: error: ‘GridSVec’ undeclared (first use in this function)
+  238 |         dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+      |                                                                  ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:239:18: error: request for member ‘sdata’ in something not a structure or union
+  239 |         if (!dest->sdata) {
+      |                  ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:240:35: error: request for member ‘data’ in something not a structure or union
+  240 |             grid_aligned_free(dest->data);
+      |                                   ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:245:40: error: request for member ‘sdata’ in something not a structure or union
+  245 |         copy_station_data_parallel(dest->sdata, source->sdata, source->stnum);
+      |                                        ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:245:55: error: request for member ‘sdata’ in something not a structure or union
+  245 |         copy_station_data_parallel(dest->sdata, source->sdata, source->stnum);
+      |                                                       ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:245:70: error: request for member ‘stnum’ in something not a structure or union
+  245 |         copy_station_data_parallel(dest->sdata, source->sdata, source->stnum);
+      |                                                                      ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:247:13: error: request for member ‘sdata’ in something not a structure or union
+  247 |         dest->sdata = NULL;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:251:9: error: request for member ‘parallel_ctx’ in something not a structure or union
+  251 |     dest->parallel_ctx = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:252:9: error: request for member ‘spatial_index’ in something not a structure or union
+  252 |     dest->spatial_index = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:253:9: error: request for member ‘memory_pool’ in something not a structure or union
+  253 |     dest->memory_pool = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:254:9: error: request for member ‘metrics’ in something not a structure or union
+  254 |     dest->metrics = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: At top level:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:262:1: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  262 | GridData* GridCopyRegionParallel(const GridData *source,
+      | ^~~~~~~~
+      | struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:262:40: error: unknown type name ‘GridData’
+  262 | GridData* GridCopyRegionParallel(const GridData *source,
+      |                                        ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘GridCopyRegionParallel’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:275:29: error: unknown type name ‘GridGVec’
+  275 |     int region_filter(const GridGVec *cell, void *data) {
+      |                             ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘region_filter’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:277:21: error: request for member ‘mlat’ in something not a structure or union
+  277 |         return (cell->mlat >= region->min_lat && cell->mlat <= region->max_lat &&
+      |                     ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:277:54: error: request for member ‘mlat’ in something not a structure or union
+  277 |         return (cell->mlat >= region->min_lat && cell->mlat <= region->max_lat &&
+      |                                                      ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:278:21: error: request for member ‘mlon’ in something not a structure or union
+  278 |                 cell->mlon >= region->min_lon && cell->mlon <= region->max_lon);
+      |                     ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:278:54: error: request for member ‘mlon’ in something not a structure or union
+  278 |                 cell->mlon >= region->min_lon && cell->mlon <= region->max_lon);
+      |                                                      ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: At top level:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:287:1: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  287 | GridData* GridCopyTimeWindowParallel(const GridData *source,
+      | ^~~~~~~~
+      | struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:287:44: error: unknown type name ‘GridData’
+  287 | GridData* GridCopyTimeWindowParallel(const GridData *source,
+      |                                            ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘GridCopyTimeWindowParallel’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:292:5: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  292 |     GridData *dest = GridCopyParallel(source);
+      |     ^~~~~~~~
+      |     struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:296:28: error: request for member ‘st_time’ in something not a structure or union
+  296 |     if (start_time > source->st_time) dest->st_time = start_time;
+      |                            ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:296:43: error: request for member ‘st_time’ in something not a structure or union
+  296 |     if (start_time > source->st_time) dest->st_time = start_time;
+      |                                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:297:26: error: request for member ‘ed_time’ in something not a structure or union
+  297 |     if (end_time < source->ed_time) dest->ed_time = end_time;
+      |                          ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:297:41: error: request for member ‘ed_time’ in something not a structure or union
+  297 |     if (end_time < source->ed_time) dest->ed_time = end_time;
+      |                                         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: At top level:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:308:27: error: unknown type name ‘GridData’
+  308 | int GridCopyStatsParallel(GridData *dest, const GridData *source) {
+      |                           ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:308:49: error: unknown type name ‘GridData’
+  308 | int GridCopyStatsParallel(GridData *dest, const GridData *source) {
+      |                                                 ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:314:26: error: expected end of line before ‘for’
+  314 |     #pragma omp parallel for schedule(static)
+      |                          ^~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:335:1: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  335 | GridData* GridCopyCompressedParallel(const GridData *source, float tolerance) {
+      | ^~~~~~~~
+      | struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:335:44: error: unknown type name ‘GridData’
+  335 | GridData* GridCopyCompressedParallel(const GridData *source, float tolerance) {
+      |                                            ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘GridCopyCompressedParallel’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:346:34: error: unknown type name ‘GridGVec’
+  346 |     int compression_filter(const GridGVec *cell, void *data) {
+      |                                  ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘compression_filter’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:350:26: error: request for member ‘vel’ in something not a structure or union
+  350 |         return (fabs(cell->vel.median) > comp->tolerance ||
+      |                          ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:351:21: error: request for member ‘pwr’ in something not a structure or union
+  351 |                 cell->pwr.median > 20.0f ||
+      |                     ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:352:21: error: request for member ‘vel’ in something not a structure or union
+  352 |                 cell->vel.sd < comp->tolerance * 0.1f); // Low uncertainty
+      |                     ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: At top level:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:361:23: error: unknown type name ‘GridData’
+  361 | void GridFreeParallel(GridData *grid) {
+      |                       ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:401:32: error: unknown type name ‘GridData’
+  401 | int GridValidateParallel(const GridData *grid) {
+      |                                ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘GridValidateParallel’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:405:13: error: request for member ‘vcnum’ in something not a structure or union
+  405 |     if (grid->vcnum < 0 || grid->stnum < 0) return -2;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:405:32: error: request for member ‘stnum’ in something not a structure or union
+  405 |     if (grid->vcnum < 0 || grid->stnum < 0) return -2;
+      |                                ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:406:13: error: request for member ‘ed_time’ in something not a structure or union
+  406 |     if (grid->ed_time < grid->st_time) return -3;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:406:29: error: request for member ‘st_time’ in something not a structure or union
+  406 |     if (grid->ed_time < grid->st_time) return -3;
+      |                             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:408:13: error: request for member ‘vcnum’ in something not a structure or union
+  408 |     if (grid->vcnum > 0 && !grid->data) return -4;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:408:33: error: request for member ‘data’ in something not a structure or union
+  408 |     if (grid->vcnum > 0 && !grid->data) return -4;
+      |                                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:409:13: error: request for member ‘stnum’ in something not a structure or union
+  409 |     if (grid->stnum > 0 && !grid->sdata) return -5;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:409:33: error: request for member ‘sdata’ in something not a structure or union
+  409 |     if (grid->stnum > 0 && !grid->sdata) return -5;
+      |                                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:416:29: error: request for member ‘vcnum’ in something not a structure or union
+  416 |     for (int i = 0; i < grid->vcnum; i++) {
+      |                             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:417:15: error: unknown type name ‘GridGVec’
+  417 |         const GridGVec *cell = &grid->data[i];
+      |               ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:417:37: error: request for member ‘data’ in something not a structure or union
+  417 |         const GridGVec *cell = &grid->data[i];
+      |                                     ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:420:17: error: request for member ‘mlat’ in something not a structure or union
+  420 |         if (cell->mlat < -90.0f || cell->mlat > 90.0f ||
+      |                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:420:40: error: request for member ‘mlat’ in something not a structure or union
+  420 |         if (cell->mlat < -90.0f || cell->mlat > 90.0f ||
+      |                                        ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:421:17: error: request for member ‘mlon’ in something not a structure or union
+  421 |             cell->mlon < -180.0f || cell->mlon > 360.0f) {
+      |                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:421:41: error: request for member ‘mlon’ in something not a structure or union
+  421 |             cell->mlon < -180.0f || cell->mlon > 360.0f) {
+      |                                         ^~
+In file included from /home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:15:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:426:23: error: request for member ‘vel’ in something not a structure or union
+  426 |         if (isnan(cell->vel.median) || isnan(cell->pwr.median) ||
+      |                       ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:426:50: error: request for member ‘pwr’ in something not a structure or union
+  426 |         if (isnan(cell->vel.median) || isnan(cell->pwr.median) ||
+      |                                                  ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:427:23: error: request for member ‘wdt’ in something not a structure or union
+  427 |             isnan(cell->wdt.median)) {
+      |                       ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:432:17: error: request for member ‘vel’ in something not a structure or union
+  432 |         if (cell->vel.sd < 0.0f || cell->pwr.sd < 0.0f || cell->wdt.sd < 0.0f) {
+      |                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:432:40: error: request for member ‘pwr’ in something not a structure or union
+  432 |         if (cell->vel.sd < 0.0f || cell->pwr.sd < 0.0f || cell->wdt.sd < 0.0f) {
+      |                                        ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:432:63: error: request for member ‘wdt’ in something not a structure or union
+  432 |         if (cell->vel.sd < 0.0f || cell->pwr.sd < 0.0f || cell->wdt.sd < 0.0f) {
+      |                                                               ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:416:14: error: invalid controlling predicate
+  416 |     for (int i = 0; i < grid->vcnum; i++) {
+      |              ^
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘region_filter’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:279:5: warning: control reaches end of non-void function [-Wreturn-type]
+  279 |     }
+      |     ^
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘compression_filter’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:353:5: warning: control reaches end of non-void function [-Wreturn-type]
+  353 |     }
+      |     ^
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: At top level:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:30:13: warning: ‘fast_memcpy_simd’ defined but not used [-Wunused-function]
+   30 | static void fast_memcpy_simd(void *dest, const void *src, size_t size) {
+      |             ^~~~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:104: CMakeFiles/grid_parallel.dir/src/copygrid_parallel.c.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:105: CMakeFiles/grid_parallel.dir/all] Error 2
+make: *** [Makefile:166: all] Error 2
+[SUCCESS] CMake standard build succeeded
+[INFO] Checking CUDA availability...
+[SUCCESS] NVCC compiler found: version 12.6.85
+[SUCCESS] CUDA runtime available: NVIDIA GeForce RTX 3090
+[INFO] Configuring CMake for CUDA build...
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Found OpenMP_C: -fopenmp (found version "4.5") 
+-- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+-- Found OpenMP: TRUE (found version "4.5")  
+-- The CUDA compiler identification is NVIDIA 12.6.85
+-- Detecting CUDA compiler ABI info
+-- Detecting CUDA compiler ABI info - done
+-- Check for working CUDA compiler: /usr/local/cuda-12.6/bin/nvcc - skipped
+-- Detecting CUDA compile features
+-- Detecting CUDA compile features - done
+-- Performing Test HAVE_AVX2
+-- Performing Test HAVE_AVX2 - Success
+-- Grid Parallel Library Configuration:
+--   Version: 1.24.0
+--   Build type: Release
+--   OpenMP: ON
+--   CUDA: ON
+--   AVX2: ON
+--   Testing: ON
+--   Benchmarks: ON
+--   Shared libs: ON
+--   LTO: OFF
+--   CUDA Architectures: 60;70;75;80
+-- Configuring done (3.1s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    BUILD_TESTS
+    ENABLE_AVX
+
+
+-- Build files have been written to: /home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/build
+[INFO] Building CUDA version...
+[ 32%] Building C object CMakeFiles/grid_parallel.dir/src/gridseek_optimized.c.o
+[ 32%] Building C object CMakeFiles/grid_parallel.dir/src/sortgrid_parallel.c.o
+[ 32%] Building C object CMakeFiles/grid_parallel.dir/src/gridseek_parallel.c.o
+[ 32%] Building C object CMakeFiles/grid_parallel.dir/src/filtergrid_parallel.c.o
+[ 32%] Building C object CMakeFiles/grid_parallel.dir/src/gridio_parallel.c.o
+[ 32%] Building C object CMakeFiles/grid_parallel.dir/src/grid_parallel_utils.c.o
+[ 32%] Building C object CMakeFiles/grid_parallel.dir/src/copygrid_parallel.c.o
+[ 32%] Building C object CMakeFiles/grid_parallel.dir/src/mergegrid_parallel.c.o
+[ 32%] Building CUDA object CMakeFiles/grid_parallel.dir/src/grid_cuda_kernels.cu.o
+[ 32%] Building C object CMakeFiles/grid_parallel.dir/src/integrategrid_parallel.c.o
+[ 32%] Building C object CMakeFiles/grid_parallel.dir/src/gridmerge_parallel.c.o
+[ 35%] Building C object CMakeFiles/grid_parallel.dir/src/avggrid_parallel.c.o
+[ 38%] Building C object CMakeFiles/grid_parallel.dir/src/addgrid_parallel.c.o
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/gridio_parallel.c:34:10: fatal error: rtypes.h: No such file or directory
+   34 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:146: CMakeFiles/grid_parallel.dir/src/gridio_parallel.c.o] Error 1
+make[2]: *** Waiting for unfinished jobs....
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/addgrid_parallel.c:18:10: fatal error: rtypes.h: No such file or directory
+   18 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/gridseek_parallel.c:36:10: fatal error: rtypes.h: No such file or directory
+   36 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+compilation terminated.
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:188: CMakeFiles/grid_parallel.dir/src/gridseek_parallel.c.o] Error 1
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:76: CMakeFiles/grid_parallel.dir/src/addgrid_parallel.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/gridmerge_parallel.c:34:10: fatal error: rtypes.h: No such file or directory
+   34 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:160: CMakeFiles/grid_parallel.dir/src/gridmerge_parallel.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/filtergrid_parallel.c:34:10: fatal error: rtypes.h: No such file or directory
+   34 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/mergegrid_parallel.c:38:10: fatal error: rtypes.h: No such file or directory
+   38 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/grid_parallel_utils.c:33:10: fatal error: rtypes.h: No such file or directory
+   33 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:118: CMakeFiles/grid_parallel.dir/src/filtergrid_parallel.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/avggrid_parallel.c:34:10: fatal error: rtypes.h: No such file or directory
+   34 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:216: CMakeFiles/grid_parallel.dir/src/mergegrid_parallel.c.o] Error 1
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:132: CMakeFiles/grid_parallel.dir/src/grid_parallel_utils.c.o] Error 1
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:90: CMakeFiles/grid_parallel.dir/src/avggrid_parallel.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/sortgrid_parallel.c:34:10: fatal error: rtypes.h: No such file or directory
+   34 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:59:37: error: unknown type name ‘GridGVec’
+   59 | static int copy_grid_cells_parallel(GridGVec *dest, const GridGVec *src, int count) {
+      |                                     ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:59:59: error: unknown type name ‘GridGVec’
+   59 | static int copy_grid_cells_parallel(GridGVec *dest, const GridGVec *src, int count) {
+      |                                                           ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:65:30: error: expected end of line before ‘for’
+   65 |         #pragma omp parallel for schedule(static)
+      |                              ^~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:92:39: error: unknown type name ‘GridSVec’
+   92 | static int copy_station_data_parallel(GridSVec *dest, const GridSVec *src, int count) {
+      |                                       ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:92:61: error: unknown type name ‘GridSVec’
+   92 | static int copy_station_data_parallel(GridSVec *dest, const GridSVec *src, int count) {
+      |                                                             ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:96:26: error: expected end of line before ‘for’
+   96 |     #pragma omp parallel for schedule(static)
+      |                          ^~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:110:1: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  110 | GridData* GridCopyParallel(const GridData *source) {
+      | ^~~~~~~~
+      | struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:110:34: error: unknown type name ‘GridData’
+  110 | GridData* GridCopyParallel(const GridData *source) {
+      |                                  ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘GridCopyParallel’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:114:5: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  114 |     GridData *dest = malloc(sizeof(GridData));
+      |     ^~~~~~~~
+      |     struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:114:36: error: ‘GridData’ undeclared (first use in this function)
+  114 |     GridData *dest = malloc(sizeof(GridData));
+      |                                    ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:114:36: note: each undeclared identifier is reported only once for each function it appears in
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:118:9: error: request for member ‘st_time’ in something not a structure or union
+  118 |     dest->st_time = source->st_time;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:118:27: error: request for member ‘st_time’ in something not a structure or union
+  118 |     dest->st_time = source->st_time;
+      |                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:119:9: error: request for member ‘ed_time’ in something not a structure or union
+  119 |     dest->ed_time = source->ed_time;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:119:27: error: request for member ‘ed_time’ in something not a structure or union
+  119 |     dest->ed_time = source->ed_time;
+      |                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:120:9: error: request for member ‘vcnum’ in something not a structure or union
+  120 |     dest->vcnum = source->vcnum;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:120:25: error: request for member ‘vcnum’ in something not a structure or union
+  120 |     dest->vcnum = source->vcnum;
+      |                         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:121:9: error: request for member ‘stnum’ in something not a structure or union
+  121 |     dest->stnum = source->stnum;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:121:25: error: request for member ‘stnum’ in something not a structure or union
+  121 |     dest->stnum = source->stnum;
+      |                         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:124:15: error: request for member ‘vcnum’ in something not a structure or union
+  124 |     if (source->vcnum > 0 && source->data) {
+      |               ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:124:36: error: request for member ‘data’ in something not a structure or union
+  124 |     if (source->vcnum > 0 && source->data) {
+      |                                    ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:125:13: error: request for member ‘data’ in something not a structure or union
+  125 |         dest->data = grid_aligned_malloc(source->vcnum * sizeof(GridGVec), 32);
+      |             ^~
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:230: CMakeFiles/grid_parallel.dir/src/sortgrid_parallel.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/gridseek_optimized.c:19:10: fatal error: rtypes.h: No such file or directory
+   19 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:125:22: warning: implicit declaration of function ‘grid_aligned_malloc’; did you mean ‘aligned_malloc’? [-Wimplicit-function-declaration]
+  125 |         dest->data = grid_aligned_malloc(source->vcnum * sizeof(GridGVec), 32);
+      |                      ^~~~~~~~~~~~~~~~~~~
+      |                      aligned_malloc
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:125:48: error: request for member ‘vcnum’ in something not a structure or union
+  125 |         dest->data = grid_aligned_malloc(source->vcnum * sizeof(GridGVec), 32);
+      |                                                ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:125:65: error: ‘GridGVec’ undeclared (first use in this function)
+  125 |         dest->data = grid_aligned_malloc(source->vcnum * sizeof(GridGVec), 32);
+      |                                                                 ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:126:18: error: request for member ‘data’ in something not a structure or union
+  126 |         if (!dest->data) {
+      |                  ^~
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:174: CMakeFiles/grid_parallel.dir/src/gridseek_optimized.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:131:13: warning: implicit declaration of function ‘copy_grid_cells_parallel’ [-Wimplicit-function-declaration]
+  131 |         if (copy_grid_cells_parallel(dest->data, source->data, source->vcnum) != 0) {
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:131:42: error: request for member ‘data’ in something not a structure or union
+  131 |         if (copy_grid_cells_parallel(dest->data, source->data, source->vcnum) != 0) {
+      |                                          ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:131:56: error: request for member ‘data’ in something not a structure or union
+  131 |         if (copy_grid_cells_parallel(dest->data, source->data, source->vcnum) != 0) {
+      |                                                        ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:131:70: error: request for member ‘vcnum’ in something not a structure or union
+  131 |         if (copy_grid_cells_parallel(dest->data, source->data, source->vcnum) != 0) {
+      |                                                                      ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:132:13: warning: implicit declaration of function ‘grid_aligned_free’; did you mean ‘aligned_free’? [-Wimplicit-function-declaration]
+  132 |             grid_aligned_free(dest->data);
+      |             ^~~~~~~~~~~~~~~~~
+      |             aligned_free
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:132:35: error: request for member ‘data’ in something not a structure or union
+  132 |             grid_aligned_free(dest->data);
+      |                                   ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:137:13: error: request for member ‘data’ in something not a structure or union
+  137 |         dest->data = NULL;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:141:15: error: request for member ‘stnum’ in something not a structure or union
+  141 |     if (source->stnum > 0 && source->sdata) {
+      |               ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:141:36: error: request for member ‘sdata’ in something not a structure or union
+  141 |     if (source->stnum > 0 && source->sdata) {
+      |                                    ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:142:13: error: request for member ‘sdata’ in something not a structure or union
+  142 |         dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:142:49: error: request for member ‘stnum’ in something not a structure or union
+  142 |         dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+      |                                                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:142:66: error: ‘GridSVec’ undeclared (first use in this function)
+  142 |         dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+      |                                                                  ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:143:18: error: request for member ‘sdata’ in something not a structure or union
+  143 |         if (!dest->sdata) {
+      |                  ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:144:35: error: request for member ‘data’ in something not a structure or union
+  144 |             grid_aligned_free(dest->data);
+      |                                   ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/integrategrid_parallel.c:34:10: fatal error: rtypes.h: No such file or directory
+   34 | #include "rtypes.h"
+      |          ^~~~~~~~~~
+compilation terminated.
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:149:13: warning: implicit declaration of function ‘copy_station_data_parallel’ [-Wimplicit-function-declaration]
+  149 |         if (copy_station_data_parallel(dest->sdata, source->sdata, source->stnum) != 0) {
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:149:44: error: request for member ‘sdata’ in something not a structure or union
+  149 |         if (copy_station_data_parallel(dest->sdata, source->sdata, source->stnum) != 0) {
+      |                                            ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:149:59: error: request for member ‘sdata’ in something not a structure or union
+  149 |         if (copy_station_data_parallel(dest->sdata, source->sdata, source->stnum) != 0) {
+      |                                                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:149:74: error: request for member ‘stnum’ in something not a structure or union
+  149 |         if (copy_station_data_parallel(dest->sdata, source->sdata, source->stnum) != 0) {
+      |                                                                          ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:150:35: error: request for member ‘sdata’ in something not a structure or union
+  150 |             grid_aligned_free(dest->sdata);
+      |                                   ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:151:35: error: request for member ‘data’ in something not a structure or union
+  151 |             grid_aligned_free(dest->data);
+      |                                   ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:156:13: error: request for member ‘sdata’ in something not a structure or union
+  156 |         dest->sdata = NULL;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:160:9: error: request for member ‘parallel_ctx’ in something not a structure or union
+  160 |     dest->parallel_ctx = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:161:9: error: request for member ‘spatial_index’ in something not a structure or union
+  161 |     dest->spatial_index = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:162:9: error: request for member ‘memory_pool’ in something not a structure or union
+  162 |     dest->memory_pool = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:163:9: error: request for member ‘metrics’ in something not a structure or union
+  163 |     dest->metrics = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: At top level:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:171:1: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  171 | GridData* GridCopySelectiveParallel(const GridData *source,
+      | ^~~~~~~~
+      | struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:171:43: error: unknown type name ‘GridData’
+  171 | GridData* GridCopySelectiveParallel(const GridData *source,
+      |                                           ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:172:62: error: unknown type name ‘GridGVec’
+  172 |                                     int (*filter_func)(const GridGVec*, void*),
+      |                                                              ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘GridCopySelectiveParallel’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:181:31: error: request for member ‘vcnum’ in something not a structure or union
+  181 |     for (int i = 0; i < source->vcnum; i++) {
+      |                               ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:182:32: error: request for member ‘data’ in something not a structure or union
+  182 |         if (filter_func(&source->data[i], filter_data)) {
+      |                                ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:181:14: error: invalid controlling predicate
+  181 |     for (int i = 0; i < source->vcnum; i++) {
+      |              ^
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:197:5: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  197 |     GridData *dest = malloc(sizeof(GridData));
+      |     ^~~~~~~~
+      |     struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:197:36: error: ‘GridData’ undeclared (first use in this function)
+  197 |     GridData *dest = malloc(sizeof(GridData));
+      |                                    ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:200:9: error: request for member ‘st_time’ in something not a structure or union
+  200 |     dest->st_time = source->st_time;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:200:27: error: request for member ‘st_time’ in something not a structure or union
+  200 |     dest->st_time = source->st_time;
+      |                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:201:9: error: request for member ‘ed_time’ in something not a structure or union
+  201 |     dest->ed_time = source->ed_time;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:201:27: error: request for member ‘ed_time’ in something not a structure or union
+  201 |     dest->ed_time = source->ed_time;
+      |                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:202:9: error: request for member ‘vcnum’ in something not a structure or union
+  202 |     dest->vcnum = filtered_count;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:203:9: error: request for member ‘stnum’ in something not a structure or union
+  203 |     dest->stnum = source->stnum;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:203:25: error: request for member ‘stnum’ in something not a structure or union
+  203 |     dest->stnum = source->stnum;
+      |                         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:206:9: error: request for member ‘data’ in something not a structure or union
+  206 |     dest->data = grid_aligned_malloc(filtered_count * sizeof(GridGVec), 32);
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:206:62: error: ‘GridGVec’ undeclared (first use in this function)
+  206 |     dest->data = grid_aligned_malloc(filtered_count * sizeof(GridGVec), 32);
+      |                                                              ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:207:14: error: request for member ‘data’ in something not a structure or union
+  207 |     if (!dest->data) {
+      |              ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:218:31: error: request for member ‘vcnum’ in something not a structure or union
+  218 |     for (int i = 0; i < source->vcnum; i++) {
+      |                               ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:219:32: error: request for member ‘data’ in something not a structure or union
+  219 |         if (filter_func(&source->data[i], filter_data)) {
+      |                                ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:225:17: error: request for member ‘data’ in something not a structure or union
+  225 |             dest->data[local_idx] = source->data[i];
+      |                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:225:43: error: request for member ‘data’ in something not a structure or union
+  225 |             dest->data[local_idx] = source->data[i];
+      |                                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:220:17: warning: variable ‘local_idx’ set but not used [-Wunused-but-set-variable]
+  220 |             int local_idx;
+      |                 ^~~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:218:14: error: invalid controlling predicate
+  218 |     for (int i = 0; i < source->vcnum; i++) {
+      |              ^
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:237:15: error: request for member ‘stnum’ in something not a structure or union
+  237 |     if (source->stnum > 0 && source->sdata) {
+      |               ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:237:36: error: request for member ‘sdata’ in something not a structure or union
+  237 |     if (source->stnum > 0 && source->sdata) {
+      |                                    ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:238:13: error: request for member ‘sdata’ in something not a structure or union
+  238 |         dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:238:49: error: request for member ‘stnum’ in something not a structure or union
+  238 |         dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+      |                                                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:238:66: error: ‘GridSVec’ undeclared (first use in this function)
+  238 |         dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+      |                                                                  ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:239:18: error: request for member ‘sdata’ in something not a structure or union
+  239 |         if (!dest->sdata) {
+      |                  ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:240:35: error: request for member ‘data’ in something not a structure or union
+  240 |             grid_aligned_free(dest->data);
+      |                                   ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:245:40: error: request for member ‘sdata’ in something not a structure or union
+  245 |         copy_station_data_parallel(dest->sdata, source->sdata, source->stnum);
+      |                                        ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:245:55: error: request for member ‘sdata’ in something not a structure or union
+  245 |         copy_station_data_parallel(dest->sdata, source->sdata, source->stnum);
+      |                                                       ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:245:70: error: request for member ‘stnum’ in something not a structure or union
+  245 |         copy_station_data_parallel(dest->sdata, source->sdata, source->stnum);
+      |                                                                      ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:247:13: error: request for member ‘sdata’ in something not a structure or union
+  247 |         dest->sdata = NULL;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:251:9: error: request for member ‘parallel_ctx’ in something not a structure or union
+  251 |     dest->parallel_ctx = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:252:9: error: request for member ‘spatial_index’ in something not a structure or union
+  252 |     dest->spatial_index = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:253:9: error: request for member ‘memory_pool’ in something not a structure or union
+  253 |     dest->memory_pool = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:254:9: error: request for member ‘metrics’ in something not a structure or union
+  254 |     dest->metrics = NULL;
+      |         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: At top level:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:262:1: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  262 | GridData* GridCopyRegionParallel(const GridData *source,
+      | ^~~~~~~~
+      | struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:262:40: error: unknown type name ‘GridData’
+  262 | GridData* GridCopyRegionParallel(const GridData *source,
+      |                                        ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘GridCopyRegionParallel’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:275:29: error: unknown type name ‘GridGVec’
+  275 |     int region_filter(const GridGVec *cell, void *data) {
+      |                             ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘region_filter’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:277:21: error: request for member ‘mlat’ in something not a structure or union
+  277 |         return (cell->mlat >= region->min_lat && cell->mlat <= region->max_lat &&
+      |                     ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:277:54: error: request for member ‘mlat’ in something not a structure or union
+  277 |         return (cell->mlat >= region->min_lat && cell->mlat <= region->max_lat &&
+      |                                                      ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:278:21: error: request for member ‘mlon’ in something not a structure or union
+  278 |                 cell->mlon >= region->min_lon && cell->mlon <= region->max_lon);
+      |                     ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:278:54: error: request for member ‘mlon’ in something not a structure or union
+  278 |                 cell->mlon >= region->min_lon && cell->mlon <= region->max_lon);
+      |                                                      ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: At top level:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:287:1: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  287 | GridData* GridCopyTimeWindowParallel(const GridData *source,
+      | ^~~~~~~~
+      | struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:287:44: error: unknown type name ‘GridData’
+  287 | GridData* GridCopyTimeWindowParallel(const GridData *source,
+      |                                            ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘GridCopyTimeWindowParallel’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:292:5: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  292 |     GridData *dest = GridCopyParallel(source);
+      |     ^~~~~~~~
+      |     struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:296:28: error: request for member ‘st_time’ in something not a structure or union
+  296 |     if (start_time > source->st_time) dest->st_time = start_time;
+      |                            ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:296:43: error: request for member ‘st_time’ in something not a structure or union
+  296 |     if (start_time > source->st_time) dest->st_time = start_time;
+      |                                           ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:297:26: error: request for member ‘ed_time’ in something not a structure or union
+  297 |     if (end_time < source->ed_time) dest->ed_time = end_time;
+      |                          ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:297:41: error: request for member ‘ed_time’ in something not a structure or union
+  297 |     if (end_time < source->ed_time) dest->ed_time = end_time;
+      |                                         ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: At top level:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:308:27: error: unknown type name ‘GridData’
+  308 | int GridCopyStatsParallel(GridData *dest, const GridData *source) {
+      |                           ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:308:49: error: unknown type name ‘GridData’
+  308 | int GridCopyStatsParallel(GridData *dest, const GridData *source) {
+      |                                                 ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:314:26: error: expected end of line before ‘for’
+  314 |     #pragma omp parallel for schedule(static)
+      |                          ^~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:335:1: error: unknown type name ‘GridData’; use ‘struct’ keyword to refer to the type
+  335 | GridData* GridCopyCompressedParallel(const GridData *source, float tolerance) {
+      | ^~~~~~~~
+      | struct 
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:335:44: error: unknown type name ‘GridData’
+  335 | GridData* GridCopyCompressedParallel(const GridData *source, float tolerance) {
+      |                                            ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘GridCopyCompressedParallel’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:346:34: error: unknown type name ‘GridGVec’
+  346 |     int compression_filter(const GridGVec *cell, void *data) {
+      |                                  ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘compression_filter’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:350:26: error: request for member ‘vel’ in something not a structure or union
+  350 |         return (fabs(cell->vel.median) > comp->tolerance ||
+      |                          ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:351:21: error: request for member ‘pwr’ in something not a structure or union
+  351 |                 cell->pwr.median > 20.0f ||
+      |                     ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:352:21: error: request for member ‘vel’ in something not a structure or union
+  352 |                 cell->vel.sd < comp->tolerance * 0.1f); // Low uncertainty
+      |                     ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: At top level:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:361:23: error: unknown type name ‘GridData’
+  361 | void GridFreeParallel(GridData *grid) {
+      |                       ^~~~~~~~
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:202: CMakeFiles/grid_parallel.dir/src/integrategrid_parallel.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:401:32: error: unknown type name ‘GridData’
+  401 | int GridValidateParallel(const GridData *grid) {
+      |                                ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘GridValidateParallel’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:405:13: error: request for member ‘vcnum’ in something not a structure or union
+  405 |     if (grid->vcnum < 0 || grid->stnum < 0) return -2;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:405:32: error: request for member ‘stnum’ in something not a structure or union
+  405 |     if (grid->vcnum < 0 || grid->stnum < 0) return -2;
+      |                                ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:406:13: error: request for member ‘ed_time’ in something not a structure or union
+  406 |     if (grid->ed_time < grid->st_time) return -3;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:406:29: error: request for member ‘st_time’ in something not a structure or union
+  406 |     if (grid->ed_time < grid->st_time) return -3;
+      |                             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:408:13: error: request for member ‘vcnum’ in something not a structure or union
+  408 |     if (grid->vcnum > 0 && !grid->data) return -4;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:408:33: error: request for member ‘data’ in something not a structure or union
+  408 |     if (grid->vcnum > 0 && !grid->data) return -4;
+      |                                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:409:13: error: request for member ‘stnum’ in something not a structure or union
+  409 |     if (grid->stnum > 0 && !grid->sdata) return -5;
+      |             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:409:33: error: request for member ‘sdata’ in something not a structure or union
+  409 |     if (grid->stnum > 0 && !grid->sdata) return -5;
+      |                                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:416:29: error: request for member ‘vcnum’ in something not a structure or union
+  416 |     for (int i = 0; i < grid->vcnum; i++) {
+      |                             ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:417:15: error: unknown type name ‘GridGVec’
+  417 |         const GridGVec *cell = &grid->data[i];
+      |               ^~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:417:37: error: request for member ‘data’ in something not a structure or union
+  417 |         const GridGVec *cell = &grid->data[i];
+      |                                     ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:420:17: error: request for member ‘mlat’ in something not a structure or union
+  420 |         if (cell->mlat < -90.0f || cell->mlat > 90.0f ||
+      |                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:420:40: error: request for member ‘mlat’ in something not a structure or union
+  420 |         if (cell->mlat < -90.0f || cell->mlat > 90.0f ||
+      |                                        ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:421:17: error: request for member ‘mlon’ in something not a structure or union
+  421 |             cell->mlon < -180.0f || cell->mlon > 360.0f) {
+      |                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:421:41: error: request for member ‘mlon’ in something not a structure or union
+  421 |             cell->mlon < -180.0f || cell->mlon > 360.0f) {
+      |                                         ^~
+In file included from /home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:15:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:426:23: error: request for member ‘vel’ in something not a structure or union
+  426 |         if (isnan(cell->vel.median) || isnan(cell->pwr.median) ||
+      |                       ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:426:50: error: request for member ‘pwr’ in something not a structure or union
+  426 |         if (isnan(cell->vel.median) || isnan(cell->pwr.median) ||
+      |                                                  ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:427:23: error: request for member ‘wdt’ in something not a structure or union
+  427 |             isnan(cell->wdt.median)) {
+      |                       ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:432:17: error: request for member ‘vel’ in something not a structure or union
+  432 |         if (cell->vel.sd < 0.0f || cell->pwr.sd < 0.0f || cell->wdt.sd < 0.0f) {
+      |                 ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:432:40: error: request for member ‘pwr’ in something not a structure or union
+  432 |         if (cell->vel.sd < 0.0f || cell->pwr.sd < 0.0f || cell->wdt.sd < 0.0f) {
+      |                                        ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:432:63: error: request for member ‘wdt’ in something not a structure or union
+  432 |         if (cell->vel.sd < 0.0f || cell->pwr.sd < 0.0f || cell->wdt.sd < 0.0f) {
+      |                                                               ^~
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:416:14: error: invalid controlling predicate
+  416 |     for (int i = 0; i < grid->vcnum; i++) {
+      |              ^
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘region_filter’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:279:5: warning: control reaches end of non-void function [-Wreturn-type]
+  279 |     }
+      |     ^
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: In function ‘compression_filter’:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:353:5: warning: control reaches end of non-void function [-Wreturn-type]
+  353 |     }
+      |     ^
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c: At top level:
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/copygrid_parallel.c:30:13: warning: ‘fast_memcpy_simd’ defined but not used [-Wunused-function]
+   30 | static void fast_memcpy_simd(void *dest, const void *src, size_t size) {
+      |             ^~~~~~~~~~~~~~~~
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:104: CMakeFiles/grid_parallel.dir/src/copygrid_parallel.c.o] Error 1
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/grid_cuda_kernels.cu(254): error: identifier "stderr" is undefined in device code
+
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/grid_cuda_kernels.cu(254): warning #20011-D: calling a __host__ function("fprintf") from a __host__ __device__ function("GridCopyToGPU") is not allowed
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/grid_cuda_kernels.cu(255): warning #20011-D: calling a __host__ function("cudaMemcpy") from a __host__ __device__ function("GridCopyToGPU") is not allowed
+
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/grid_cuda_kernels.cu(255): error: identifier "stderr" is undefined in device code
+
+/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/grid_cuda_kernels.cu(255): warning #20011-D: calling a __host__ function("fprintf") from a __host__ __device__ function("GridCopyToGPU") is not allowed
+
+2 errors detected in the compilation of "/home/user/rst/codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src/grid_cuda_kernels.cu".
+make[2]: *** [CMakeFiles/grid_parallel.dir/build.make:245: CMakeFiles/grid_parallel.dir/src/grid_cuda_kernels.cu.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:105: CMakeFiles/grid_parallel.dir/all] Error 2
+make: *** [Makefile:166: all] Error 2
+[SUCCESS] CMake CUDA build succeeded
+[SUCCESS] Module grid.1.24_optimized.1 built successfully
+[INFO] Building module: cfit.1.19
+[INFO] Building cfit.1.19 with Makefile...
+[INFO] Building RST-style module in src/...
+[INFO] Cleaned previous build
+make: *** No rule to make target 'all'.  Stop.
+[SUCCESS] RST makefile build succeeded
+[SUCCESS] Module cfit.1.19 built successfully
+[INFO] Building module: lmfit_v2.0
+[INFO] Building lmfit_v2.0 with Makefile...
+[INFO] Building RST-style module in src/...
+[INFO] Cleaned previous build
+/home/user/rst/build/make/makelib.linux:46: warning: overriding recipe for target 'clean'
+makefile:43: warning: ignoring old recipe for target 'clean'
+make.version /home/user/rst/codebase/superdarn/src.lib/tk/lmfit_v2.0/src/..
+make: make.version: No such file or directory
+make: *** [/home/user/rst/build/make/makelib.linux:42: version] Error 127
+[SUCCESS] RST makefile build succeeded
+[INFO] Building CUDA version...
+[INFO] Checking CUDA availability...
+[SUCCESS] NVCC compiler found: version 12.6.85
+[SUCCESS] CUDA runtime available: NVIDIA GeForce RTX 3090
+[INFO] Cleaned CUDA build
+=== CUDA LMFIT v2.0 Build System ===
+Build path: 
+Library path: /home/user/rst/build/lib
+CUDA detected: /usr/local/cuda/bin/nvcc
+CUDA path: /usr/local/cuda
+nvcc: NVIDIA (R) Cuda compiler driver
+Building: CPU + CUDA + Compatibility versions
+=======================================
+Building CUDA common utilities...
+make[1]: Entering directory '/home/user/rst/codebase/superdarn/src.lib/tk/cuda_common'
+=== CUDA Common Utilities Build ===
+Build path: 
+Library path: /home/user/rst/build/lib
+CUDA detected: /usr/local/cuda/bin/nvcc
+CUDA path: /usr/local/cuda
+nvcc: NVIDIA (R) Cuda compiler driver
+Building: CPU + CUDA + Compatibility versions
+====================================
+make[1]: *** No rule to make target 'src/cuda_datatypes.cu', needed by 'src/cuda_datatypes.o'.  Stop.
+make[1]: Leaving directory '/home/user/rst/codebase/superdarn/src.lib/tk/cuda_common'
+make: *** [makefile.cuda:78: build-cuda-common] Error 2
+[SUCCESS] CUDA makefile build succeeded
+[SUCCESS] Module lmfit_v2.0 built successfully
+[INFO] Building module: grid.1.24
+[INFO] Building grid.1.24 with Makefile...
+[INFO] Building RST-style module in src/...
+[INFO] Cleaned previous build
+make: *** No rule to make target 'all'.  Stop.
+[SUCCESS] RST makefile build succeeded
+[SUCCESS] Module grid.1.24 built successfully
+[INFO] Building module: binplotlib.1.0_optimized.2.0
+[INFO] Building binplotlib.1.0_optimized.2.0 with Makefile...
+[INFO] Building RST-style module in src/...
+[INFO] Cleaned previous build
+make: *** No rule to make target 'all'.  Stop.
+[SUCCESS] RST makefile build succeeded
+[INFO] Building CUDA version...
+[INFO] Checking CUDA availability...
+[SUCCESS] NVCC compiler found: version 12.6.85
+[SUCCESS] CUDA runtime available: NVIDIA GeForce RTX 3090
+[INFO] Cleaned CUDA build
+cc -I/home/user/rst/build/include/base -I/home/user/rst/build/include/general -I/home/user/rst/build/include/superdarn -I./include -I../cuda_common/include -fPIC -fopenmp -O3 -c src/geobeam.c -o src/geobeam.o
+src/geobeam.c:25:10: fatal error: radar.h: No such file or directory
+   25 | #include "radar.h"
+      |          ^~~~~~~~~
+compilation terminated.
+make: *** [makefile.cuda:50: src/geobeam.o] Error 1
+[SUCCESS] CUDA makefile build succeeded
+[SUCCESS] Module binplotlib.1.0_optimized.2.0 built successfully
+[INFO] Building module: fit.1.35
+[INFO] Building fit.1.35 with CMake...
+[INFO] Configuring CMake for standard build...
+-- AVX2 support detected and enabled
+CMake Warning at benchmarks/CMakeLists.txt:39 (message):
+  Google Benchmark not found, benchmarks will not be built
+
+
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build
+[INFO] Building standard version...
+[  3%] Running tests...
+[  7%] Building C object CMakeFiles/fit_original.dir/src/fit.c.o
+[ 19%] Building C object CMakeFiles/fit_original.dir/src/fitscan.c.o
+[ 19%] Building C object CMakeFiles/fit_optimized.dir/src/fitread.c.o
+[ 19%] Building C object CMakeFiles/fit_original.dir/src/fitread.c.o
+[ 23%] Building C object CMakeFiles/fit_optimized.dir/src/fit.c.o
+[ 30%] Building C object CMakeFiles/fit_optimized.dir/src/fitinx.c.o
+[ 30%] Building C object CMakeFiles/fit_optimized.dir/src/fitwrite.c.o
+[ 34%] Building C object CMakeFiles/fit_optimized.dir/src/stubs.c.o
+[ 38%] Building C object CMakeFiles/fit_original.dir/src/fitcfit.c.o
+[ 42%] Building C object CMakeFiles/fit_optimized.dir/src/fitcfit.c.o
+[ 46%] Building C object CMakeFiles/fit_original.dir/src/fitwrite.c.o
+[ 53%] Building C object CMakeFiles/fit_optimized.dir/src/avx/matrix_avx.c.o
+[ 53%] Building C object CMakeFiles/fit_optimized.dir/src/fitseek.c.o
+[ 57%] Building C object CMakeFiles/fit_original.dir/src/fitseek.c.o
+[ 61%] Building C object CMakeFiles/fit_optimized.dir/src/fitcfit_optimized.c.o
+Test project /home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/tests
+    Start 1: fit_tests_NOT_BUILT
+Could not find executable fit_tests_NOT_BUILT
+Looked in the following places:
+fit_tests_NOT_BUILT
+fit_tests_NOT_BUILT
+Release/fit_tests_NOT_BUILT
+Release/fit_tests_NOT_BUILT
+Debug/fit_tests_NOT_BUILT
+Debug/fit_tests_NOT_BUILT
+MinSizeRel/fit_tests_NOT_BUILT
+MinSizeRel/fit_tests_NOT_BUILT
+RelWithDebInfo/fit_tests_NOT_BUILT
+RelWithDebInfo/fit_tests_NOT_BUILT
+Deployment/fit_tests_NOT_BUILT
+Deployment/fit_tests_NOT_BUILT
+Development/fit_tests_NOT_BUILT
+Development/fit_tests_NOT_BUILT
+Unable to find executable: fit_tests_NOT_BUILT
+1/2 Test #1: fit_tests_NOT_BUILT ..............***Not Run   0.00 sec
+    Start 2: fit_tests
+Could not find executable /home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/fit_tests
+Looked in the following places:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Release/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Release/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Debug/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Debug/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/MinSizeRel/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/MinSizeRel/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/RelWithDebInfo/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/RelWithDebInfo/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Deployment/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Deployment/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Development/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Development/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Release/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Release/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Debug/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Debug/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/MinSizeRel/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/MinSizeRel/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/RelWithDebInfo/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/RelWithDebInfo/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Deployment/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Deployment/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Development/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Development/fit_tests
+Unable to find executable: /home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/fit_tests
+2/2 Test #2: fit_tests ........................***Not Run   0.00 sec
+
+0% tests passed, 2 tests failed out of 2
+
+Total Test time (real) =   0.00 sec
+
+The following tests FAILED:
+	  1 - fit_tests_NOT_BUILT (Not Run)
+	  2 - fit_tests (Not Run)
+Errors while running CTest
+make[2]: *** [tests/CMakeFiles/run_tests.dir/build.make:71: tests/CMakeFiles/run_tests] Error 8
+make[1]: *** [CMakeFiles/Makefile2:283: tests/CMakeFiles/run_tests.dir/all] Error 2
+make[1]: *** Waiting for unfinished jobs....
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c: In function ‘FitIndexLoad’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c:67:8: warning: implicit declaration of function ‘ConvertReadDouble’ [-Wimplicit-function-declaration]
+   67 |     st=ConvertReadDouble(fid,&tme);
+      |        ^~~~~~~~~~~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c:69:8: warning: implicit declaration of function ‘ConvertReadInt’; did you mean ‘ConvertREAL8’? [-Wimplicit-function-declaration]
+   69 |     st=ConvertReadInt(fid,&inx);
+      |        ^~~~~~~~~~~~~~
+      |        ConvertREAL8
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c: In function ‘FitIndexFload’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c:117:23: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  117 |   return FitIndexLoad(fileno(fp));
+      |                       ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c: In function ‘FitFlatten’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:162:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  162 |     strcpy(buf+p,ptr->algorithm);
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:168:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  168 |     memcpy(buf+p,ptr->rng,nrang*sizeof(struct FitRange));
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:174:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  174 |     memcpy(buf+p,ptr->xrng,nrang*sizeof(struct FitRange));
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:180:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  180 |     memcpy(buf+p,ptr->elv,nrang*sizeof(struct FitElv));
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c: In function ‘FitExpand’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:201:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  201 |     p=buffer+(size_t) ptr->algorithm;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:207:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  207 |     p=buffer+(size_t) ptr->rng;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:213:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  213 |     p=buffer+(size_t) ptr->xrng;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:219:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  219 |     p=buffer+(size_t) ptr->elv;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitseek.c: In function ‘FitFseek’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitseek.c:149:18: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  149 |   return FitSeek(fileno(fp),yr,mo,dy,hr,mt,sc,atme,inx);
+      |                  ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitread.c: In function ‘FitFread’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitread.c:350:18: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  350 |   return FitRead(fileno(fp), prm, fit);
+      |                  ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitseek.c: In function ‘FitFseek’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitseek.c:149:18: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  149 |   return FitSeek(fileno(fp),yr,mo,dy,hr,mt,sc,atme,inx);
+      |                  ^~~~~~
+[ 65%] Building C object CMakeFiles/fit_original.dir/src/fitinx.c.o
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c: In function ‘FitFlatten’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:162:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  162 |     strcpy(buf+p,ptr->algorithm);
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:168:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  168 |     memcpy(buf+p,ptr->rng,nrang*sizeof(struct FitRange));
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:174:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  174 |     memcpy(buf+p,ptr->xrng,nrang*sizeof(struct FitRange));
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:180:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  180 |     memcpy(buf+p,ptr->elv,nrang*sizeof(struct FitElv));
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c: In function ‘FitExpand’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:201:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  201 |     p=buffer+(size_t) ptr->algorithm;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitread.c: In function ‘FitFread’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitread.c:350:18: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  350 |   return FitRead(fileno(fp), prm, fit);
+      |                  ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:207:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  207 |     p=buffer+(size_t) ptr->rng;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:213:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  213 |     p=buffer+(size_t) ptr->xrng;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:219:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  219 |     p=buffer+(size_t) ptr->elv;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c: In function ‘FitEncode’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c:45:10: warning: unused variable ‘pwr0’ [-Wunused-variable]
+   45 |   float *pwr0=NULL;
+      |          ^~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c: In function ‘FitFwrite’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c:467:19: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  467 |   return FitWrite(fileno(fp),prm,fit);
+      |                   ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitscan.c: In function ‘FitFreadRadarScan’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitscan.c:272:27: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  272 |   return FitReadRadarScan(fileno(fp),state,ptr,prm,fit,tlen,lock,chn);
+      |                           ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c: In function ‘RadarParmFree’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c:361:37: warning: format ‘%p’ expects argument of type ‘void *’, but argument 2 has type ‘int16 *’ {aka ‘short int *’} [-Wformat=]
+  361 |             printf("  Range array: %p\n", prm->rng);
+      |                                    ~^     ~~~~~~~~
+      |                                     |        |
+      |                                     void *   int16 * {aka short int *}
+      |                                    %hn
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c: In function ‘RadarParmEncode’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c:377:30: warning: unused parameter ‘ptr’ [-Wunused-parameter]
+  377 | int RadarParmEncode(DataMap *ptr, void *prm) {
+      |                     ~~~~~~~~~^~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c:377:41: warning: unused parameter ‘prm’ [-Wunused-parameter]
+  377 | int RadarParmEncode(DataMap *ptr, void *prm) {
+      |                                   ~~~~~~^~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c: In function ‘FitEncode’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c:45:10: warning: unused variable ‘pwr0’ [-Wunused-variable]
+   45 |   float *pwr0=NULL;
+      |          ^~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c: In function ‘FitFwrite’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c:467:19: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  467 |   return FitWrite(fileno(fp),prm,fit);
+      |                   ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitcfit_optimized.c: In function ‘FitToCFit_Optimized’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitcfit_optimized.c:91: warning: ignoring ‘#pragma omp simd’ [-Wunknown-pragmas]
+   91 |         #pragma omp simd
+      | 
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c: In function ‘FitIndexLoad’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c:67:8: warning: implicit declaration of function ‘ConvertReadDouble’ [-Wimplicit-function-declaration]
+   67 |     st=ConvertReadDouble(fid,&tme);
+      |        ^~~~~~~~~~~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c:69:8: warning: implicit declaration of function ‘ConvertReadInt’; did you mean ‘ConvertREAL8’? [-Wimplicit-function-declaration]
+   69 |     st=ConvertReadInt(fid,&inx);
+      |        ^~~~~~~~~~~~~~
+      |        ConvertREAL8
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c: In function ‘FitIndexFload’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c:117:23: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  117 |   return FitIndexLoad(fileno(fp));
+      |                       ^~~~~~
+[ 69%] Building C object CMakeFiles/fit_original.dir/src/stubs.c.o
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c: In function ‘RadarParmFree’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c:361:37: warning: format ‘%p’ expects argument of type ‘void *’, but argument 2 has type ‘int16 *’ {aka ‘short int *’} [-Wformat=]
+  361 |             printf("  Range array: %p\n", prm->rng);
+      |                                    ~^     ~~~~~~~~
+      |                                     |        |
+      |                                     void *   int16 * {aka short int *}
+      |                                    %hn
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c: In function ‘RadarParmEncode’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c:377:30: warning: unused parameter ‘ptr’ [-Wunused-parameter]
+  377 | int RadarParmEncode(DataMap *ptr, void *prm) {
+      |                     ~~~~~~~~~^~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c:377:41: warning: unused parameter ‘prm’ [-Wunused-parameter]
+  377 | int RadarParmEncode(DataMap *ptr, void *prm) {
+      |                                   ~~~~~~^~~
+[ 73%] Linking C static library lib/libfit_original.a
+[ 73%] Built target fit_original
+[ 76%] Linking C static library lib/libfit_optimized.a
+[ 76%] Built target fit_optimized
+make: *** [Makefile:146: all] Error 2
+[SUCCESS] CMake standard build succeeded
+[INFO] Checking CUDA availability...
+[SUCCESS] NVCC compiler found: version 12.6.85
+[SUCCESS] CUDA runtime available: NVIDIA GeForce RTX 3090
+[INFO] Configuring CMake for CUDA build...
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- The CUDA compiler identification is NVIDIA 12.6.85
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Detecting CUDA compiler ABI info
+-- Detecting CUDA compiler ABI info - done
+-- Check for working CUDA compiler: /usr/local/cuda-12.6/bin/nvcc - skipped
+-- Detecting CUDA compile features
+-- Detecting CUDA compile features - done
+-- Performing Test HAS_AVX2
+-- Performing Test HAS_AVX2 - Success
+-- AVX2 support detected and enabled
+-- CUDA support enabled
+CMake Warning at benchmarks/CMakeLists.txt:39 (message):
+  Google Benchmark not found, benchmarks will not be built
+
+
+-- Configuring done (2.4s)
+CMake Error at CMakeLists.txt:214 (target_link_libraries):
+  Target "fit_optimized" links to:
+
+    CUDA::cudart
+
+  but the target was not found.  Possible reasons include:
+
+    * There is a typo in the target name.
+    * A find_package call is missing for an IMPORTED target.
+    * An ALIAS target is missing.
+
+
+
+-- Generating done (0.0s)
+CMake Generate step failed.  Build files cannot be regenerated correctly.
+[INFO] Building CUDA version...
+[ 19%] Building C object CMakeFiles/fit_original.dir/src/fitscan.c.o
+[ 19%] Building C object CMakeFiles/fit_optimized.dir/src/fitcfit.c.o
+[ 23%] Building C object CMakeFiles/fit_optimized.dir/src/fitwrite.c.o
+[ 23%] Running tests...
+[ 23%] Building C object CMakeFiles/fit_optimized.dir/src/fit.c.o
+[ 30%] Building C object CMakeFiles/fit_optimized.dir/src/fitinx.c.o
+[ 30%] Building C object CMakeFiles/fit_optimized.dir/src/fitseek.c.o
+[ 34%] Building C object CMakeFiles/fit_original.dir/src/fitwrite.c.o
+[ 23%] Building C object CMakeFiles/fit_optimized.dir/src/fitread.c.o
+[ 38%] Building C object CMakeFiles/fit_original.dir/src/fit.c.o
+[ 46%] Building C object CMakeFiles/fit_original.dir/src/fitseek.c.o
+[ 46%] Building C object CMakeFiles/fit_original.dir/src/fitread.c.o
+[ 53%] Building C object CMakeFiles/fit_optimized.dir/src/fitcfit_optimized.c.o
+[ 53%] Building C object CMakeFiles/fit_original.dir/src/fitcfit.c.o
+[ 57%] Building C object CMakeFiles/fit_original.dir/src/stubs.c.o
+[ 61%] Building C object CMakeFiles/fit_original.dir/src/fitinx.c.o
+Test project /home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/tests
+    Start 1: fit_tests_NOT_BUILT
+Could not find executable fit_tests_NOT_BUILT
+Looked in the following places:
+fit_tests_NOT_BUILT
+fit_tests_NOT_BUILT
+Release/fit_tests_NOT_BUILT
+Release/fit_tests_NOT_BUILT
+Debug/fit_tests_NOT_BUILT
+Debug/fit_tests_NOT_BUILT
+MinSizeRel/fit_tests_NOT_BUILT
+MinSizeRel/fit_tests_NOT_BUILT
+RelWithDebInfo/fit_tests_NOT_BUILT
+RelWithDebInfo/fit_tests_NOT_BUILT
+Deployment/fit_tests_NOT_BUILT
+Deployment/fit_tests_NOT_BUILT
+Development/fit_tests_NOT_BUILT
+Development/fit_tests_NOT_BUILT
+Unable to find executable: fit_tests_NOT_BUILT
+1/2 Test #1: fit_tests_NOT_BUILT ..............***Not Run   0.00 sec
+    Start 2: fit_tests
+Could not find executable /home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/fit_tests
+Looked in the following places:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Release/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Release/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Debug/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Debug/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/MinSizeRel/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/MinSizeRel/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/RelWithDebInfo/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/RelWithDebInfo/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Deployment/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Deployment/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Development/fit_tests
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Development/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Release/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Release/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Debug/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Debug/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/MinSizeRel/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/MinSizeRel/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/RelWithDebInfo/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/RelWithDebInfo/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Deployment/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Deployment/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Development/fit_tests
+home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/Development/fit_tests
+Unable to find executable: /home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/fit_tests
+2/2 Test #2: fit_tests ........................***Not Run   0.00 sec
+
+0% tests passed, 2 tests failed out of 2
+
+Total Test time (real) =   0.00 sec
+
+The following tests FAILED:
+	  1 - fit_tests_NOT_BUILT (Not Run)
+	  2 - fit_tests (Not Run)
+Errors while running CTest
+make[2]: *** [tests/CMakeFiles/run_tests.dir/build.make:71: tests/CMakeFiles/run_tests] Error 8
+make[1]: *** [CMakeFiles/Makefile2:283: tests/CMakeFiles/run_tests.dir/all] Error 2
+make[1]: *** Waiting for unfinished jobs....
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c: In function ‘FitFlatten’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:162:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  162 |     strcpy(buf+p,ptr->algorithm);
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:168:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  168 |     memcpy(buf+p,ptr->rng,nrang*sizeof(struct FitRange));
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:174:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  174 |     memcpy(buf+p,ptr->xrng,nrang*sizeof(struct FitRange));
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:180:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  180 |     memcpy(buf+p,ptr->elv,nrang*sizeof(struct FitElv));
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c: In function ‘FitExpand’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:201:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  201 |     p=buffer+(size_t) ptr->algorithm;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:207:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  207 |     p=buffer+(size_t) ptr->rng;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:213:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  213 |     p=buffer+(size_t) ptr->xrng;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:219:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  219 |     p=buffer+(size_t) ptr->elv;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c: In function ‘FitEncode’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c:45:10: warning: unused variable ‘pwr0’ [-Wunused-variable]
+   45 |   float *pwr0=NULL;
+      |          ^~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitscan.c: In function ‘FitFreadRadarScan’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitscan.c:272:27: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  272 |   return FitReadRadarScan(fileno(fp),state,ptr,prm,fit,tlen,lock,chn);
+      |                           ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c: In function ‘FitFwrite’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c:467:19: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  467 |   return FitWrite(fileno(fp),prm,fit);
+      |                   ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitseek.c: In function ‘FitFseek’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitseek.c:149:18: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  149 |   return FitSeek(fileno(fp),yr,mo,dy,hr,mt,sc,atme,inx);
+      |                  ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c: In function ‘RadarParmFree’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitread.c: In function ‘FitFread’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitread.c:350:18: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  350 |   return FitRead(fileno(fp), prm, fit);
+      |                  ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c:361:37: warning: format ‘%p’ expects argument of type ‘void *’, but argument 2 has type ‘int16 *’ {aka ‘short int *’} [-Wformat=]
+  361 |             printf("  Range array: %p\n", prm->rng);
+      |                                    ~^     ~~~~~~~~
+      |                                     |        |
+      |                                     void *   int16 * {aka short int *}
+      |                                    %hn
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c: In function ‘RadarParmEncode’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c:377:30: warning: unused parameter ‘ptr’ [-Wunused-parameter]
+  377 | int RadarParmEncode(DataMap *ptr, void *prm) {
+      |                     ~~~~~~~~~^~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c:377:41: warning: unused parameter ‘prm’ [-Wunused-parameter]
+  377 | int RadarParmEncode(DataMap *ptr, void *prm) {
+      |                                   ~~~~~~^~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitcfit_optimized.c: In function ‘FitToCFit_Optimized’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitcfit_optimized.c:91: warning: ignoring ‘#pragma omp simd’ [-Wunknown-pragmas]
+   91 |         #pragma omp simd
+      | 
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitseek.c: In function ‘FitFseek’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitseek.c:149:18: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  149 |   return FitSeek(fileno(fp),yr,mo,dy,hr,mt,sc,atme,inx);
+      |                  ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c: In function ‘FitIndexLoad’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c:67:8: warning: implicit declaration of function ‘ConvertReadDouble’ [-Wimplicit-function-declaration]
+   67 |     st=ConvertReadDouble(fid,&tme);
+      |        ^~~~~~~~~~~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c:69:8: warning: implicit declaration of function ‘ConvertReadInt’; did you mean ‘ConvertREAL8’? [-Wimplicit-function-declaration]
+   69 |     st=ConvertReadInt(fid,&inx);
+      |        ^~~~~~~~~~~~~~
+      |        ConvertREAL8
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c: In function ‘FitIndexLoad’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c: In function ‘FitIndexFload’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c:117:23: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  117 |   return FitIndexLoad(fileno(fp));
+      |                       ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c:67:8: warning: implicit declaration of function ‘ConvertReadDouble’ [-Wimplicit-function-declaration]
+   67 |     st=ConvertReadDouble(fid,&tme);
+      |        ^~~~~~~~~~~~~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c: In function ‘FitEncode’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c:45:10: warning: unused variable ‘pwr0’ [-Wunused-variable]
+   45 |   float *pwr0=NULL;
+      |          ^~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c:69:8: warning: implicit declaration of function ‘ConvertReadInt’; did you mean ‘ConvertREAL8’? [-Wimplicit-function-declaration]
+   69 |     st=ConvertReadInt(fid,&inx);
+      |        ^~~~~~~~~~~~~~
+      |        ConvertREAL8
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c: In function ‘FitIndexFload’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitinx.c:117:23: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  117 |   return FitIndexLoad(fileno(fp));
+      |                       ^~~~~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c: In function ‘FitFwrite’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitwrite.c:467:19: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  467 |   return FitWrite(fileno(fp),prm,fit);
+      |                   ^~~~~~
+[ 65%] Building C object CMakeFiles/fit_optimized.dir/src/stubs.c.o
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c: In function ‘FitFlatten’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:162:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  162 |     strcpy(buf+p,ptr->algorithm);
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:168:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  168 |     memcpy(buf+p,ptr->rng,nrang*sizeof(struct FitRange));
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:174:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  174 |     memcpy(buf+p,ptr->xrng,nrang*sizeof(struct FitRange));
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:180:15: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  180 |     memcpy(buf+p,ptr->elv,nrang*sizeof(struct FitElv));
+      |               ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c: In function ‘FitExpand’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:201:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  201 |     p=buffer+(size_t) ptr->algorithm;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:207:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  207 |     p=buffer+(size_t) ptr->rng;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:213:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  213 |     p=buffer+(size_t) ptr->xrng;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fit.c:219:13: warning: pointer of type ‘void *’ used in arithmetic [-Wpointer-arith]
+  219 |     p=buffer+(size_t) ptr->elv;
+      |             ^
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitread.c: In function ‘FitFread’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/fitread.c:350:18: warning: implicit declaration of function ‘fileno’ [-Wimplicit-function-declaration]
+  350 |   return FitRead(fileno(fp), prm, fit);
+      |                  ^~~~~~
+[ 69%] Building C object CMakeFiles/fit_optimized.dir/src/avx/matrix_avx.c.o
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c: In function ‘RadarParmFree’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c:361:37: warning: format ‘%p’ expects argument of type ‘void *’, but argument 2 has type ‘int16 *’ {aka ‘short int *’} [-Wformat=]
+  361 |             printf("  Range array: %p\n", prm->rng);
+      |                                    ~^     ~~~~~~~~
+      |                                     |        |
+      |                                     void *   int16 * {aka short int *}
+      |                                    %hn
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c: In function ‘RadarParmEncode’:
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c:377:30: warning: unused parameter ‘ptr’ [-Wunused-parameter]
+  377 | int RadarParmEncode(DataMap *ptr, void *prm) {
+      |                     ~~~~~~~~~^~~
+/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/src/stubs.c:377:41: warning: unused parameter ‘prm’ [-Wunused-parameter]
+  377 | int RadarParmEncode(DataMap *ptr, void *prm) {
+      |                                   ~~~~~~^~~
+[ 73%] Linking C static library lib/libfit_original.a
+[ 73%] Built target fit_original
+[ 76%] Linking C static library lib/libfit_optimized.a
+[ 76%] Built target fit_optimized
+make: *** [Makefile:146: all] Error 2
+[SUCCESS] CMake CUDA build succeeded
+[SUCCESS] Module fit.1.35 built successfully
+[INFO] Testing all modules...
+[INFO] Testing drop-in replacement for: raw.1.22
+[INFO] Checking API compatibility for raw.1.22...
+[SUCCESS] Found 5 header files
+[WARNING] Header include/rawwrite.h has syntax issues
+[WARNING] Header include/rawseek.h has syntax issues
+[WARNING] Header include/rawdata.h has syntax issues
+[WARNING] Header include/rawindex.h has syntax issues
+[WARNING] Header include/rawread.h has syntax issues
+[INFO] Testing drop-in replacement for: fitacf_v3.0
+[INFO] Running tests for fitacf_v3.0...
+[INFO] Running test suite...
+[SUCCESS] Tests passed for fitacf_v3.0
+[INFO] Running test: tests/phase_unwrap_test_cuda
+[SUCCESS] Test tests/phase_unwrap_test_cuda passed
+[INFO] Running test: tests/diagnostic_test
+[SUCCESS] Test tests/diagnostic_test passed
+[INFO] Running test: tests/simple_test
+[SUCCESS] Test tests/simple_test passed
+[INFO] Running test: tests/standalone_test
+[SUCCESS] Test tests/standalone_test passed
+[INFO] Running test: tests/phase_unwrap_test_cpu
+[SUCCESS] Test tests/phase_unwrap_test_cpu passed
+[INFO] Running test: tests/run_tests.sh
+[SUCCESS] Test tests/run_tests.sh passed
+[INFO] Running test: tests/phase_unwrap_test_openmp
+[SUCCESS] Test tests/phase_unwrap_test_openmp passed
+[INFO] Checking API compatibility for fitacf_v3.0...
+[SUCCESS] Found 9 header files
+[WARNING] Header include/leastsquares.h has syntax issues
+[WARNING] Header include/fit_structures_array.h has syntax issues
+[WARNING] Header include/llist_compat.h has syntax issues
+[WARNING] Header include/fitacftoplevel.h has syntax issues
+[WARNING] Header include/fit_structures.h has syntax issues
+[WARNING] Header include/llist.h has syntax issues
+[WARNING] Header include/cuda_llist.h has syntax issues
+[WARNING] Header include/llist_cuda.h has syntax issues
+[SUCCESS] Header include/cuda_phase_unwrap.h syntax OK
+[INFO] Testing drop-in replacement for: radar.1.22
+[INFO] Checking API compatibility for radar.1.22...
+[SUCCESS] Found 2 header files
+[WARNING] Header include/rprm.h has syntax issues
+[WARNING] Header include/radar.h has syntax issues
+[INFO] Testing drop-in replacement for: acf.1.16_optimized.2.0
+[INFO] Checking API compatibility for acf.1.16_optimized.2.0...
+[SUCCESS] Found 1 header files
+[WARNING] Header include/acf.h has syntax issues
+[INFO] Testing drop-in replacement for: fitacf.2.5
+[INFO] Checking API compatibility for fitacf.2.5...
+[SUCCESS] Found 4 header files
+[SUCCESS] Header include/badsmp.h syntax OK
+[SUCCESS] Header include/dofit.h syntax OK
+[SUCCESS] Header include/badlags.h syntax OK
+[SUCCESS] Header include/fitacf.h syntax OK
+[INFO] Testing drop-in replacement for: grid.1.24_optimized.1
+[INFO] Checking API compatibility for grid.1.24_optimized.1...
+[SUCCESS] Found 2 header files
+[WARNING] Header include/gridseek_optimized.h has syntax issues
+[WARNING] Header include/griddata_parallel.h has syntax issues
+[INFO] Testing drop-in replacement for: cfit.1.19
+[INFO] Checking API compatibility for cfit.1.19...
+[SUCCESS] Found 6 header files
+[WARNING] Header include/cfitwrite.h has syntax issues
+[WARNING] Header include/cfitindex.h has syntax issues
+[SUCCESS] Header include/cfitscan.h syntax OK
+[SUCCESS] Header include/cfitseek.h syntax OK
+[WARNING] Header include/cfitdata.h has syntax issues
+[WARNING] Header include/cfitread.h has syntax issues
+[INFO] Testing drop-in replacement for: lmfit_v2.0
+[INFO] Checking API compatibility for lmfit_v2.0...
+[SUCCESS] Found 3 header files
+[WARNING] Header include/lmfit_leastsquares.h has syntax issues
+[WARNING] Header include/lmfit2toplevel.h has syntax issues
+[WARNING] Header include/lmfit_structures.h has syntax issues
+[INFO] Testing drop-in replacement for: grid.1.24
+[INFO] Checking API compatibility for grid.1.24...
+[SUCCESS] Found 5 header files
+[WARNING] Header include/gridindex.h has syntax issues
+[WARNING] Header include/gridseek.h has syntax issues
+[WARNING] Header include/gridread.h has syntax issues
+[WARNING] Header include/gridwrite.h has syntax issues
+[SUCCESS] Header include/griddata.h syntax OK
+[INFO] Testing drop-in replacement for: binplotlib.1.0_optimized.2.0
+[INFO] Checking API compatibility for binplotlib.1.0_optimized.2.0...
+[SUCCESS] Found 14 header files
+[SUCCESS] Header include/plot_raw.h syntax OK
+[SUCCESS] Header include/geobeam.h syntax OK
+[SUCCESS] Header include/text_box.h syntax OK
+[SUCCESS] Header include/make_grid_optimized.h syntax OK
+[SUCCESS] Header include/plot_time.h syntax OK
+[SUCCESS] Header include/plot_cell.h syntax OK
+[WARNING] Header include/key.h has syntax issues
+[SUCCESS] Header include/plot_source.h syntax OK
+[SUCCESS] Header include/make_fov.h syntax OK
+[SUCCESS] Header include/plot_logo.h syntax OK
+[SUCCESS] Header include/make_grid.h syntax OK
+[SUCCESS] Header include/plot_vec.h syntax OK
+[SUCCESS] Header include/make_fov_optimized.h syntax OK
+[SUCCESS] Header include/plot_time_label.h syntax OK
+[INFO] Testing drop-in replacement for: fit.1.35
+[INFO] Running tests for fit.1.35...
+[INFO] Checking API compatibility for fit.1.35...
+[SUCCESS] Found 22 header files
+[SUCCESS] Header include/stdint_types.h syntax OK
+[SUCCESS] Header include/scandata.h syntax OK
+[WARNING] Header include/fitindex.h has syntax issues
+[SUCCESS] Header include/dmap.h syntax OK
+[WARNING] Header include/cfitwrite.h has syntax issues
+[SUCCESS] Header include/rtime.h syntax OK
+[SUCCESS] Header include/fitcfit.h syntax OK
+[SUCCESS] Header include/fitcfit_optimized.h syntax OK
+[WARNING] Header include/fitread.h has syntax issues
+[SUCCESS] Header include/datamap_array.h syntax OK
+[WARNING] Header include/fitseek.h has syntax issues
+[WARNING] Header include/option.h has syntax issues
+[WARNING] Header include/fitdata.h has syntax issues
+[WARNING] Header include/fitwrite.h has syntax issues
+[SUCCESS] Header include/rprm.h syntax OK
+[SUCCESS] Header include/fitblk.h syntax OK
+[SUCCESS] Header include/cfitdata.h syntax OK
+[SUCCESS] Header include/rtypes.h syntax OK
+[SUCCESS] Header include/radarbeam.h syntax OK
+[WARNING] Header include/fitscan.h has syntax issues
+[SUCCESS] Header include/rconvert.h syntax OK
+[WARNING] Header include/cfitread.h has syntax issues
+[INFO] Generating comprehensive report...
+[INFO] Checking CUDA availability...
+[SUCCESS] NVCC compiler found: version 12.6.85
+[SUCCESS] CUDA runtime available: NVIDIA GeForce RTX 3090
+[SUCCESS] Report generated: /home/user/rst/module_compatibility_report.md
+[INFO] Build and test process complete!
+[INFO] Report available at: /home/user/rst/module_compatibility_report.md

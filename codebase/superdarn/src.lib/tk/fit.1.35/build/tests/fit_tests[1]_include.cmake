@@ -1,0 +1,5 @@
+if(EXISTS "/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/tests/fit_tests[1]_tests.cmake")
+  include("/home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/tests/fit_tests[1]_tests.cmake")
+else()
+  add_test(fit_tests_NOT_BUILT fit_tests_NOT_BUILT)
+endif()

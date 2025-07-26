@@ -1,0 +1,56 @@
+# CUDA-Compatible scan.1.7 Makefile
+include $(MAKECFG).$(SYSTEM)
+
+CUDA_PATH ?= /usr/local/cuda
+NVCC := $(CUDA_PATH)/bin/nvcc
+CUDA_AVAILABLE := $(shell command -v $(NVCC) 2> /dev/null)
+
+LIBNAME_CPU = scan.1.7
+LIBNAME_CUDA = scan.1.7.cuda
+LIBNAME_COMPAT = scan.1.7.compat
+
+CPU_SOURCES = $(wildcard src/*.c)
+CUDA_SOURCES = src/cuda_scan_1_7_kernels.cu
+COMPAT_SOURCES = $(CPU_SOURCES)
+
+CPU_OBJECTS = $(CPU_SOURCES:.c=.o)
+CUDA_OBJECTS = $(CUDA_SOURCES:.cu=.o)
+COMPAT_OBJECTS = $(COMPAT_SOURCES:.c=.compat.o)
+
+INCLUDE = -I$(IPATH)/base -I$(IPATH)/general -I$(IPATH)/superdarn -I./include -I../cuda_common/include
+CFLAGS += $(INCLUDE) -fPIC -fopenmp -O3
+NVCCFLAGS = $(INCLUDE) -arch=sm_50 -std=c++11 --compiler-options -fPIC
+
+ifdef CUDA_AVAILABLE
+    TARGETS = $(LIBPATH)/lib$(LIBNAME_CPU).a $(LIBPATH)/lib$(LIBNAME_CUDA).a $(LIBPATH)/lib$(LIBNAME_COMPAT).a
+else
+    TARGETS = $(LIBPATH)/lib$(LIBNAME_CPU).a $(LIBPATH)/lib$(LIBNAME_COMPAT).a
+endif
+
+all: $(TARGETS)
+
+$(LIBPATH)/lib$(LIBNAME_CPU).a: $(CPU_OBJECTS)
+	$(AR) $(ARFLAGS) $@ $(CPU_OBJECTS)
+
+ifdef CUDA_AVAILABLE
+$(LIBPATH)/lib$(LIBNAME_CUDA).a: $(CUDA_OBJECTS)
+	$(AR) $(ARFLAGS) $@ $(CUDA_OBJECTS)
+
+%.o: %.cu
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+endif
+
+$(LIBPATH)/lib$(LIBNAME_COMPAT).a: $(COMPAT_OBJECTS)
+	$(AR) $(ARFLAGS) $@ $(COMPAT_OBJECTS)
+
+%.compat.o: %.c
+	$(CC) $(CFLAGS) -DUSE_CUDA_COMPAT -c $< -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(CPU_OBJECTS) $(CUDA_OBJECTS) $(COMPAT_OBJECTS)
+	rm -f $(LIBPATH)/lib$(LIBNAME_CPU).a $(LIBPATH)/lib$(LIBNAME_CUDA).a $(LIBPATH)/lib$(LIBNAME_COMPAT).a
+
+.PHONY: all clean

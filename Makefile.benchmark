@@ -1,0 +1,70 @@
+# SuperDARN CUDA Performance Benchmark Makefile
+# Compiles and runs comprehensive performance tests
+
+CC = gcc
+NVCC = nvcc
+CFLAGS = -O3 -march=native -fopenmp -Wall -Wextra
+NVCCFLAGS = -O3 -arch=sm_75 --compiler-options -fPIC
+INCLUDES = -I./codebase/superdarn/src.lib/tk/cuda_common/include \
+           -I./include/base -I./include/general -I./include/superdarn
+LIBS = -lm -lcuda -lcudart -lcublas -lcusolver
+
+# Source files
+BENCHMARK_SRC = cuda_performance_benchmark.c
+BENCHMARK_BIN = cuda_performance_benchmark
+
+# Targets
+all: $(BENCHMARK_BIN)
+
+$(BENCHMARK_BIN): $(BENCHMARK_SRC)
+	@echo "Compiling performance benchmark..."
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $< $(LIBS)
+
+# Create mock CUDA datatypes header if not available
+mock-headers:
+	@mkdir -p ./include/cuda_common
+	@echo "Creating mock CUDA datatypes header..."
+	@echo '#ifndef CUDA_DATATYPES_H' > ./include/cuda_common/cuda_datatypes.h
+	@echo '#define CUDA_DATATYPES_H' >> ./include/cuda_common/cuda_datatypes.h
+	@echo '#include <stddef.h>' >> ./include/cuda_common/cuda_datatypes.h
+	@echo '#include <stdbool.h>' >> ./include/cuda_common/cuda_datatypes.h
+	@echo 'typedef enum { CUDA_SUCCESS = 0, CUDA_ERROR_INVALID_ARGUMENT } cuda_error_t;' >> ./include/cuda_common/cuda_datatypes.h
+	@echo 'typedef enum { CUDA_MEMORY_HOST, CUDA_MEMORY_DEVICE } cuda_memory_type_t;' >> ./include/cuda_common/cuda_datatypes.h
+	@echo 'typedef enum { CUDA_DATA_FLOAT, CUDA_DATA_INT } cuda_data_type_t;' >> ./include/cuda_common/cuda_datatypes.h
+	@echo 'typedef struct { void *host_ptr; void *device_ptr; size_t size; } cuda_memory_t;' >> ./include/cuda_common/cuda_datatypes.h
+	@echo 'typedef struct { cuda_memory_t memory; size_t count; } cuda_array_t;' >> ./include/cuda_common/cuda_datatypes.h
+	@echo '#define CUDA_CHECK(call) call' >> ./include/cuda_common/cuda_datatypes.h
+	@echo '#endif' >> ./include/cuda_common/cuda_datatypes.h
+
+# Run benchmarks
+run: $(BENCHMARK_BIN)
+	@echo "Running CUDA performance benchmarks..."
+	@echo "This may take several minutes..."
+	./$(BENCHMARK_BIN)
+
+# Run with profiling
+profile: $(BENCHMARK_BIN)
+	@echo "Running benchmarks with profiling..."
+	nvprof --print-gpu-trace ./$(BENCHMARK_BIN) 2> profile_output.txt || \
+	time ./$(BENCHMARK_BIN)
+
+# Generate quick test
+quick-test: $(BENCHMARK_BIN)
+	@echo "Running quick performance test..."
+	@echo "Testing single configuration per module..."
+	timeout 60s ./$(BENCHMARK_BIN) || echo "Quick test completed"
+
+# Clean
+clean:
+	rm -f $(BENCHMARK_BIN)
+	rm -f cuda_performance_report.md
+	rm -f profile_output.txt
+	rm -rf ./include/cuda_common
+
+# Install dependencies (if needed)
+install-deps:
+	@echo "Checking CUDA installation..."
+	@which nvcc || echo "CUDA not found - install CUDA toolkit"
+	@which gcc || echo "GCC not found - install build-essential"
+
+.PHONY: all run profile quick-test clean mock-headers install-deps

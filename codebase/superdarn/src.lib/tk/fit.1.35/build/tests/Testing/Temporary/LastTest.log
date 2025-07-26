@@ -1,0 +1,35 @@
+Start testing: Jul 25 22:47 BST
+----------------------------------------------------------
+Unable to find executable: fit_tests_NOT_BUILT
+1/2 Testing: fit_tests_NOT_BUILT
+1/2 Test: fit_tests_NOT_BUILT
+Command: ""
+Directory: /home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/tests
+"fit_tests_NOT_BUILT" start time: 
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"fit_tests_NOT_BUILT" end time: Jul 25 22:47 BST
+"fit_tests_NOT_BUILT" time elapsed: 00:00:00
+----------------------------------------------------------
+
+Unable to find executable: /home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/bin/fit_tests
+2/2 Testing: fit_tests
+2/2 Test: fit_tests
+Command: ""
+Directory: /home/user/rst/codebase/superdarn/src.lib/tk/fit.1.35/build/tests
+"fit_tests" start time: 
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"fit_tests" end time: Jul 25 22:47 BST
+"fit_tests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Jul 25 22:47 BST

@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/benchmark_fitcfit.dir/benchmark_fitcfit.c.o -o ../bin/benchmark_fitcfit  ../lib/libfit_optimized.a -lm -lCUDA::cudart -lCUDA::cufft 

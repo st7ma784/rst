@@ -28,18 +28,16 @@ Modifications:
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <zlib.h>
 #include "rtypes.h"
 #include "dmap.h"
 #include "rprm.h"
 #include "fitblk.h"
 #include "fitdata.h"
+#include "datamap_array.h"
 
-
-
-
-int FitDecode(struct DataMap *ptr,
-              struct FitData *fit) {
+int FitDecode(DataMap *ptr, struct FitData *fit) {
   int c,x;
   int snum=0;
   int *slist=NULL;
@@ -327,28 +325,27 @@ int FitDecode(struct DataMap *ptr,
 }
 
 
-int FitRead(int fid,struct RadarParm *prm,
-              struct FitData *fit) {
-
-  int s;
-  struct DataMap *ptr;
-
-  ptr=DataMapRead(fid);
-  if (ptr==NULL) return -1;
-  s=RadarParmDecode(ptr,prm);
-  if (s !=0) {
+int FitRead(int fid, struct RadarParm *prm, struct FitData *fit)
+{
+  DataMap *ptr = NULL;
+  int s = 0;
+  
+  s = DataMapRead(fid, &ptr);
+  if (s != 0 || ptr == NULL) return -1;
+  
+  s = RadarParmDecode(ptr, prm);
+  if (s != 0) {
     DataMapFree(ptr);
-    return s;
+    return -1;
   }
-  s=FitDecode(ptr,fit);
+  
+  s = FitDecode(ptr, fit);
   DataMapFree(ptr);
   return s;
-
 }
 
 
-int FitFread(FILE *fp,struct RadarParm *prm,
-              struct FitData *fit) {
-  return FitRead(fileno(fp),prm,fit);
+int FitFread(FILE *fp, struct RadarParm *prm, struct FitData *fit)
+{
+  return FitRead(fileno(fp), prm, fit);
 }
-

@@ -1,0 +1,59 @@
+# CUDA-Enhanced Makefile with Native Data Structures
+include $(MAKECFG).$(SYSTEM)
+
+CUDA_PATH ?= /usr/local/cuda
+NVCC := $(CUDA_PATH)/bin/nvcc
+CUDA_AVAILABLE := $(shell command -v $(NVCC) 2> /dev/null)
+
+# Library Names
+LIBNAME_CPU = sim_data.1.0
+LIBNAME_CUDA = sim_data.1.0.cuda
+LIBNAME_COMPAT = sim_data.1.0.compat
+
+# CUDA Configuration
+CUDA_ARCH ?= sm_50 sm_60 sm_70 sm_75 sm_80 sm_86
+CUDA_FLAGS = -O3 -use_fast_math --ptxas-options=-v
+CUDA_INCLUDES = -I$(CUDA_PATH)/include -I../cuda_common/include
+CUDA_LIBS = -L$(CUDA_PATH)/lib64 -lcudart -lcublas -lcusolver -lcufft
+
+# Source Files
+C_SOURCES = $(wildcard src/*.c)
+CUDA_SOURCES = $(wildcard src/cuda/*.cu)
+C_OBJECTS = $(C_SOURCES:.c=.o)
+CUDA_OBJECTS = $(CUDA_SOURCES:.cu=.o)
+
+# Compiler Flags
+CFLAGS += -O3 -march=native -fPIC -DCUDA_NATIVE_TYPES
+NVCCFLAGS = $(CUDA_FLAGS) $(foreach arch,$(CUDA_ARCH),-gencode arch=compute_$(arch:sm_%=%),code=sm_$(arch:sm_%=%))
+
+.PHONY: all cpu cuda compat clean
+
+all: cpu cuda compat
+
+cpu: $(LIBNAME_CPU).a
+cuda: check_cuda $(LIBNAME_CUDA).a
+compat: $(LIBNAME_COMPAT).a
+
+$(LIBNAME_CPU).a: $(C_OBJECTS)
+	ar rcs $@ $^
+
+$(LIBNAME_CUDA).a: $(C_OBJECTS) $(CUDA_OBJECTS)
+	ar rcs $@ $^
+
+$(LIBNAME_COMPAT).a: $(C_OBJECTS) $(CUDA_OBJECTS)
+	ar rcs $@ $^
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(CUDA_INCLUDES) -c $< -o $@
+
+%.o: %.cu
+	$(NVCC) $(NVCCFLAGS) $(CUDA_INCLUDES) -c $< -o $@
+
+check_cuda:
+ifndef CUDA_AVAILABLE
+	@echo "Warning: CUDA not found. Install CUDA toolkit for GPU acceleration."
+endif
+
+clean:
+	rm -f $(C_OBJECTS) $(CUDA_OBJECTS)
+	rm -f $(LIBNAME_CPU).a $(LIBNAME_CUDA).a $(LIBNAME_COMPAT).a

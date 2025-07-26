@@ -1,0 +1,2 @@
+/usr/bin/ar qc lib/libfit_optimized.a CMakeFiles/fit_optimized.dir/src/fit.c.o CMakeFiles/fit_optimized.dir/src/fitread.c.o CMakeFiles/fit_optimized.dir/src/fitwrite.c.o CMakeFiles/fit_optimized.dir/src/fitseek.c.o CMakeFiles/fit_optimized.dir/src/fitinx.c.o CMakeFiles/fit_optimized.dir/src/fitcfit.c.o CMakeFiles/fit_optimized.dir/src/fitcfit_optimized.c.o CMakeFiles/fit_optimized.dir/src/stubs.c.o CMakeFiles/fit_optimized.dir/src/avx/matrix_avx.c.o
+/usr/bin/ranlib lib/libfit_optimized.a

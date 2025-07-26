@@ -1,0 +1,12 @@
+prefix=
+exec_prefix=
+libdir=
+includedir=
+
+Name: grid_parallel
+Description: SuperDARN Grid Parallel Processing Library
+Version: 
+Requires:
+Libs: -L${libdir} -lgrid_parallel -lm -lgomp
+Libs.private: -lpthread
+Cflags: -I${includedir}/grid_parallel

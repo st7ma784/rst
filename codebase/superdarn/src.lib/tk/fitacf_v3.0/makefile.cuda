@@ -22,7 +22,7 @@ LIBNAME_COMPAT = fitacf.3.0.compat
 
 # Source files (based on existing fitacf makefile)
 CPU_SOURCES = llist.c fitacf_v3.c range_gate.c acf_processing.c
-CUDA_SOURCES = cuda_llist.cu cuda_kernels.cu
+CUDA_SOURCES = cuda_llist.cu cuda_kernels.cu cuda_phase_unwrap.cu
 COMPAT_SOURCES = cuda_cpu_bridge.c src/determinations.c src/fitacftoplevel.c src/fitting.c src/leastsquares.c src/llist_cuda.c src/preprocessing.c
 
 # Object files
@@ -35,7 +35,7 @@ HEADERS = $(wildcard include/*.h)
 CUDA_HEADERS = include/llist_cuda.h include/llist_compat.h
 
 # Compiler flags
-INCLUDE = -I$(IPATH)/base -I$(IPATH)/general -I$(IPATH)/superdarn/fit -I$(IPATH)/superdarn -I./include
+INCLUDE = -I$(IPATH)/base -I$(IPATH)/general -I$(IPATH)/superdarn/fit -I$(IPATH)/superdarn -I./include -I./include/fitacf_v3.0
 CFLAGS += $(INCLUDE)
 NVCCFLAGS = $(INCLUDE) -arch=sm_50 -std=c++11
 

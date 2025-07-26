@@ -1,0 +1,132 @@
+# Universal CUDA Makefile for channel.1.0
+# Supports CPU, CUDA, and Compatibility builds for any module type
+
+include $(MAKECFG).$(SYSTEM)
+
+# CUDA Configuration
+CUDA_PATH ?= /usr/local/cuda
+NVCC := $(CUDA_PATH)/bin/nvcc
+CUDA_AVAILABLE := $(shell command -v $(NVCC) 2> /dev/null)
+
+# Module Configuration
+MODULE_NAME = channel.1.0
+LIBNAME_CPU = $(MODULE_NAME)
+LIBNAME_CUDA = $(MODULE_NAME).cuda
+LIBNAME_COMPAT = $(MODULE_NAME).compat
+
+# CUDA Architecture Support
+CUDA_ARCH ?= sm_50 sm_60 sm_70 sm_75 sm_80 sm_86 sm_89 sm_90
+CUDA_FLAGS = -O3 -use_fast_math --ptxas-options=-v -Xcompiler -fPIC
+CUDA_INCLUDES = -I$(CUDA_PATH)/include -I../cuda_common/include -Iinclude
+CUDA_LIBS = -L$(CUDA_PATH)/lib64 -lcudart -lcublas -lcusolver -lcufft -lcurand
+
+# Source File Discovery
+SRC_DIR = src
+CUDA_SRC_DIR = src/cuda
+INCLUDE_DIR = include
+
+# Auto-detect all source files
+C_SOURCES = $(shell find $(SRC_DIR) -name "*.c" 2>/dev/null || true)
+CUDA_SOURCES = $(shell find $(CUDA_SRC_DIR) -name "*.cu" 2>/dev/null || true)
+HEADERS = $(shell find $(INCLUDE_DIR) -name "*.h" 2>/dev/null || true)
+
+# Object Files
+C_OBJECTS = $(C_SOURCES:.c=.o)
+CUDA_OBJECTS = $(CUDA_SOURCES:.cu=.o)
+
+# Compiler Flags
+CFLAGS += -O3 -march=native -fPIC -DCUDA_ENABLED -DCUDA_NATIVE_TYPES
+NVCCFLAGS = $(CUDA_FLAGS) $(foreach arch,$(CUDA_ARCH),-gencode arch=compute_$(arch:sm_%=%),code=sm_$(arch:sm_%=%))
+
+# Build Targets
+.PHONY: all cpu cuda compat clean test benchmark install help
+
+all: cpu cuda compat
+
+# CPU-only build
+cpu: $(LIBNAME_CPU).a
+
+$(LIBNAME_CPU).a: $(C_OBJECTS)
+	@if [ -n "$(C_OBJECTS)" ]; then \
+		ar rcs $@ $(C_OBJECTS); \
+		echo "Built CPU library: $@"; \
+	else \
+		echo "No C sources found, creating empty library"; \
+		ar rcs $@; \
+	fi
+
+# CUDA build
+cuda: check_cuda $(LIBNAME_CUDA).a
+
+$(LIBNAME_CUDA).a: $(C_OBJECTS) $(CUDA_OBJECTS)
+	@if [ -n "$(C_OBJECTS)" ] || [ -n "$(CUDA_OBJECTS)" ]; then \
+		ar rcs $@ $(C_OBJECTS) $(CUDA_OBJECTS); \
+		echo "Built CUDA library: $@"; \
+	else \
+		echo "No sources found, creating empty CUDA library"; \
+		ar rcs $@; \
+	fi
+
+# Compatibility build
+compat: $(LIBNAME_COMPAT).a
+
+$(LIBNAME_COMPAT).a: $(C_OBJECTS) $(CUDA_OBJECTS)
+	@if [ -n "$(C_OBJECTS)" ] || [ -n "$(CUDA_OBJECTS)" ]; then \
+		ar rcs $@ $(C_OBJECTS) $(CUDA_OBJECTS); \
+		echo "Built compatibility library: $@"; \
+	else \
+		echo "No sources found, creating empty compatibility library"; \
+		ar rcs $@; \
+	fi
+
+# Compilation Rules
+%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(CUDA_INCLUDES) -c $< -o $@
+
+%.o: %.cu
+	@mkdir -p $(dir $@)
+	$(NVCC) $(NVCCFLAGS) $(CUDA_INCLUDES) -c $< -o $@
+
+# CUDA Check
+check_cuda:
+ifndef CUDA_AVAILABLE
+	@echo "Warning: CUDA not found. GPU acceleration disabled."
+endif
+
+# Testing
+test: all
+	@echo "Testing channel.1.0..."
+	@if [ -f "test/test_$(MODULE_NAME).sh" ]; then \
+		cd test && ./test_$(MODULE_NAME).sh; \
+	else \
+		echo "No test script found - module ready for integration testing"; \
+	fi
+
+# Benchmarking
+benchmark: all
+	@echo "Benchmarking channel.1.0..."
+	@if [ -f "benchmark/benchmark_$(MODULE_NAME)" ]; then \
+		cd benchmark && ./benchmark_$(MODULE_NAME); \
+	else \
+		echo "No benchmark found - module ready for performance testing"; \
+	fi
+
+# Clean
+clean:
+	rm -f $(C_OBJECTS) $(CUDA_OBJECTS)
+	rm -f $(LIBNAME_CPU).a $(LIBNAME_CUDA).a $(LIBNAME_COMPAT).a
+	find . -name "*.o" -delete 2>/dev/null || true
+
+# Install
+install: all
+	@mkdir -p $(LIBDIR) $(INCDIR)
+	@cp *.a $(LIBDIR)/ 2>/dev/null || true
+	@cp $(HEADERS) $(INCDIR)/ 2>/dev/null || true
+	@echo "Installed channel.1.0 libraries and headers"
+
+# Help
+help:
+	@echo "Universal CUDA Build System for channel.1.0"
+	@echo "Targets: all cpu cuda compat test benchmark clean install help"
+

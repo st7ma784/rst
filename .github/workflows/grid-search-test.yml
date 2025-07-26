@@ -1,0 +1,144 @@
+name: Grid Search Optimization Tests
+
+on:
+  push:
+    branches: [ main, develop, grid-optimization-* ]
+    paths:
+      - 'codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/**'
+      - '.github/workflows/grid-search-test.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/**'
+      - '.github/workflows/grid-search-test.yml'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of test to run'
+        required: false
+        default: 'quick'
+        type: choice
+        options:
+          - 'quick'
+          - 'full'
+          - 'benchmark'
+
+env:
+  CC: gcc
+  CXX: g++
+  CFLAGS: "-O3 -march=native -mtune=native"
+  CXXFLAGS: "-O3 -march=native -mtune=native"
+  MAKEFLAGS: "-j$(nproc)"
+
+jobs:
+  test:
+    name: Grid Search Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        gcc-version: [9, 10, 11]
+        openmp: [true, false]
+        exclude:
+          # Skip OpenMP=false for GCC 9 due to known issues
+          - gcc-version: 9
+            openmp: false
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential gcc-${{ matrix.gcc-version }} g++-${{ matrix.gcc-version }}
+        if [ "${{ matrix.openmp }}" = "true" ]; then
+          echo "CFLAGS+=-fopenmp" >> $GITHUB_ENV
+          echo "LDFLAGS+=-fopenmp" >> $GITHUB_ENV
+        fi
+        echo "CC=gcc-${{ matrix.gcc-version }}" >> $GITHUB_ENV
+        echo "CXX=g++-${{ matrix.gcc-version }}" >> $GITHUB_ENV
+
+    - name: Build grid search tests
+      working-directory: ./codebase/superdarn/src.lib/tk/grid.1.24_optimized.1
+      run: |
+        make clean
+        if [ "${{ matrix.openmp }}" = "true" ]; then
+          make OPENMP=1 test
+        else
+          make test
+        fi
+
+    - name: Run grid search tests
+      working-directory: ./codebase/superdarn/src.lib/tk/grid.1.24_optimized.1
+      run: |
+        ./test_gridseek_optimized | tee test_output.txt
+        echo "TEST_OUTPUT<<EOF" >> $GITHUB_ENV
+        cat test_output.txt >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: grid-search-test-results-gcc${{ matrix.gcc-version }}-${{ matrix.openmp }}
+        path: |
+          ./codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/test_output.txt
+          ./codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/*.o
+          ./codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/test_gridseek_optimized
+
+  benchmark:
+    name: Grid Search Benchmark
+    needs: test
+    if: github.event.inputs.test_type == 'benchmark' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential gcc-11 g++-11
+        echo "CC=gcc-11" >> $GITHUB_ENV
+        echo "CXX=g++-11" >> $GITHUB_ENV
+        echo "CFLAGS=-O3 -march=native -mtune=native -fopenmp" >> $GITHUB_ENV
+        echo "LDFLAGS=-fopenmp" >> $GITHUB_ENV
+
+    - name: Build with optimizations
+      working-directory: ./codebase/superdarn/src.lib/tk/grid.1.24_optimized.1
+      run: |
+        make clean
+        make OPENMP=1 test
+
+    - name: Run benchmarks
+      id: benchmark
+      working-directory: ./codebase/superdarn/src.lib/tk/grid.1.24_optimized.1
+      run: |
+        echo "Running benchmarks..."
+        ./test_gridseek_optimized --benchmark | tee benchmark_results.txt
+        
+        # Extract metrics (simplified example)
+        AVG_SPEEDUP=$(grep "Average speedup" benchmark_results.txt | awk '{print $3}')
+        echo "SPEEDUP=$AVG_SPEEDUP" >> $GITHUB_ENV
+        
+        # Check for performance regression
+        if (( $(echo "$AVG_SPEEDUP < 1.0" | bc -l) ); then
+          echo "PERF_REGRESSION=true" >> $GITHUB_ENV
+          echo "Performance regression detected! Speedup: $AVG_SPEEDUP"
+          exit 1
+        fi
+
+    - name: Upload benchmark results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: grid-search-benchmark-results
+        path: |
+          ./codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/benchmark_results.txt
+
+    - name: Check for performance regression
+      if: env.PERF_REGRESSION == 'true'
+      run: |
+        echo "::error::Performance regression detected! Average speedup: ${{ env.SPEEDUP }}x"
+        exit 1

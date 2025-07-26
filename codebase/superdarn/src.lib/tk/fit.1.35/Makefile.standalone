@@ -1,0 +1,30 @@
+# Standalone Makefile for fit.1.35 module
+
+# Compiler settings
+CC = gcc
+CFLAGS = -Wall -O3 -fPIC -I./include -I../../../../include
+LDFLAGS = -lm
+
+# Source files
+SRC = src/fit.c src/fitscan.c src/fitcfit.c src/fitread.c src/fitwrite.c src/fitseek.c src/fitinx.c
+OBJ = $(SRC:.c=.o)
+
+# Output library
+LIB = libfit.1.35.a
+
+# Default target
+all: $(LIB)
+
+# Build the library
+$(LIB): $(OBJ)
+	ar rcs $@ $^
+
+# Compile source files
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+# Clean up
+clean:
+	rm -f $(OBJ) $(LIB)
+
+.PHONY: all clean

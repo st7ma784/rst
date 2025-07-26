@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/fit_tests.dir/test_fit.c.o -o ../bin/fit_tests  -Wl,-rpath,/home/user/miniconda3/lib ../lib/libfit_optimized.a -lCUDA::cudart -lCUDA::cufft /home/user/miniconda3/lib/libgtest_main.so.1.11.0 /home/user/miniconda3/lib/libgtest.so.1.11.0 

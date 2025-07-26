@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG CMakeFiles/profile_fit.dir/profile_fit.c.o -o ../bin/profile_fit  ../lib/libfit_optimized.a -lm -lCUDA::cudart -lCUDA::cufft 

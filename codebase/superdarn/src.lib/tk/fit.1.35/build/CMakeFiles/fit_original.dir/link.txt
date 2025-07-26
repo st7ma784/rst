@@ -1,0 +1,2 @@
+/usr/bin/ar qc lib/libfit_original.a CMakeFiles/fit_original.dir/src/fit.c.o CMakeFiles/fit_original.dir/src/fitscan.c.o CMakeFiles/fit_original.dir/src/fitcfit.c.o CMakeFiles/fit_original.dir/src/fitread.c.o CMakeFiles/fit_original.dir/src/fitwrite.c.o CMakeFiles/fit_original.dir/src/fitseek.c.o CMakeFiles/fit_original.dir/src/fitinx.c.o CMakeFiles/fit_original.dir/src/stubs.c.o
+/usr/bin/ranlib lib/libfit_original.a
