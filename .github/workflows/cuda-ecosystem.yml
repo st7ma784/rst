@@ -5,9 +5,7 @@ on:
     branches: [ main, develop, cuda-* ]
   pull_request:
     branches: [ main, develop ]
-  schedule:
-    # Run nightly performance benchmarks
-    - cron: '0 2 * * *'
+
 
 env:
   CUDA_VERSION: '12.6'
