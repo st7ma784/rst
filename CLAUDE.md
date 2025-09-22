@@ -4,12 +4,20 @@ This repo has gotten away from me a bit! It started out as a fork of the RST Sup
 
 I think a total rewrite is in order! 
 
-Please rewrite the tools,scripts and utilities in this repo into python, making use of libraries like CUPy that offer CUDA acceleration with python support.
+First, make a summarisation of how this repo builds the modules into the whole toolkit, as the build is rather complicated. Lets first make that plan. 
 
-Begin writing this in a new folder called pythonv2 and include documentations and visualisations  where convenient. 
+Secondly, when we've got that plan, I need you to analyse the architecture of the algorithms. 
 
-You may find it useful to condense tools, reuse blocks of code where possible to simplify a complex code base into a very streamlined python package.
+a number of the modules use linked lists and are rather innefficent as they cant be parrelelised using tools like CUDA. 
 
-Begin by summarising how the code base works, make a plan of the new software design so that data storage can make maximal use of accelerators, so emphasise CUDA and GPU support over memory efficiency. 
+As a general rule, the linked lists were used for fast item deletion when possibilities were ruled out. A better datastructure would be a 2d array with a parralel mask of bool values for discarding them down the road. 
 
-Once a software architecture has been drawn out in the python folder, begin implementing it. 
+The next task is to plan how to migrate the current system module-by-module to cuda. Plan a new architecture that doesnt break the existing compilation structure. 
+
+Next, lets build the CUDA-based approaches systematically module-by-module. 
+
+when done, download some RST fitacf files, and consult the docs for how to process them into a map. 
+
+Systematically run the files through the old system and generate images of the output. Then, run the same data through your cuda implementation and show the results are the same or better than the other visualisations 
+
+The final task is to ensure that it compiles separately into a CUDArst library that has the same interface as the old packages. 

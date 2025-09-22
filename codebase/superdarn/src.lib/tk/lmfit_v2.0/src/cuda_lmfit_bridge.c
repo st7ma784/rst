@@ -1,13 +1,85 @@
 /**
  * @file cuda_lmfit_bridge.c
- * @brief Bridge between CPU and CUDA implementations for drop-in compatibility
+ * @brief CPU-GPU bridge for LMFIT v2.0 CUDA acceleration
  * 
- * This file provides the compatibility layer that allows CUDA-accelerated
- * LMFIT functions to be used as drop-in replacements for the original CPU
- * implementations.
+ * This file provides the interface between the original CPU-based LMFIT
+ * implementation and the new CUDA-accelerated version, maintaining full
+ * backward compatibility while enabling transparent GPU acceleration.
  * 
  * @author CUDA Conversion Project
  * @date 2025
+ */
+
+#include "cuda_lmfit.h"
+#include "cuda_lmfit_kernels.h"
+#include "lmfit2toplevel.h"
+#include "lmfit_structures.h"
+#include "llist.h"
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <sys/time.h>
+
+// =============================================================================
+// GLOBAL STATE AND CONFIGURATION
+// =============================================================================
+
+static compute_mode_t g_compute_mode = COMPUTE_MODE_AUTO;
+static bool g_cuda_initialized = false;
+static size_t g_cuda_threshold_ranges = 50;  // Use CUDA for ≥50 ranges
+static float g_cuda_memory_limit = 0.8f;     // Use up to 80% of GPU memory
+
+// =============================================================================
+// CUDA INITIALIZATION AND CLEANUP
+// =============================================================================
+
+cuda_error_t cuda_lmfit_init(void) {
+    if (g_cuda_initialized) {
+        return CUDA_SUCCESS;
+    }
+    
+    if (!cuda_is_available()) {
+        return CUDA_ERROR_DEVICE_NOT_AVAILABLE;
+    }
+    
+    // Initialize CUDA context
+    cudaError_t err = cudaSetDevice(0);
+    if (err != cudaSuccess) {
+        return cuda_convert_error(err);
+    }
+    
+    // Warm up GPU
+    void *temp_ptr;
+    err = cudaMalloc(&temp_ptr, 1024);
+    if (err == cudaSuccess) {
+        cudaFree(temp_ptr);
+        g_cuda_initialized = true;
+        return CUDA_SUCCESS;
+    }
+    
+    return cuda_convert_error(err);
+}
+
+cuda_error_t cuda_lmfit_cleanup(void) {
+    if (!g_cuda_initialized) {
+        return CUDA_SUCCESS;
+    }
+    
+    cudaDeviceReset();
+    g_cuda_initialized = false;
+    return CUDA_SUCCESS;
+}
+
+cuda_error_t cuda_lmfit_set_mode(compute_mode_t mode) {
+    g_compute_mode = mode;
+    return CUDA_SUCCESS;
+}
+
+compute_mode_t cuda_lmfit_get_mode(void) {
+    return g_compute_mode;
+}
+
+// Complete implementation continues in the file...
  */
 
 #include "cuda_lmfit.h"

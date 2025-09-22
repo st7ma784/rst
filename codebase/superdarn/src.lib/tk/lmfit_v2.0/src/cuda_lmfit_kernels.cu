@@ -49,6 +49,377 @@ __global__ void cuda_calculate_power_kernel(
     // Check for valid power
     if (power <= 0.0f) {
         power_output[data_idx] = 0.0f;
+        sigma_output[data_idx] = 1e10f;  // Large error for invalid data
+        return;
+    }
+    
+    power_output[data_idx] = power;
+    
+    // Calculate power error based on noise statistics
+    float time_val = lag_times[lag_idx];
+    float noise_factor = 1.0f / sqrtf(nave);
+    sigma_output[data_idx] = power * noise_factor * (1.0f + 0.1f * time_val);
+}
+
+/**
+ * @brief GPU kernel for parallel ACF calculation
+ */
+__global__ void cuda_calculate_acf_kernel(
+    const float2 *raw_acf,      ///< Input raw ACF data
+    float2 *processed_acf,      ///< Output processed ACF
+    float *sigma_re,            ///< Output real part errors
+    float *sigma_im,            ///< Output imaginary part errors
+    const int *lag_nums,        ///< Lag numbers
+    const float *lag_times,     ///< Lag times
+    int num_ranges,             ///< Number of range gates
+    int num_lags,               ///< Number of lags
+    float nave,                 ///< Number of averages
+    float noise_level           ///< Noise level estimate
+) {
+    int range_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int lag_idx = blockIdx.y * blockDim.y + threadIdx.y;
+    
+    if (range_idx >= num_ranges || lag_idx >= num_lags) return;
+    
+    int data_idx = range_idx * num_lags + lag_idx;
+    float2 acf_val = raw_acf[data_idx];
+    
+    // Normalize ACF by lag 0 power if available
+    if (lag_idx > 0) {
+        float2 lag0_val = raw_acf[range_idx * num_lags + 0];  // Lag 0 for this range
+        float lag0_power = sqrtf(lag0_val.x * lag0_val.x + lag0_val.y * lag0_val.y);
+        if (lag0_power > noise_level) {
+            acf_val.x /= lag0_power;
+            acf_val.y /= lag0_power;
+        }
+    }
+    
+    processed_acf[data_idx] = acf_val;
+    
+    // Error estimation based on noise and averaging
+    float time_val = lag_times[lag_idx];
+    float noise_factor = noise_level / sqrtf(nave);
+    float time_decay = expf(-0.1f * time_val);  // Simple time decay model
+    
+    sigma_re[data_idx] = noise_factor * (1.0f + 0.5f * (1.0f - time_decay));
+    sigma_im[data_idx] = noise_factor * (1.0f + 0.5f * (1.0f - time_decay));
+}
+
+/**
+ * @brief GPU kernel for parallel Jacobian calculation
+ */
+__global__ void cuda_calculate_jacobian_kernel(
+    const float *parameters,    ///< Current parameter values [P, vel, wid, phi0]
+    const float *lag_times,     ///< Lag time values
+    const float2 *acf_data,     ///< ACF measurements
+    float *jacobian,            ///< Output Jacobian matrix [data_points x 4]
+    int num_data_points,        ///< Number of data points
+    int jacobian_stride         ///< Row stride for Jacobian matrix
+) {
+    int data_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    if (data_idx >= num_data_points) return;
+    
+    float P = parameters[0];        // Power
+    float vel = parameters[1];      // Velocity
+    float wid = parameters[2];      // Spectral width
+    float phi0 = parameters[3];     // Phase offset
+    
+    float t = lag_times[data_idx];
+    float2 acf_meas = acf_data[data_idx];
+    
+    // Model: ACF(t) = P * exp(-wid^2 * t^2) * exp(i * (vel * t + phi0))
+    float decay = expf(-wid * wid * t * t);
+    float phase = vel * t + phi0;
+    float cos_phase = cosf(phase);
+    float sin_phase = sinf(phase);
+    
+    // Jacobian elements (partial derivatives)
+    // ∂/∂P
+    jacobian[data_idx * jacobian_stride + 0] = decay * cos_phase;  // Real part
+    jacobian[data_idx * jacobian_stride + 1] = decay * sin_phase;  // Imaginary part
+    
+    // ∂/∂vel
+    jacobian[data_idx * jacobian_stride + 2] = -P * decay * t * sin_phase;  // Real part
+    jacobian[data_idx * jacobian_stride + 3] = P * decay * t * cos_phase;   // Imaginary part
+    
+    // ∂/∂wid
+    float width_factor = -2.0f * wid * t * t;
+    jacobian[data_idx * jacobian_stride + 4] = P * width_factor * decay * cos_phase;  // Real
+    jacobian[data_idx * jacobian_stride + 5] = P * width_factor * decay * sin_phase;  // Imaginary
+    
+    // ∂/∂phi0
+    jacobian[data_idx * jacobian_stride + 6] = -P * decay * sin_phase;  // Real part
+    jacobian[data_idx * jacobian_stride + 7] = P * decay * cos_phase;   // Imaginary part
+}
+
+/**
+ * @brief GPU kernel for residual calculation
+ */
+__global__ void cuda_calculate_residuals_kernel(
+    const float *parameters,    ///< Current parameter values [P, vel, wid, phi0]
+    const float *lag_times,     ///< Lag time values
+    const float2 *acf_measured, ///< Measured ACF data
+    const float *sigma_re,      ///< Real part errors
+    const float *sigma_im,      ///< Imaginary part errors
+    float2 *residuals,          ///< Output residuals
+    int num_data_points         ///< Number of data points
+) {
+    int data_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    if (data_idx >= num_data_points) return;
+    
+    float P = parameters[0];
+    float vel = parameters[1];
+    float wid = parameters[2];
+    float phi0 = parameters[3];
+    
+    float t = lag_times[data_idx];
+    float2 acf_meas = acf_measured[data_idx];
+    
+    // Calculate model prediction
+    float decay = expf(-wid * wid * t * t);
+    float phase = vel * t + phi0;
+    float2 acf_model;
+    acf_model.x = P * decay * cosf(phase);
+    acf_model.y = P * decay * sinf(phase);
+    
+    // Calculate weighted residuals
+    float2 residual;
+    residual.x = (acf_meas.x - acf_model.x) / sigma_re[data_idx];
+    residual.y = (acf_meas.y - acf_model.y) / sigma_im[data_idx];
+    
+    residuals[data_idx] = residual;
+}
+
+/**
+ * @brief GPU kernel for batch range processing
+ */
+__global__ void cuda_batch_range_processing_kernel(
+    cuda_range_node_t *range_nodes,  ///< Array of range nodes
+    int num_ranges,                   ///< Number of ranges to process
+    float *fitting_results,           ///< Output fitting results [num_ranges x 8]
+    int max_iterations,               ///< Maximum LM iterations
+    float convergence_tolerance       ///< Convergence tolerance
+) {
+    int range_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    if (range_idx >= num_ranges) return;
+    
+    cuda_range_node_t *node = &range_nodes[range_idx];
+    
+    // Initialize fitting parameters
+    float params[4] = {1.0f, 0.0f, 100.0f, 0.0f};  // P, vel, wid, phi0
+    float lambda = 0.001f;  // LM damping parameter
+    
+    // Simple Levenberg-Marquardt iteration (simplified for kernel)
+    for (int iter = 0; iter < max_iterations; iter++) {
+        // In a real implementation, this would involve:
+        // 1. Calculate Jacobian matrix
+        // 2. Calculate residuals
+        // 3. Solve normal equations: (J^T J + λI) δ = J^T r
+        // 4. Update parameters: params += δ
+        // 5. Check convergence
+        
+        // For this simplified version, we'll just store the initial parameters
+        break;  // Placeholder - real implementation would iterate
+    }
+    
+    // Store results
+    int result_offset = range_idx * 8;
+    fitting_results[result_offset + 0] = params[0];      // Power
+    fitting_results[result_offset + 1] = params[1];      // Velocity
+    fitting_results[result_offset + 2] = params[2];      // Width
+    fitting_results[result_offset + 3] = params[3];      // Phase
+    fitting_results[result_offset + 4] = 0.1f;           // Power error (placeholder)
+    fitting_results[result_offset + 5] = 10.0f;          // Velocity error (placeholder)
+    fitting_results[result_offset + 6] = 20.0f;          // Width error (placeholder)
+    fitting_results[result_offset + 7] = 0.1f;           // Phase error (placeholder)
+}
+
+/**
+ * @brief GPU kernel for self-clutter estimation
+ */
+__global__ void cuda_estimate_self_clutter_kernel(
+    const float2 *acf_data,     ///< Input ACF data
+    float *clutter_power,       ///< Output clutter power estimates
+    const int *lag_nums,        ///< Lag numbers
+    int num_ranges,             ///< Number of range gates
+    int num_lags,               ///< Number of lags
+    float clutter_threshold     ///< Clutter detection threshold
+) {
+    int range_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    if (range_idx >= num_ranges) return;
+    
+    float max_power = 0.0f;
+    float avg_power = 0.0f;
+    int valid_lags = 0;
+    
+    // Find maximum and average power for this range
+    for (int lag_idx = 0; lag_idx < num_lags; lag_idx++) {
+        int data_idx = range_idx * num_lags + lag_idx;
+        float2 acf_val = acf_data[data_idx];
+        float power = sqrtf(acf_val.x * acf_val.x + acf_val.y * acf_val.y);
+        
+        if (power > 0.0f) {
+            max_power = fmaxf(max_power, power);
+            avg_power += power;
+            valid_lags++;
+        }
+    }
+    
+    if (valid_lags > 0) {
+        avg_power /= valid_lags;
+        
+        // Simple clutter detection: if max_power >> avg_power, likely clutter
+        float power_ratio = max_power / (avg_power + 1e-10f);
+        if (power_ratio > clutter_threshold) {
+            clutter_power[range_idx] = max_power;
+        } else {
+            clutter_power[range_idx] = 0.0f;
+        }
+    } else {
+        clutter_power[range_idx] = 0.0f;
+    }
+}
+
+/**
+ * @brief GPU kernel for parallel phase unwrapping
+ */
+__global__ void cuda_phase_unwrap_kernel(
+    const float *phases_in,     ///< Input wrapped phases
+    float *phases_out,          ///< Output unwrapped phases
+    const float *lag_times,     ///< Lag times
+    int num_ranges,             ///< Number of range gates
+    int num_lags                ///< Number of lags per range
+) {
+    int range_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    if (range_idx >= num_ranges) return;
+    
+    // Phase unwrapping for this range
+    int range_offset = range_idx * num_lags;
+    
+    if (num_lags > 0) {
+        phases_out[range_offset] = phases_in[range_offset];  // First phase unchanged
+        
+        for (int lag_idx = 1; lag_idx < num_lags; lag_idx++) {
+            int current_idx = range_offset + lag_idx;
+            int prev_idx = range_offset + lag_idx - 1;
+            
+            float phase_diff = phases_in[current_idx] - phases_out[prev_idx];
+            
+            // Unwrap phase differences > π
+            while (phase_diff > M_PI) phase_diff -= 2.0f * M_PI;
+            while (phase_diff < -M_PI) phase_diff += 2.0f * M_PI;
+            
+            phases_out[current_idx] = phases_out[prev_idx] + phase_diff;
+        }
+    }
+}
+
+// =============================================================================
+// CUDA KERNEL LAUNCH WRAPPERS
+// =============================================================================
+
+cudaError_t launch_power_calculation_kernel(
+    const float2 *acf_data,
+    float *power_output,
+    float *sigma_output,
+    const int *lag_nums,
+    const float *lag_times,
+    int num_ranges,
+    int num_lags,
+    float nave
+) {
+    dim3 block_size(16, 16);
+    dim3 grid_size((num_ranges + block_size.x - 1) / block_size.x,
+                   (num_lags + block_size.y - 1) / block_size.y);
+    
+    cuda_calculate_power_kernel<<<grid_size, block_size>>>(
+        acf_data, power_output, sigma_output, lag_nums, lag_times,
+        num_ranges, num_lags, nave
+    );
+    
+    return cudaGetLastError();
+}
+
+cudaError_t launch_acf_calculation_kernel(
+    const float2 *raw_acf,
+    float2 *processed_acf,
+    float *sigma_re,
+    float *sigma_im,
+    const int *lag_nums,
+    const float *lag_times,
+    int num_ranges,
+    int num_lags,
+    float nave,
+    float noise_level
+) {
+    dim3 block_size(16, 16);
+    dim3 grid_size((num_ranges + block_size.x - 1) / block_size.x,
+                   (num_lags + block_size.y - 1) / block_size.y);
+    
+    cuda_calculate_acf_kernel<<<grid_size, block_size>>>(
+        raw_acf, processed_acf, sigma_re, sigma_im, lag_nums, lag_times,
+        num_ranges, num_lags, nave, noise_level
+    );
+    
+    return cudaGetLastError();
+}
+
+cudaError_t launch_batch_range_processing_kernel(
+    cuda_range_node_t *range_nodes,
+    int num_ranges,
+    float *fitting_results,
+    int max_iterations,
+    float convergence_tolerance
+) {
+    dim3 block_size(256);
+    dim3 grid_size((num_ranges + block_size.x - 1) / block_size.x);
+    
+    cuda_batch_range_processing_kernel<<<grid_size, block_size>>>(
+        range_nodes, num_ranges, fitting_results, max_iterations, convergence_tolerance
+    );
+    
+    return cudaGetLastError();
+}
+
+cudaError_t launch_self_clutter_estimation_kernel(
+    const float2 *acf_data,
+    float *clutter_power,
+    const int *lag_nums,
+    int num_ranges,
+    int num_lags,
+    float clutter_threshold
+) {
+    dim3 block_size(256);
+    dim3 grid_size((num_ranges + block_size.x - 1) / block_size.x);
+    
+    cuda_estimate_self_clutter_kernel<<<grid_size, block_size>>>(
+        acf_data, clutter_power, lag_nums, num_ranges, num_lags, clutter_threshold
+    );
+    
+    return cudaGetLastError();
+}
+
+cudaError_t launch_phase_unwrap_kernel(
+    const float *phases_in,
+    float *phases_out,
+    const float *lag_times,
+    int num_ranges,
+    int num_lags
+) {
+    dim3 block_size(256);
+    dim3 grid_size((num_ranges + block_size.x - 1) / block_size.x);
+    
+    cuda_phase_unwrap_kernel<<<grid_size, block_size>>>(
+        phases_in, phases_out, lag_times, num_ranges, num_lags
+    );
+    
+    return cudaGetLastError();
+        power_output[data_idx] = 0.0f;
         sigma_output[data_idx] = 0.0f;
         return;
     }

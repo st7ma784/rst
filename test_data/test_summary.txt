@@ -1,0 +1,18 @@
+SuperDARN FITACF Test Data Summary
+========================================
+
+Generated: 2025-09-20 13:46:07
+Purpose: Testing CUDA vs CPU FITACF processing
+
+File Format:
+- Binary format with simple header
+- 16 beams × 75 ranges × 17 lags
+- Realistic ACF data with noise
+- Exponential range dependence
+- Spatial velocity patterns
+
+Data Structure:
+- Header: 'FITACF_TEST_DATA' + parameters
+- For each beam: beam_num, date, time
+- For each range: power + 17 complex ACF values
+- All values in IEEE 754 32-bit float format

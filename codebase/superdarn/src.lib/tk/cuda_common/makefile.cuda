@@ -1,8 +1,63 @@
 # CUDA Common Utilities Makefile
-# Provides standardized CUDA datatypes and utilities for all SuperDARN modules
-#
-# Author: CUDA Conversion Project
-# Date: 2025
+# Builds the shared CUDA infrastructure used by all SuperDARN CUDA modules
+
+include $(MAKECFG).$(SYSTEM)
+
+CUDA_PATH ?= /usr/local/cuda
+NVCC := $(CUDA_PATH)/bin/nvcc
+CUDA_AVAILABLE := $(shell command -v $(NVCC) 2> /dev/null)
+
+LIBNAME = cuda_common
+
+# Source files
+CPU_SOURCES = src/cuda_datatypes.c src/cuda_memory.c src/cuda_validation.c
+CUDA_SOURCES = src/cuda_kernels.cu src/cuda_utils.cu
+
+# Object files  
+CPU_OBJECTS = $(CPU_SOURCES:.c=.o)
+CUDA_OBJECTS = $(CUDA_SOURCES:.cu=.o)
+
+# Compiler flags
+INCLUDE = -I./include -I$(IPATH)/base
+CFLAGS += $(INCLUDE) -fPIC
+NVCCFLAGS = $(INCLUDE) -arch=sm_50 --compiler-options -fPIC
+
+ifdef CUDA_AVAILABLE
+    TARGETS = $(LIBPATH)/lib$(LIBNAME).a $(LIBPATH)/lib$(LIBNAME).cuda.a
+else
+    TARGETS = $(LIBPATH)/lib$(LIBNAME).a
+endif
+
+all: $(TARGETS)
+
+# CPU version
+$(LIBPATH)/lib$(LIBNAME).a: $(CPU_OBJECTS)
+	@echo "Building CUDA common CPU library: $@"
+	@mkdir -p $(LIBPATH)
+	$(AR) $(ARFLAGS) $@ $(CPU_OBJECTS)
+
+# CUDA version
+ifdef CUDA_AVAILABLE
+$(LIBPATH)/lib$(LIBNAME).cuda.a: $(CUDA_OBJECTS) $(CPU_OBJECTS)
+	@echo "Building CUDA common GPU library: $@"
+	@mkdir -p $(LIBPATH)
+	$(AR) $(ARFLAGS) $@ $(CUDA_OBJECTS) $(CPU_OBJECTS)
+
+%.o: %.cu
+	@echo "Compiling CUDA: $<"
+	@mkdir -p $(dir $@)
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
+endif
+
+%.o: %.c
+	@echo "Compiling: $<"
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(CPU_OBJECTS) $(CUDA_OBJECTS) $(TARGETS)
+
+.PHONY: all clean
 
 include $(MAKECFG).$(SYSTEM)
 
