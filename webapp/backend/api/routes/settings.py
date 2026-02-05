@@ -2,7 +2,7 @@
 Settings and configuration endpoints
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
 import logging
 
@@ -54,7 +54,7 @@ async def update_settings(settings: Dict[str, Any]):
         }
     except Exception as e:
         logger.error(f"Settings update failed: {e}")
-        return {"error": str(e)}, 500
+        raise HTTPException(status_code=500, detail=f"Settings update failed: {str(e)}")
 
 @router.post("/reset")
 async def reset_settings():

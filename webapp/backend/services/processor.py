@@ -69,8 +69,8 @@ async def process_data_async(
                 import cupy as cp
                 use_gpu = True
                 logger.info("GPU available - using CUDA acceleration")
-            except:
-                logger.info("GPU not available - using CPU processing")
+            except (ImportError, Exception) as e:
+                logger.info(f"GPU not available - using CPU processing: {e}")
         
         # Process through each stage
         for stage in stages:

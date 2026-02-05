@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -30,6 +31,7 @@ interface ProcessingParameters {
 }
 
 export default function ProcessingPage() {
+  const navigate = useNavigate();
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [fileId, setFileId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -130,8 +132,8 @@ export default function ProcessingPage() {
             setIsProcessing(false);
             
             if (data.status === 'completed') {
-              // Navigate to visualization
-              window.location.href = `/visualization/${jobId}`;
+              // Navigate to visualization using React Router
+              navigate(`/visualization/${jobId}`);
             }
           }
         }
