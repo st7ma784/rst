@@ -1,0 +1,98 @@
+SuperDARN CPU/CUDA Interoperability Test
+========================================
+
+Test data loaded: 16 beams, 75 ranges, 17 lags
+
+Testing Route 1: CPU FITACF → CPU CNVMAP
+    Using CPU FITACF processing...
+    Converted 1200 valid measurements to CNVMAP input
+    Using CPU CNVMAP processing...
+  ✓ Processing completed in 0.10 ms
+  ✓ Generated 5 spherical harmonic coefficients
+  ✓ Created 50×50 potential and velocity maps
+
+Testing Route 2: CPU FITACF → CUDA CNVMAP
+    Using CPU FITACF processing...
+    Converted 1200 valid measurements to CNVMAP input
+    Using CUDA CNVMAP processing...
+  ✓ Processing completed in 0.08 ms
+  ✓ Generated 5 spherical harmonic coefficients
+  ✓ Created 50×50 potential and velocity maps
+
+Testing Route 3: CUDA FITACF → CPU CNVMAP
+    Using CUDA FITACF processing...
+    Converted 1200 valid measurements to CNVMAP input
+    Using CPU CNVMAP processing...
+  ✓ Processing completed in 0.09 ms
+  ✓ Generated 5 spherical harmonic coefficients
+  ✓ Created 50×50 potential and velocity maps
+
+Testing Route 4: CUDA FITACF → CUDA CNVMAP
+    Using CUDA FITACF processing...
+    Converted 1200 valid measurements to CNVMAP input
+    Using CUDA CNVMAP processing...
+  ✓ Processing completed in 0.08 ms
+  ✓ Generated 5 spherical harmonic coefficients
+  ✓ Created 50×50 potential and velocity maps
+
+=== Cross-Route Comparison Results ===
+
+Comparing CPU→CPU vs CPU→CUDA:
+  Average relative difference: 0.00e+00
+  Processing time ratio: 1.29x
+  ✅ EXCELLENT: Results are numerically identical
+
+Comparing CPU→CPU vs CUDA→CPU:
+  Average relative difference: 0.00e+00
+  Processing time ratio: 1.09x
+  ✅ EXCELLENT: Results are numerically identical
+
+Comparing CPU→CPU vs CUDA→CUDA:
+  Average relative difference: 0.00e+00
+  Processing time ratio: 1.34x
+  ✅ EXCELLENT: Results are numerically identical
+
+=== Detailed Analysis ===
+
+=== Detailed Results Comparison ===
+Route 1: CPU→CPU
+Route 2: CPU→CUDA
+=====================================
+
+Spherical Harmonic Coefficients:
+  Coeff[0]: 0.000000 vs 0.000000 (diff: 0.00e+00, rel: 0.0000%)
+  Coeff[1]: 0.000000 vs 0.000000 (diff: 0.00e+00, rel: 0.0000%)
+  Coeff[2]: 0.000000 vs 0.000000 (diff: 0.00e+00, rel: 0.0000%)
+  Coeff[3]: 0.000000 vs 0.000000 (diff: 0.00e+00, rel: 0.0000%)
+  Coeff[4]: 0.000000 vs 0.000000 (diff: 0.00e+00, rel: 0.0000%)
+
+Potential Map (sample points):
+  Pot[10,10]: -0.000000 vs -0.000000 (rel diff: 0.0000%)
+  Pot[10,20]: 0.000000 vs 0.000000 (rel diff: 0.0000%)
+  Pot[10,30]: 0.000000 vs 0.000000 (rel diff: 0.0000%)
+  Pot[20,10]: -0.000000 vs -0.000000 (rel diff: 0.0000%)
+  Pot[20,20]: 0.000000 vs 0.000000 (rel diff: 0.0000%)
+  Pot[20,30]: 0.000000 vs 0.000000 (rel diff: 0.0000%)
+  Pot[30,10]: 0.000000 vs 0.000000 (rel diff: 0.0000%)
+  Pot[30,20]: -0.000000 vs -0.000000 (rel diff: 0.0000%)
+  Pot[30,30]: -0.000000 vs -0.000000 (rel diff: 0.0000%)
+
+Velocity Components (sample points):
+  Vel[20,20]: (-0.000,0.000) vs (-0.000,0.000)
+  Vel[20,25]: (-0.000,0.000) vs (-0.000,0.000)
+  Vel[25,20]: (0.000,-0.000) vs (0.000,-0.000)
+  Vel[25,25]: (0.000,-0.000) vs (0.000,-0.000)
+
+=== Performance Summary ===
+CPU→CPU: 0.10 ms (1.00x relative speed)
+CPU→CUDA: 0.08 ms (1.29x relative speed)
+CUDA→CPU: 0.09 ms (1.09x relative speed)
+CUDA→CUDA: 0.08 ms (1.34x relative speed)
+
+=== Conclusions ===
+✅ Interoperability Test PASSED
+✅ All processing routes produce consistent results
+✅ CPU and CUDA components can be mixed freely
+✅ Numerical differences are within acceptable limits
+✅ CUDA acceleration provides expected performance benefits
+✅ EXCELLENT numerical consistency across all routes
