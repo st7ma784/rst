@@ -1,0 +1,207 @@
+SuperDARN CUDA Performance Benchmark
+====================================
+
+Running ACF processing benchmarks...
+=== acf.1.16_optimized.2.0 ===
+Test: ACF Power/Phase (50 ranges, 17 lags)
+Data Size: 50 elements
+CPU Time: 1.62 ms
+GPU Time (est): 0.41 ms
+Transfer Time: 0.10 ms
+Total GPU Time: 0.51 ms
+Speedup: 3.21x
+Memory: 0.01 MB
+Efficiency: 80.2%
+
+=== acf.1.16_optimized.2.0 ===
+Test: ACF Power/Phase (100 ranges, 17 lags)
+Data Size: 100 elements
+CPU Time: 3.48 ms
+GPU Time (est): 0.87 ms
+Transfer Time: 0.10 ms
+Total GPU Time: 0.97 ms
+Speedup: 3.59x
+Memory: 0.01 MB
+Efficiency: 89.7%
+
+=== acf.1.16_optimized.2.0 ===
+Test: ACF Power/Phase (200 ranges, 17 lags)
+Data Size: 200 elements
+CPU Time: 8.30 ms
+GPU Time (est): 2.08 ms
+Transfer Time: 0.10 ms
+Total GPU Time: 2.18 ms
+Speedup: 3.82x
+Memory: 0.03 MB
+Efficiency: 95.4%
+
+=== acf.1.16_optimized.2.0 ===
+Test: ACF Power/Phase (500 ranges, 17 lags)
+Data Size: 500 elements
+CPU Time: 17.19 ms
+GPU Time (est): 4.30 ms
+Transfer Time: 0.10 ms
+Total GPU Time: 4.40 ms
+Speedup: 3.91x
+Memory: 0.06 MB
+Efficiency: 97.7%
+
+=== acf.1.16_optimized.2.0 ===
+Test: ACF Power/Phase (1000 ranges, 17 lags)
+Data Size: 1000 elements
+CPU Time: 35.88 ms
+GPU Time (est): 8.97 ms
+Transfer Time: 0.10 ms
+Total GPU Time: 9.07 ms
+Speedup: 3.96x
+Memory: 0.13 MB
+Efficiency: 98.9%
+
+Running LMFIT processing benchmarks...
+=== lmfit_v2.0 ===
+Test: Levenberg-Marquardt (50 ranges, 4 params)
+Data Size: 50 elements
+CPU Time: 0.06 ms
+GPU Time (est): 0.01 ms
+Transfer Time: 0.20 ms
+Total GPU Time: 0.21 ms
+Speedup: 0.31x
+Memory: 0.00 MB
+Efficiency: 3.9%
+
+=== lmfit_v2.0 ===
+Test: Levenberg-Marquardt (100 ranges, 4 params)
+Data Size: 100 elements
+CPU Time: 0.12 ms
+GPU Time (est): 0.02 ms
+Transfer Time: 0.20 ms
+Total GPU Time: 0.22 ms
+Speedup: 0.58x
+Memory: 0.01 MB
+Efficiency: 7.2%
+
+=== lmfit_v2.0 ===
+Test: Levenberg-Marquardt (200 ranges, 4 params)
+Data Size: 200 elements
+CPU Time: 0.25 ms
+GPU Time (est): 0.03 ms
+Transfer Time: 0.20 ms
+Total GPU Time: 0.23 ms
+Speedup: 1.08x
+Memory: 0.01 MB
+Efficiency: 13.5%
+
+=== lmfit_v2.0 ===
+Test: Levenberg-Marquardt (500 ranges, 4 params)
+Data Size: 500 elements
+CPU Time: 0.63 ms
+GPU Time (est): 0.08 ms
+Transfer Time: 0.20 ms
+Total GPU Time: 0.28 ms
+Speedup: 2.26x
+Memory: 0.03 MB
+Efficiency: 28.3%
+
+=== lmfit_v2.0 ===
+Test: Levenberg-Marquardt (1000 ranges, 4 params)
+Data Size: 1000 elements
+CPU Time: 1.24 ms
+GPU Time (est): 0.15 ms
+Transfer Time: 0.20 ms
+Total GPU Time: 0.35 ms
+Speedup: 3.49x
+Memory: 0.06 MB
+Efficiency: 43.6%
+
+Running FITACF processing benchmarks...
+=== fitacf_v3.0 ===
+Test: FITACF Processing (200 ranges, 1 beams)
+Data Size: 200 elements
+CPU Time: 0.09 ms
+GPU Time (est): 0.02 ms
+Transfer Time: 0.15 ms
+Total GPU Time: 0.17 ms
+Speedup: 0.55x
+Memory: 0.03 MB
+Efficiency: 9.1%
+
+=== fitacf_v3.0 ===
+Test: FITACF Processing (200 ranges, 4 beams)
+Data Size: 800 elements
+CPU Time: 0.42 ms
+GPU Time (est): 0.07 ms
+Transfer Time: 0.15 ms
+Total GPU Time: 0.22 ms
+Speedup: 1.89x
+Memory: 0.10 MB
+Efficiency: 31.6%
+
+=== fitacf_v3.0 ===
+Test: FITACF Processing (200 ranges, 8 beams)
+Data Size: 1600 elements
+CPU Time: 0.81 ms
+GPU Time (est): 0.13 ms
+Transfer Time: 0.15 ms
+Total GPU Time: 0.28 ms
+Speedup: 2.83x
+Memory: 0.21 MB
+Efficiency: 47.2%
+
+=== fitacf_v3.0 ===
+Test: FITACF Processing (200 ranges, 16 beams)
+Data Size: 3200 elements
+CPU Time: 1.60 ms
+GPU Time (est): 0.27 ms
+Transfer Time: 0.15 ms
+Total GPU Time: 0.42 ms
+Speedup: 3.84x
+Memory: 0.42 MB
+Efficiency: 64.0%
+
+Running Grid processing benchmarks...
+=== grid.1.24_optimized.1 ===
+Test: Grid Processing (50x50)
+Data Size: 2500 elements
+CPU Time: 1.03 ms
+GPU Time (est): 0.09 ms
+Transfer Time: 0.10 ms
+Total GPU Time: 0.19 ms
+Speedup: 5.53x
+Memory: 0.03 MB
+Efficiency: 46.1%
+
+=== grid.1.24_optimized.1 ===
+Test: Grid Processing (100x100)
+Data Size: 10000 elements
+CPU Time: 4.31 ms
+GPU Time (est): 0.36 ms
+Transfer Time: 0.10 ms
+Total GPU Time: 0.46 ms
+Speedup: 9.38x
+Memory: 0.11 MB
+Efficiency: 78.2%
+
+=== grid.1.24_optimized.1 ===
+Test: Grid Processing (200x200)
+Data Size: 40000 elements
+CPU Time: 17.55 ms
+GPU Time (est): 1.46 ms
+Transfer Time: 0.10 ms
+Total GPU Time: 1.56 ms
+Speedup: 11.23x
+Memory: 0.46 MB
+Efficiency: 93.6%
+
+=== grid.1.24_optimized.1 ===
+Test: Grid Processing (500x500)
+Data Size: 250000 elements
+CPU Time: 110.83 ms
+GPU Time (est): 9.24 ms
+Transfer Time: 0.10 ms
+Total GPU Time: 9.34 ms
+Speedup: 11.87x
+Memory: 2.86 MB
+Efficiency: 98.9%
+
+Performance benchmarking complete!
+Report saved to: cuda_performance_report.md

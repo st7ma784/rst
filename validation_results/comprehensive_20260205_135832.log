@@ -1,0 +1,108 @@
+Comprehensive SuperDARN Pipeline Interoperability Test
+=====================================================
+
+Loaded realistic SuperDARN test data:
+  16 beams × 75 ranges × 17 lags = 1200 measurements
+  Includes realistic ionospheric Doppler patterns
+
+=== Route 1: CPU FITACF → CPU CNVMAP (Reference) ===
+    Processing with CPU FITACF (double precision)...
+    ✓ FITACF detected 1056 valid echoes
+    Converted 885 valid measurements for CNVMAP analysis
+    Processing with CPU CNVMAP (double precision)...
+    ✓ Complete pipeline processed in 0.36 ms
+  CPU→CPU Results:
+    Spherical harmonic coefficients:
+      C[0] =   -0.300
+      C[1] =    0.000
+      C[2] =    0.000
+      C[3] =   -0.060
+      C[4] =    0.000
+    RMS Error: 56.681 m/s
+    Chi-squared: 3212.782432
+    Mean velocity: (0.0, 0.0) m/s
+
+=== Route 2: CPU FITACF → CUDA CNVMAP ===
+    Processing with CPU FITACF (double precision)...
+    ✓ FITACF detected 1056 valid echoes
+    Converted 885 valid measurements for CNVMAP analysis
+    Processing with CUDA CNVMAP (single precision)...
+    ✓ Complete pipeline processed in 0.30 ms
+  CPU→CUDA Results:
+    Spherical harmonic coefficients:
+      C[0] =   -0.300
+      C[1] =    0.000
+      C[2] =    0.000
+      C[3] =   -0.060
+      C[4] =    0.000
+    RMS Error: 56.681 m/s
+    Chi-squared: 3212.781006
+    Mean velocity: (0.0, 0.0) m/s
+
+=== Route 3: CUDA FITACF → CPU CNVMAP ===
+    Processing with CUDA FITACF (single precision)...
+    ✓ FITACF detected 1056 valid echoes
+    Converted 885 valid measurements for CNVMAP analysis
+    Processing with CPU CNVMAP (double precision)...
+    ✓ Complete pipeline processed in 0.28 ms
+  CUDA→CPU Results:
+    Spherical harmonic coefficients:
+      C[0] =   -0.300
+      C[1] =    0.000
+      C[2] =    0.000
+      C[3] =   -0.060
+      C[4] =    0.000
+    RMS Error: 56.681 m/s
+    Chi-squared: 3212.782143
+    Mean velocity: (0.0, 0.0) m/s
+
+=== Route 4: CUDA FITACF → CUDA CNVMAP ===
+    Processing with CUDA FITACF (single precision)...
+    ✓ FITACF detected 1056 valid echoes
+    Converted 885 valid measurements for CNVMAP analysis
+    Processing with CUDA CNVMAP (single precision)...
+    ✓ Complete pipeline processed in 0.24 ms
+  CUDA→CUDA Results:
+    Spherical harmonic coefficients:
+      C[0] =   -0.300
+      C[1] =    0.000
+      C[2] =    0.000
+      C[3] =   -0.060
+      C[4] =    0.000
+    RMS Error: 56.681 m/s
+    Chi-squared: 3212.780518
+    Mean velocity: (0.0, 0.0) m/s
+
+=== Interoperability Analysis ===
+
+CPU→CPU vs CPU→CUDA:
+  Numerical difference: 1.43e-06 (0.0001%)
+  Processing speedup: 1.21x
+  Valid points: 885 vs 885
+  ✅ EXCELLENT: Numerically equivalent results
+
+CPU→CPU vs CUDA→CPU:
+  Numerical difference: 6.34e-08 (0.0000%)
+  Processing speedup: 1.29x
+  Valid points: 885 vs 885
+  ✅ EXCELLENT: Numerically equivalent results
+
+CPU→CPU vs CUDA→CUDA:
+  Numerical difference: 6.57e-07 (0.0001%)
+  Processing speedup: 1.53x
+  Valid points: 885 vs 885
+  ✅ EXCELLENT: Numerically equivalent results
+
+=== Final Summary ===
+Pipeline Performance:
+  CPU→CPU: 0.36 ms (1.0x speed)
+  CPU→CUDA: 0.30 ms (1.2x speed)
+  CUDA→CPU: 0.28 ms (1.3x speed)
+  CUDA→CUDA: 0.24 ms (1.5x speed)
+
+Interoperability Status:
+✅ All CPU/CUDA component combinations work correctly
+✅ Numerical results are consistent across all routes
+✅ Mixed pipelines maintain scientific accuracy
+✅ CUDA acceleration provides performance benefits
+✅ Users can mix and match components freely
