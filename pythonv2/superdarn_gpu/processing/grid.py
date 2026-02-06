@@ -244,24 +244,36 @@ class GridProcessor(Stage):
         
         return int(grid_size + vector_size + overhead)
     
-    def process(self, fitacf_list: List[FitACF]) -> GridData:
+    def process(self, fitacf_list: Union[List[FitACF], Dict[str, Any]]) -> GridData:
         """
         Process FITACF data to create spatial grid
         
         Parameters
         ----------
-        fitacf_list : List[FitACF]
-            List of FITACF records to grid
+        fitacf_list : List[FitACF] or dict
+            List of FITACF records to grid, or dict with pre-extracted vectors
             
         Returns
         -------
         GridData
             Gridded data structure
         """
-        with MemoryMonitor(f"Grid Processing ({len(fitacf_list)} records)"):
+        # Handle dict input with pre-extracted vectors
+        if isinstance(fitacf_list, dict):
+            if '_raw_vectors' in fitacf_list:
+                vectors = self._convert_raw_vectors(fitacf_list['_raw_vectors'])
+            else:
+                vectors = fitacf_list.get('vectors', {})
+            record_count = len(vectors.get('lat', []))
+        else:
+            record_count = len(fitacf_list)
+            vectors = None
+            
+        with MemoryMonitor(f"Grid Processing ({record_count} records)"):
             
             # Step 1: Extract and validate vectors
-            vectors = self._extract_vectors(fitacf_list)
+            if vectors is None:
+                vectors = self._extract_vectors(fitacf_list)
             
             if len(vectors['lat']) == 0:
                 warnings.warn("No valid vectors found for gridding")
@@ -345,6 +357,46 @@ class GridProcessor(Stage):
                 all_vectors[key] = self.xp.array(all_vectors[key])
         
         return all_vectors
+    
+    def _convert_raw_vectors(self, raw_vectors: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Convert list of vector dicts to arrays format used internally.
+        
+        Parameters
+        ----------
+        raw_vectors : list
+            List of dicts with keys: lat, lon, velocity, azimuth, velocity_error, etc.
+            
+        Returns
+        -------
+        dict
+            Dict with numpy arrays for each field
+        """
+        converted = {
+            'lat': [], 'lon': [], 'velocity': [], 'velocity_error': [],
+            'power': [], 'spectral_width': [], 'quality': [],
+            'timestamp': [], 'station_id': [], 'beam': [], 'range_gate': []
+        }
+        
+        for vec in raw_vectors:
+            converted['lat'].append(vec.get('lat', 0.0))
+            converted['lon'].append(vec.get('lon', 0.0))
+            converted['velocity'].append(vec.get('velocity', 0.0))
+            converted['velocity_error'].append(vec.get('velocity_error', 50.0))
+            converted['power'].append(vec.get('power', 0.0))
+            converted['spectral_width'].append(vec.get('spectral_width', 0.0))
+            converted['quality'].append(1)  # Default good quality
+            converted['timestamp'].append(vec.get('timestamp', ''))
+            converted['station_id'].append(vec.get('station_id', 0))
+            converted['beam'].append(vec.get('beam', 0))
+            converted['range_gate'].append(vec.get('range_gate', 0))
+        
+        # Convert to arrays
+        for key in converted:
+            if key != 'timestamp':
+                converted[key] = self.xp.array(converted[key])
+        
+        return converted
     
     def _calculate_coordinates(self, prm: RadarParameters, 
                              beam: int, range_gate: int) -> Tuple[float, float]:
@@ -538,13 +590,22 @@ class GridProcessor(Stage):
         # Convert back if needed
         grid_data.velocity = self.xp.asarray(filtered_velocity)
     
-    def _calculate_grid_statistics(self, grid_data: GridData, fitacf_list: List[FitACF]):
+    def _calculate_grid_statistics(self, grid_data: GridData, 
+                                    fitacf_list: Union[List[FitACF], Dict[str, Any]]):
         """Calculate grid metadata and statistics"""
         
-        # Time range
-        timestamps = [fitacf.prm.timestamp for fitacf in fitacf_list]
-        grid_data.start_time = min(timestamps)
-        grid_data.end_time = max(timestamps)
+        # Handle different input types
+        if isinstance(fitacf_list, dict):
+            # Dict input - use timestamp from config or now
+            from datetime import datetime
+            now = datetime.now().isoformat()
+            grid_data.start_time = fitacf_list.get('timestamp', now)
+            grid_data.end_time = fitacf_list.get('timestamp', now)
+        else:
+            # Time range from FitACF list
+            timestamps = [fitacf.prm.timestamp for fitacf in fitacf_list]
+            grid_data.start_time = min(timestamps)
+            grid_data.end_time = max(timestamps)
         
         # Grid type
         grid_data.grid_type = f"{self.config.grid_method.value}_{self.config.coordinate_system.value}"

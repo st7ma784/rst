@@ -20,6 +20,7 @@ import {
   Cloud as RemoteIcon,
   Settings as SettingsIcon,
   Menu as MenuIcon,
+  Science as TestsIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -43,6 +44,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     { text: 'Processing', icon: <ProcessIcon />, path: '/processing' },
     { text: 'Visualization', icon: <VisualizeIcon />, path: '/visualization/demo' },
     { text: 'Remote Compute', icon: <RemoteIcon />, path: '/remote' },
+    { text: 'Module Tests', icon: <TestsIcon />, path: '/tests' },
   ];
 
   const drawer = (

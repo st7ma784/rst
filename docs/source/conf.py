@@ -6,10 +6,11 @@ import sys
 
 # -- Path setup --------------------------------------------------------------
 sys.path.insert(0, os.path.abspath('../../codebase'))
+sys.path.insert(0, os.path.abspath('../../pythonv2'))
 
 # -- Project information -----------------------------------------------------
 project = 'SuperDARN RST'
-copyright = '2024, SuperDARN Data Analysis Working Group'
+copyright = '2026, SuperDARN Data Analysis Working Group'
 author = 'SuperDARN DAWG'
 release = '1.0'
 version = '1.0'
@@ -46,6 +47,9 @@ source_suffix = {
 
 # The master toctree document.
 master_doc = 'index'
+
+# Include parent docs directory for finding all subdirectories
+# This allows referencing ../tutorials, ../guides, etc.
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = 'sphinx_rtd_theme'

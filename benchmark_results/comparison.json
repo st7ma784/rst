@@ -1,0 +1,22 @@
+[
+  {
+    "system_name": "python_numpy",
+    "files_processed": 500,
+    "total_records": 30000,
+    "total_time_sec": 8.321366160998878,
+    "avg_file_time_ms": 16.642732321997755,
+    "avg_record_time_ms": 0.2773788720332959,
+    "throughput_files_per_sec": 60.08628755497296,
+    "throughput_records_per_sec": 3605.1772532983778
+  },
+  {
+    "system_name": "cudarst_cpu",
+    "files_processed": 500,
+    "total_records": 30000,
+    "total_time_sec": 7.35200224199798,
+    "avg_file_time_ms": 14.70400448399596,
+    "avg_record_time_ms": 0.24506674139993265,
+    "throughput_files_per_sec": 68.00868437495471,
+    "throughput_records_per_sec": 4080.521062497283
+  }
+]

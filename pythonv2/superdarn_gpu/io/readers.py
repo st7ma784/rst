@@ -10,8 +10,24 @@ from datetime import datetime
 import struct
 
 import numpy as np
-import h5py
-import netCDF4 as nc
+
+# Optional dependencies - imported lazily when needed
+h5py = None
+nc = None
+
+def _get_h5py():
+    global h5py
+    if h5py is None:
+        import h5py as _h5py
+        h5py = _h5py
+    return h5py
+
+def _get_netcdf():
+    global nc
+    if nc is None:
+        import netCDF4 as _nc
+        nc = _nc
+    return nc
 
 from ..core.backends import get_array_module, ensure_array, get_backend, Backend
 from ..core.datatypes import RawACF, FitACF, GridData, ConvectionMap, RadarParameters
@@ -196,7 +212,7 @@ def _detect_file_format(filename: Path) -> str:
     # Try to detect from file content
     try:
         if filename.suffix.lower() in ['.h5', '.hdf5']:
-            with h5py.File(filename, 'r') as f:
+            with _get_h5py().File(filename, 'r') as f:
                 if 'rawacf' in f.keys() or 'acf' in f.keys():
                     return 'rawacf'
                 elif 'fitacf' in f.keys() or 'velocity' in f.keys():
@@ -220,7 +236,7 @@ def _load_rawacf_hdf5(filename: Path, use_gpu: Optional[bool],
     xp = get_array_module()
     records = []
     
-    with h5py.File(filename, 'r') as f:
+    with _get_h5py().File(filename, 'r') as f:
         # Get number of records
         n_records = f.attrs.get('n_records', len(f.keys()))
         
@@ -302,7 +318,7 @@ def _load_fitacf_hdf5(filename: Path, use_gpu: Optional[bool],
     
     records = []
     
-    with h5py.File(filename, 'r') as f:
+    with _get_h5py().File(filename, 'r') as f:
         n_records = f.attrs.get('n_records', len(f.keys()))
         
         for i in range(n_records):

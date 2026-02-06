@@ -26,10 +26,21 @@ from .performance import (
     PerformanceDashboard, GPUMonitor, 
     plot_processing_times, plot_memory_usage
 )
-from .interactive import (
-    InteractiveExplorer, ParameterTuner,
-    ProcessingComparison, ValidationViewer
-)
+
+# Interactive tools require ipywidgets - optional import
+try:
+    from .interactive import (
+        InteractiveExplorer, ParameterTuner,
+        ProcessingComparison, ValidationViewer
+    )
+    _INTERACTIVE_AVAILABLE = True
+except ImportError:
+    InteractiveExplorer = None
+    ParameterTuner = None
+    ProcessingComparison = None
+    ValidationViewer = None
+    _INTERACTIVE_AVAILABLE = False
+
 from .dashboards import (
     create_processing_dashboard, create_performance_dashboard,
     create_validation_dashboard

@@ -26,3 +26,8 @@ docs/latex/
 docs/html 
 
 test-results/enhanced_*
+extracted_data/*
+
+minio_data/*
+
+pythonv2/**/__pycache__/

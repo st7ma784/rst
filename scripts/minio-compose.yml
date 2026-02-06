@@ -1,0 +1,36 @@
+version: '3.8'
+
+# MinIO service for accessing SuperDARN data stored in MinIO format
+# The data on the 4 drives was originally stored via MinIO with erasure coding
+# This service allows reading that data via S3-compatible API
+
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: superdarn-minio-v2
+    privileged: true
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      # Local copy of MinIO data (drives copied to local storage for proper permissions)
+      - /home/user/rst/minio_data/data1:/data1
+      - /home/user/rst/minio_data/data2:/data2
+      - /home/user/rst/minio_data/data3:/data3
+      - /home/user/rst/minio_data/data4:/data4
+    command: server /data{1...4} --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - superdarn-net
+
+networks:
+  superdarn-net:
+    driver: bridge

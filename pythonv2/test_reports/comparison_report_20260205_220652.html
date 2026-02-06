@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RST Module Comparison Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .status-passed { background-color: #10b981; color: white; }
+        .status-failed { background-color: #ef4444; color: white; }
+        .status-skipped { background-color: #6b7280; color: white; }
+        .metric-card { transition: transform 0.2s; }
+        .metric-card:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">RST Module Comparison Report</h1>
+            <p class="text-gray-600">C/CUDA vs Python Implementation Testing</p>
+            <p class="text-sm text-gray-500 mt-2">Generated: 2026-02-05 22:06:52</p>
+        </div>
+        
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            
+            <div class="metric-card bg-white rounded-lg shadow p-6">
+                <div class="text-sm text-gray-500 uppercase">Modules Tested</div>
+                <div class="text-3xl font-bold text-gray-800">4</div>
+            </div>
+            <div class="metric-card bg-white rounded-lg shadow p-6">
+                <div class="text-sm text-gray-500 uppercase">Tests Passed</div>
+                <div class="text-3xl font-bold text-green-600">1/1</div>
+            </div>
+            <div class="metric-card bg-white rounded-lg shadow p-6">
+                <div class="text-sm text-gray-500 uppercase">Pass Rate</div>
+                <div class="text-3xl font-bold text-blue-600">100.0%</div>
+            </div>
+            <div class="metric-card bg-white rounded-lg shadow p-6">
+                <div class="text-sm text-gray-500 uppercase">Avg Speedup</div>
+                <div class="text-3xl font-bold text-purple-600">1.00x</div>
+            </div>
+        
+        </div>
+        
+        <!-- Speedup Chart -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Performance Comparison</h2>
+            <canvas id="speedupChart" height="100"></canvas>
+        </div>
+        
+        <!-- Module Results -->
+        <div class="space-y-6">
+            
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gray-800 text-white px-6 py-4 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-semibold">ACF</h3>
+                        <p class="text-gray-300 text-sm">Auto-correlation function calculation</p>
+                    </div>
+                    <span class="px-3 py-1 rounded text-sm status-passed">PASSED</span>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-4 gap-4 mb-6">
+                        <div class="text-center p-4 bg-gray-50 rounded">
+                            <div class="text-2xl font-bold text-gray-800">1</div>
+                            <div class="text-sm text-gray-500">Total Tests</div>
+                        </div>
+                        <div class="text-center p-4 bg-green-50 rounded">
+                            <div class="text-2xl font-bold text-green-600">1</div>
+                            <div class="text-sm text-gray-500">Passed</div>
+                        </div>
+                        <div class="text-center p-4 bg-purple-50 rounded">
+                            <div class="text-2xl font-bold text-purple-600">0.00x</div>
+                            <div class="text-sm text-gray-500">Avg Speedup</div>
+                        </div>
+                        <div class="text-center p-4 bg-blue-50 rounded">
+                            <div class="text-2xl font-bold text-blue-600">0.00e+00</div>
+                            <div class="text-sm text-gray-500">Avg Error</div>
+                        </div>
+                    </div>
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="py-3 px-4 text-left">Reference</th>
+                                <th class="py-3 px-4 text-left">Comparison</th>
+                                <th class="py-3 px-4 text-left">Status</th>
+                                <th class="py-3 px-4 text-right">Ref Time</th>
+                                <th class="py-3 px-4 text-right">Cmp Time</th>
+                                <th class="py-3 px-4 text-right">Speedup</th>
+                                <th class="py-3 px-4 text-right">MAE</th>
+                                <th class="py-3 px-4 text-right">Correlation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                    <tr class="border-b">
+                        <td class="py-3 px-4">python_numpy</td>
+                        <td class="py-3 px-4">python_numpy</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 rounded text-xs status-passed">PASSED</span>
+                        </td>
+                        <td class="py-3 px-4 text-right">248.26 ms</td>
+                        <td class="py-3 px-4 text-right">248.26 ms</td>
+                        <td class="py-3 px-4 text-right font-semibold">1.00x</td>
+                        <td class="py-3 px-4 text-right">0.00e+00</td>
+                        <td class="py-3 px-4 text-right">1.0000</td>
+                    </tr>
+                
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gray-800 text-white px-6 py-4 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-semibold">FITACF</h3>
+                        <p class="text-gray-300 text-sm">ACF curve fitting for velocity/width extraction</p>
+                    </div>
+                    <span class="px-3 py-1 rounded text-sm status-passed">PASSED</span>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-4 gap-4 mb-6">
+                        <div class="text-center p-4 bg-gray-50 rounded">
+                            <div class="text-2xl font-bold text-gray-800">0</div>
+                            <div class="text-sm text-gray-500">Total Tests</div>
+                        </div>
+                        <div class="text-center p-4 bg-green-50 rounded">
+                            <div class="text-2xl font-bold text-green-600">0</div>
+                            <div class="text-sm text-gray-500">Passed</div>
+                        </div>
+                        <div class="text-center p-4 bg-purple-50 rounded">
+                            <div class="text-2xl font-bold text-purple-600">0.00x</div>
+                            <div class="text-sm text-gray-500">Avg Speedup</div>
+                        </div>
+                        <div class="text-center p-4 bg-blue-50 rounded">
+                            <div class="text-2xl font-bold text-blue-600">0.00e+00</div>
+                            <div class="text-sm text-gray-500">Avg Error</div>
+                        </div>
+                    </div>
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="py-3 px-4 text-left">Reference</th>
+                                <th class="py-3 px-4 text-left">Comparison</th>
+                                <th class="py-3 px-4 text-left">Status</th>
+                                <th class="py-3 px-4 text-right">Ref Time</th>
+                                <th class="py-3 px-4 text-right">Cmp Time</th>
+                                <th class="py-3 px-4 text-right">Speedup</th>
+                                <th class="py-3 px-4 text-right">MAE</th>
+                                <th class="py-3 px-4 text-right">Correlation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gray-800 text-white px-6 py-4 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-semibold">GRID</h3>
+                        <p class="text-gray-300 text-sm">Spatial gridding of radar measurements</p>
+                    </div>
+                    <span class="px-3 py-1 rounded text-sm status-passed">PASSED</span>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-4 gap-4 mb-6">
+                        <div class="text-center p-4 bg-gray-50 rounded">
+                            <div class="text-2xl font-bold text-gray-800">0</div>
+                            <div class="text-sm text-gray-500">Total Tests</div>
+                        </div>
+                        <div class="text-center p-4 bg-green-50 rounded">
+                            <div class="text-2xl font-bold text-green-600">0</div>
+                            <div class="text-sm text-gray-500">Passed</div>
+                        </div>
+                        <div class="text-center p-4 bg-purple-50 rounded">
+                            <div class="text-2xl font-bold text-purple-600">0.00x</div>
+                            <div class="text-sm text-gray-500">Avg Speedup</div>
+                        </div>
+                        <div class="text-center p-4 bg-blue-50 rounded">
+                            <div class="text-2xl font-bold text-blue-600">0.00e+00</div>
+                            <div class="text-sm text-gray-500">Avg Error</div>
+                        </div>
+                    </div>
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="py-3 px-4 text-left">Reference</th>
+                                <th class="py-3 px-4 text-left">Comparison</th>
+                                <th class="py-3 px-4 text-left">Status</th>
+                                <th class="py-3 px-4 text-right">Ref Time</th>
+                                <th class="py-3 px-4 text-right">Cmp Time</th>
+                                <th class="py-3 px-4 text-right">Speedup</th>
+                                <th class="py-3 px-4 text-right">MAE</th>
+                                <th class="py-3 px-4 text-right">Correlation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gray-800 text-white px-6 py-4 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-semibold">CONVMAP</h3>
+                        <p class="text-gray-300 text-sm">Convection map generation via spherical harmonic fitting</p>
+                    </div>
+                    <span class="px-3 py-1 rounded text-sm status-passed">PASSED</span>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-4 gap-4 mb-6">
+                        <div class="text-center p-4 bg-gray-50 rounded">
+                            <div class="text-2xl font-bold text-gray-800">0</div>
+                            <div class="text-sm text-gray-500">Total Tests</div>
+                        </div>
+                        <div class="text-center p-4 bg-green-50 rounded">
+                            <div class="text-2xl font-bold text-green-600">0</div>
+                            <div class="text-sm text-gray-500">Passed</div>
+                        </div>
+                        <div class="text-center p-4 bg-purple-50 rounded">
+                            <div class="text-2xl font-bold text-purple-600">0.00x</div>
+                            <div class="text-sm text-gray-500">Avg Speedup</div>
+                        </div>
+                        <div class="text-center p-4 bg-blue-50 rounded">
+                            <div class="text-2xl font-bold text-blue-600">0.00e+00</div>
+                            <div class="text-sm text-gray-500">Avg Error</div>
+                        </div>
+                    </div>
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="py-3 px-4 text-left">Reference</th>
+                                <th class="py-3 px-4 text-left">Comparison</th>
+                                <th class="py-3 px-4 text-left">Status</th>
+                                <th class="py-3 px-4 text-right">Ref Time</th>
+                                <th class="py-3 px-4 text-right">Cmp Time</th>
+                                <th class="py-3 px-4 text-right">Speedup</th>
+                                <th class="py-3 px-4 text-right">MAE</th>
+                                <th class="py-3 px-4 text-right">Correlation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    
+    <script>
+        
+        const ctx = document.getElementById('speedupChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ["acf", "fitacf", "grid", "convmap"],
+                datasets: [
+                    {
+                        label: 'C CPU',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    },
+                    {
+                        label: 'Python NumPy',
+                        data: [248.25692176818848, 0, 0, 0],
+                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    },
+                    {
+                        label: 'Python CuPy',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: 'rgba(139, 92, 246, 0.8)',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Processing Time by Backend (ms)'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Time (ms)'
+                        }
+                    }
+                }
+            }
+        });
+        
+    </script>
+</body>
+</html>

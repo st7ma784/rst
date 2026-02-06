@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import ProcessingPage from './pages/ProcessingPage';
 import VisualizationPage from './pages/VisualizationPage';
 import RemoteComputePage from './pages/RemoteComputePage';
+import TestDashboard from './pages/TestDashboard';
 
 const theme = createTheme({
   palette: {
@@ -47,6 +48,7 @@ function App() {
             <Route path="/processing" element={<ProcessingPage />} />
             <Route path="/visualization/:jobId" element={<VisualizationPage />} />
             <Route path="/remote" element={<RemoteComputePage />} />
+            <Route path="/tests" element={<TestDashboard />} />
           </Routes>
         </MainLayout>
       </Router>

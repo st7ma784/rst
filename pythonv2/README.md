@@ -240,6 +240,82 @@ pytest tests/
 python benchmarks/run_benchmarks.py
 ```
 
+## 🧪 Module Comparison Testing
+
+The package includes a comprehensive testing framework for comparing Python implementations against C/CUDA baselines:
+
+### Running Comparison Tests
+
+```bash
+# Run all module comparisons
+python scripts/run_module_tests.py
+
+# Test specific modules
+python scripts/run_module_tests.py --module acf fitacf
+
+# Use large test data with HTML report
+python scripts/run_module_tests.py --size large --report html
+
+# All reports (console, JSON, HTML)
+python scripts/run_module_tests.py --report all --output test_reports/
+```
+
+### Available Modules
+
+| Module  | Version | Description |
+|---------|---------|-------------|
+| `acf`   | 1.16    | Auto-correlation function calculation |
+| `fitacf`| 3.0     | ACF curve fitting for velocity/width |
+| `grid`  | 1.24    | Spatial gridding of measurements |
+| `convmap`| 1.17   | Convection map spherical harmonic fitting |
+
+### Web Dashboard
+
+The test framework integrates with the SuperDARN Interactive Workbench:
+
+```bash
+# Start backend
+cd ../webapp/backend && uvicorn main:app --reload
+
+# Start frontend  
+cd ../webapp/frontend && npm start
+
+# Navigate to http://localhost:3000/tests
+```
+
+The dashboard provides:
+- One-click test execution
+- Real-time progress monitoring
+- Side-by-side performance comparisons
+- Downloadable reports
+
+### Programmatic Usage
+
+```python
+from tests.comparison.framework import ComparisonTestFramework
+from tests.comparison.fixtures import generate_test_data
+from superdarn_gpu.processing.fitacf import FitACFProcessor
+
+# Initialize framework
+framework = ComparisonTestFramework(tolerance_rtol=1e-4)
+
+# Register module
+framework.register_module(
+    'fitacf',
+    python_processor=FitACFProcessor,
+    description='ACF fitting',
+    version='3.0'
+)
+
+# Run comparison
+test_data = generate_test_data('fitacf', size='medium')
+results = framework.run_module_comparison('fitacf', test_data)
+
+# Generate report
+from tests.comparison.reporters import HTMLReporter
+HTMLReporter().generate_report(framework.results, Path('report.html'))
+```
+
 ## 📖 Documentation
 
 - **API Reference**: [https://superdarn.github.io/rst/pythonv2/api/](https://superdarn.github.io/rst/pythonv2/api/)

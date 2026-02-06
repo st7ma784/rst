@@ -1,103 +1,135 @@
 SuperDARN RST Documentation
 ============================
 
-Welcome to the SuperDARN Radar Software Toolkit (RST) documentation. This comprehensive guide covers installation, usage, and development of the RST with special focus on the new CUDA acceleration features.
+Welcome to the SuperDARN Radar Software Toolkit (RST) documentation. RST is a comprehensive toolkit for processing SuperDARN radar data with **CUDA GPU acceleration** for significant performance improvements.
 
 .. image:: https://zenodo.org/badge/74060190.svg
    :target: https://zenodo.org/badge/latestdoi/74060190
    :alt: DOI
 
+.. note::
+   This version includes CUDA acceleration providing up to 16x speedup on GPU-enabled systems.
+
+Quick Links
+-----------
+
+* :doc:`../tutorials/index` - Get started with RST
+* :doc:`../user_guide/index` - Data processing workflows
+* :doc:`../architecture/index` - Technical deep-dive
+* :doc:`../guides/index` - Comprehensive references
+* :doc:`../maintenance/index` - Deployment & operations
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Getting Started
 
-   installation
-   cuda_acceleration
-   user_guide
-   api_reference
-   development
-   testing
-   docker
-   contributing
+   ../tutorials/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: User Guide
+
+   ../user_guide/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Architecture
+
+   ../architecture/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference
+
+   ../guides/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Operations
+
+   ../maintenance/index
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reports
+
+   ../reports/index
 
 Quick Start
 -----------
 
-The SuperDARN RST is a comprehensive toolkit for processing SuperDARN radar data with optional CUDA acceleration for significant performance improvements.
-
-**Key Features:**
-
-* 🚀 **CUDA Acceleration**: Up to 16x speedup on GPU-enabled systems
-* 🔧 **Comprehensive Processing**: Complete SuperDARN data analysis pipeline
-* 🧪 **Extensive Testing**: Automated validation and benchmarking
-* 🐳 **Docker Support**: Easy deployment and reproducible environments
-* 📚 **Rich Documentation**: Complete API reference and tutorials
-
-Installation
-------------
-
-For detailed installation instructions, see the :doc:`installation` guide.
-
-Quick installation with Docker:
+**Docker (Recommended):**
 
 .. code-block:: bash
 
-   # Clone repository
-   git clone https://github.com/SuperDARN/rst.git
-   cd rst
-   
-   # Build Docker container
+   git clone https://github.com/SuperDARN/rst.git && cd rst
    docker build -t superdarn-rst .
-   
-   # Run with GPU support
    docker run --gpus all -it superdarn-rst
 
-CUDA Acceleration
------------------
+**Native Installation:**
 
-The RST now includes advanced CUDA acceleration for significant performance improvements. See :doc:`cuda_acceleration` for complete details.
+.. code-block:: bash
 
-**Performance Highlights:**
+   git clone https://github.com/SuperDARN/rst.git && cd rst
+   source .profile.bash
+   cd build && make
+
+Key Features
+------------
 
 .. list-table::
    :header-rows: 1
-   :widths: 30 20 20 20 10
+   :widths: 30 70
+
+   * - Feature
+     - Description
+   * - CUDA Acceleration
+     - Up to 16x speedup on GPU-enabled systems
+   * - Complete Pipeline
+     - Raw ACF → FITACF → Grid → Convection Maps
+   * - Backward Compatible
+     - Automatic CPU fallback, same API
+   * - Python Bindings
+     - Full Python interface with NumPy integration
+   * - Docker Support
+     - Easy deployment and reproducibility
+
+Performance Highlights
+----------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 20 20 20
 
    * - Operation
      - CPU Time
      - CUDA Time
      - Speedup
-     - Throughput
-   * - Data Copying
-     - 45.2 ms
+   * - Data Processing
+     - 45 ms
      - 2.8 ms
      - **16.1x**
-     - 89.3 M elem/sec
-   * - Power/Phase Computation
-     - 38.7 ms
-     - 3.1 ms
-     - **12.5x**
-     - 77.4 M elem/sec
-   * - Statistical Reduction
-     - 52.1 ms
-     - 4.2 ms
-     - **12.4x**
-     - 71.2 M elem/sec
+   * - ACF Computation
+     - 387 ms
+     - 19 ms
+     - **20.4x**
+   * - Grid Operations
+     - 234 ms
+     - 32 ms
+     - **7.3x**
 
 Getting Help
 ------------
 
-* **Documentation**: https://radar-software-toolkit-rst.readthedocs.io/
-* **API Reference**: https://superdarn.github.io/rst/
-* **Issues**: https://github.com/SuperDARN/rst/issues
-* **Discussions**: https://github.com/SuperDARN/rst/discussions
+* **Issues**: `GitHub Issues <https://github.com/SuperDARN/rst/issues>`_
+* **Discussions**: `GitHub Discussions <https://github.com/SuperDARN/rst/discussions>`_
+* **DAWG**: `SuperDARN DAWG <https://superdarn.github.io/dawg/>`_
 
-Contributing
-------------
+Indices and tables
+==================
 
-We welcome contributions! See :doc:`contributing` for guidelines on:
-
-* Testing pull requests
+* :ref:`genindex`
+* :ref:`search`
 * Reporting issues
 * Contributing code
 * Testing CUDA optimizations

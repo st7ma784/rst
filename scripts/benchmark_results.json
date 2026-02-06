@@ -1,0 +1,160 @@
+{
+  "timestamp": "2026-02-05T22:50:44.480279",
+  "sample_size": 3,
+  "data_types": [
+    "convmap"
+  ],
+  "results": [
+    {
+      "system": "c_cpu",
+      "data_file": "2016111202.cnvmap",
+      "success": true,
+      "execution_time_sec": 0.0013,
+      "memory_peak_mb": 0,
+      "output_file": "/tmp/superdarn_bench_seoplulq/2016111202_c_cpu_output",
+      "output_hash": "3b071065c6e9483e",
+      "error_message": null
+    },
+    {
+      "system": "c_cuda",
+      "data_file": "2016111202.cnvmap",
+      "success": true,
+      "execution_time_sec": 0.0005,
+      "memory_peak_mb": 0,
+      "output_file": "/tmp/superdarn_bench_seoplulq/2016111202_c_cuda_output",
+      "output_hash": "3b071065c6e9483e",
+      "error_message": null
+    },
+    {
+      "system": "python",
+      "data_file": "2016111202.cnvmap",
+      "success": true,
+      "execution_time_sec": 0.3093,
+      "memory_peak_mb": 0,
+      "output_file": "/tmp/superdarn_bench_seoplulq/2016111202_python_output",
+      "output_hash": "3b071065c6e9483e",
+      "error_message": null
+    },
+    {
+      "system": "c_cpu",
+      "data_file": "2014071716.cnvmap",
+      "success": true,
+      "execution_time_sec": 0.0011,
+      "memory_peak_mb": 0,
+      "output_file": "/tmp/superdarn_bench_seoplulq/2014071716_c_cpu_output",
+      "output_hash": "829ceda40c1bc0dc",
+      "error_message": null
+    },
+    {
+      "system": "c_cuda",
+      "data_file": "2014071716.cnvmap",
+      "success": true,
+      "execution_time_sec": 0.0003,
+      "memory_peak_mb": 0,
+      "output_file": "/tmp/superdarn_bench_seoplulq/2014071716_c_cuda_output",
+      "output_hash": "829ceda40c1bc0dc",
+      "error_message": null
+    },
+    {
+      "system": "python",
+      "data_file": "2014071716.cnvmap",
+      "success": true,
+      "execution_time_sec": 0.0004,
+      "memory_peak_mb": 0,
+      "output_file": "/tmp/superdarn_bench_seoplulq/2014071716_python_output",
+      "output_hash": "829ceda40c1bc0dc",
+      "error_message": null
+    },
+    {
+      "system": "c_cpu",
+      "data_file": "2017111502.cnvmap",
+      "success": true,
+      "execution_time_sec": 0.001,
+      "memory_peak_mb": 0,
+      "output_file": "/tmp/superdarn_bench_seoplulq/2017111502_c_cpu_output",
+      "output_hash": "56661d455c6c4a7a",
+      "error_message": null
+    },
+    {
+      "system": "c_cuda",
+      "data_file": "2017111502.cnvmap",
+      "success": true,
+      "execution_time_sec": 0.0004,
+      "memory_peak_mb": 0,
+      "output_file": "/tmp/superdarn_bench_seoplulq/2017111502_c_cuda_output",
+      "output_hash": "56661d455c6c4a7a",
+      "error_message": null
+    },
+    {
+      "system": "python",
+      "data_file": "2017111502.cnvmap",
+      "success": true,
+      "execution_time_sec": 0.0004,
+      "memory_peak_mb": 0,
+      "output_file": "/tmp/superdarn_bench_seoplulq/2017111502_python_output",
+      "output_hash": "56661d455c6c4a7a",
+      "error_message": null
+    }
+  ],
+  "comparisons": [
+    {
+      "file_name": "2016111202.cnvmap",
+      "systems_compared": [
+        "c_cpu",
+        "c_cuda",
+        "python"
+      ],
+      "outputs_identical": true,
+      "hash_values": {
+        "c_cpu": "3b071065c6e9483e",
+        "c_cuda": "3b071065c6e9483e",
+        "python": "3b071065c6e9483e"
+      },
+      "differences": []
+    },
+    {
+      "file_name": "2014071716.cnvmap",
+      "systems_compared": [
+        "c_cpu",
+        "c_cuda",
+        "python"
+      ],
+      "outputs_identical": true,
+      "hash_values": {
+        "c_cpu": "829ceda40c1bc0dc",
+        "c_cuda": "829ceda40c1bc0dc",
+        "python": "829ceda40c1bc0dc"
+      },
+      "differences": []
+    },
+    {
+      "file_name": "2017111502.cnvmap",
+      "systems_compared": [
+        "c_cpu",
+        "c_cuda",
+        "python"
+      ],
+      "outputs_identical": true,
+      "hash_values": {
+        "c_cpu": "56661d455c6c4a7a",
+        "c_cuda": "56661d455c6c4a7a",
+        "python": "56661d455c6c4a7a"
+      },
+      "differences": []
+    }
+  ],
+  "timing_summary": {
+    "c_cpu": {
+      "avg": 0.0011333333333333334,
+      "count": 3
+    },
+    "c_cuda": {
+      "avg": 0.0004,
+      "count": 3
+    },
+    "python": {
+      "avg": 0.10336666666666668,
+      "count": 3
+    }
+  }
+}

@@ -14,7 +14,7 @@ from pathlib import Path
 # Add pythonv2 to path for superdarn_gpu imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "pythonv2"))
 
-from api.routes import processing, upload, results, remote, settings
+from api.routes import processing, upload, results, remote, settings, tests
 from core.websocket_manager import ConnectionManager
 
 # Configure logging
@@ -76,6 +76,7 @@ app.include_router(processing.router, prefix="/api/processing", tags=["processin
 app.include_router(results.router, prefix="/api/results", tags=["results"])
 app.include_router(remote.router, prefix="/api/remote", tags=["remote"])
 app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
+app.include_router(tests.router, prefix="/api/tests", tags=["tests"])
 
 # WebSocket endpoint for real-time updates
 @app.websocket("/ws/progress")

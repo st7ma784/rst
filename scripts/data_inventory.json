@@ -1,0 +1,104 @@
+{
+  "scan_time": "2026-02-05T22:50:44.115129",
+  "drives": [
+    {
+      "device": "sda",
+      "mount_point": "/media/user/c9e6d06c-2981-4697-9747-450cd09e6cde",
+      "total_space_gb": 1832.69,
+      "used_space_gb": 794.75,
+      "available_space_gb": 944.77
+    },
+    {
+      "device": "sdb",
+      "mount_point": "/media/user/c4b5011b-4278-431f-b977-4e3e7812ed79",
+      "total_space_gb": 1832.69,
+      "used_space_gb": 45.44,
+      "available_space_gb": 1694.08
+    },
+    {
+      "device": "sdc",
+      "mount_point": "/media/user/c078fa0c-611b-4a52-a4a2-97a506a541b9",
+      "total_space_gb": 1832.69,
+      "used_space_gb": 43.34,
+      "available_space_gb": 1696.18
+    },
+    {
+      "device": "sdd",
+      "mount_point": "/media/user/f185ee55-7d95-4936-8b51-eb231896a216",
+      "total_space_gb": 1832.69,
+      "used_space_gb": 42.13,
+      "available_space_gb": 1697.39
+    }
+  ],
+  "file_counts": {
+    "rawacf": 1,
+    "fitacf": 1,
+    "fitacf_output": 1,
+    "convmap": 26180,
+    "grid": 0
+  },
+  "total_files": 26183,
+  "total_size_gb": 0.0,
+  "date_range": {
+    "convmap": [
+      "2012090700",
+      "2017111502"
+    ]
+  },
+  "data_files": {
+    "rawacf": [],
+    "fitacf": [],
+    "fitacf_output": [],
+    "convmap": [
+      {
+        "name": "2016111202.cnvmap",
+        "path": "/media/user/c9e6d06c-2981-4697-9747-450cd09e6cde/convmap/2016111202.cnvmap/f9e932d8-84f9-46e0-9055-a3a4efa6731c/part.1",
+        "minio_path": "/media/user/c9e6d06c-2981-4697-9747-450cd09e6cde/convmap/2016111202.cnvmap",
+        "size_bytes": 503323,
+        "data_type": "convmap",
+        "timestamp": "2016111202"
+      },
+      {
+        "name": "2014071716.cnvmap",
+        "path": "/media/user/c9e6d06c-2981-4697-9747-450cd09e6cde/convmap/2014071716.cnvmap/125f2e30-ebfe-4378-9ccb-090380946239/part.1",
+        "minio_path": "/media/user/c9e6d06c-2981-4697-9747-450cd09e6cde/convmap/2014071716.cnvmap",
+        "size_bytes": 306016,
+        "data_type": "convmap",
+        "timestamp": "2014071716"
+      },
+      {
+        "name": "2017111502.cnvmap",
+        "path": "/media/user/c9e6d06c-2981-4697-9747-450cd09e6cde/convmap/2017111502.cnvmap/15ba5a0c-d251-4d35-877c-d401bea23584/part.1",
+        "minio_path": "/media/user/c9e6d06c-2981-4697-9747-450cd09e6cde/convmap/2017111502.cnvmap",
+        "size_bytes": 320605,
+        "data_type": "convmap",
+        "timestamp": "2017111502"
+      },
+      {
+        "name": "2012090700.cnvmap",
+        "path": "/media/user/c9e6d06c-2981-4697-9747-450cd09e6cde/convmap/2012090700.cnvmap/265b4aa2-10f0-49b8-979b-4a97a862ad1c/part.1",
+        "minio_path": "/media/user/c9e6d06c-2981-4697-9747-450cd09e6cde/convmap/2012090700.cnvmap",
+        "size_bytes": 460327,
+        "data_type": "convmap",
+        "timestamp": "2012090700"
+      },
+      {
+        "name": "2014111808.cnvmap",
+        "path": "/media/user/c9e6d06c-2981-4697-9747-450cd09e6cde/convmap/2014111808.cnvmap/b6c0ff47-2c9c-4f42-a18d-341f18216347/part.1",
+        "minio_path": "/media/user/c9e6d06c-2981-4697-9747-450cd09e6cde/convmap/2014111808.cnvmap",
+        "size_bytes": 586413,
+        "data_type": "convmap",
+        "timestamp": "2014111808"
+      },
+      {
+        "name": "2016101808.cnvmap",
+        "path": "/media/user/c9e6d06c-2981-4697-9747-450cd09e6cde/convmap/2016101808.cnvmap/804568a7-d7d0-4198-a42a-5b0dee37759d/part.1",
+        "minio_path": "/media/user/c9e6d06c-2981-4697-9747-450cd09e6cde/convmap/2016101808.cnvmap",
+        "size_bytes": 347776,
+        "data_type": "convmap",
+        "timestamp": "2016101808"
+      }
+    ],
+    "grid": []
+  }
+}

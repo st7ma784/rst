@@ -1,0 +1,14 @@
+{
+  "total_files": 1000,
+  "successful_files": 1000,
+  "failed_files": 0,
+  "total_records": 59963,
+  "total_read_time": 13.698756615056482,
+  "total_compute_time": 1.0313900580295012,
+  "total_processing_time": 14.730146673085983,
+  "avg_time_per_file": 0.014730146673085982,
+  "avg_time_per_record": 0.00024565393114230413,
+  "throughput_files_per_sec": 65.4791153553674,
+  "throughput_records_per_sec": 3926.3241940538956,
+  "timestamp": "2026-02-06T00:31:33.236356"
+}
