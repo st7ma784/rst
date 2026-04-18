@@ -1,0 +1,40 @@
+{
+  "reference": "tests/reference/fitacf_legacy_reference.json",
+  "mode": "all",
+  "backend": "numpy",
+  "cupy_available": false,
+  "iterations": 5,
+  "warmup": 1,
+  "scale": 4,
+  "regression": {
+    "numpy": {
+      "velocity_mae": 4.76837158203125e-07,
+      "width_mae": 0.00014162063598632812,
+      "power_rel_mae": 0.0
+    },
+    "checks": {
+      "numpy_velocity": true,
+      "numpy_width": true,
+      "numpy_power": true
+    },
+    "passed": true
+  },
+  "benchmark": {
+    "numpy_mean_sec": 0.009678587201051414,
+    "numpy_std_sec": 0.00014658215125226326
+  },
+  "backend_details": {
+    "numpy": {
+      "backend": "numpy",
+      "timings_sec": [
+        0.009633367008063942,
+        0.009617156989406794,
+        0.009664736979175359,
+        0.009521857020445168,
+        0.009955818008165807
+      ],
+      "mean_sec": 0.009678587201051414,
+      "std_sec": 0.00014658215125226326
+    }
+  }
+}

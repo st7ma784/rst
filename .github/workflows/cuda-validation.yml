@@ -300,7 +300,11 @@ jobs:
         echo "=== Analyzing Performance Results ==="
         # Extract key performance metrics
         SPEEDUP=$(grep -o "Speedup: [0-9.]*x" benchmark_results.txt | tail -1 | grep -o "[0-9.]*")
+        if [ -z "$SPEEDUP" ]; then
+          SPEEDUP="0"
+        fi
         echo "Measured Speedup: ${SPEEDUP}x"
+        echo "SPEEDUP=${SPEEDUP}" >> $GITHUB_ENV
         
         # Check performance thresholds
         if (( $(echo "$SPEEDUP >= ${{ env.BENCHMARK_THRESHOLD_SPEEDUP }}" | bc -l) )); then
@@ -326,10 +330,10 @@ jobs:
       run: |
         echo "=== Performance Regression Analysis ==="
         echo "Current Speedup: ${SPEEDUP}x"
-        echo "Benchmark Status: ${{ env.BENCHMARK_STATUS }}"
+        echo "Benchmark Status: ${BENCHMARK_STATUS}"
         
         # Store performance metrics for trend analysis
-        echo "$(date -Iseconds),${{ github.sha }},${SPEEDUP},${{ env.BENCHMARK_STATUS }}" >> performance_history.csv
+        echo "$(date -Iseconds),${{ github.sha }},${SPEEDUP},${BENCHMARK_STATUS}" >> performance_history.csv
         
         # Check for performance regression (if we have historical data)
         if [ -f performance_history.csv ] && [ $(wc -l < performance_history.csv) -gt 1 ]; then

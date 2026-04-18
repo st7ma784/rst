@@ -1,0 +1,32 @@
+{
+  "reference": "tests/reference/fitacf_legacy_reference.json",
+  "mode": "regression",
+  "backend": "both",
+  "cupy_available": false,
+  "iterations": 1,
+  "warmup": 0,
+  "scale": 32,
+  "regression": {
+    "numpy": {
+      "velocity_mae": 4.76837158203125e-07,
+      "width_mae": 0.00014162063598632812,
+      "power_rel_mae": 0.0
+    },
+    "checks": {
+      "numpy_velocity": true,
+      "numpy_width": true,
+      "numpy_power": true
+    },
+    "passed": true
+  },
+  "backend_details": {
+    "numpy": {
+      "backend": "numpy",
+      "timings_sec": [
+        0.0029975860379636288
+      ],
+      "mean_sec": 0.0029975860379636288,
+      "std_sec": 0.0
+    }
+  }
+}

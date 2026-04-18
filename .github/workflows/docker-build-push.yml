@@ -3,42 +3,60 @@ name: Build and Push Docker Image
 on:
   push:
     branches: [ "main" ]
-    # Publish semver tags as releases.
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
-    build:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
 
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            packages: write
-            # This is used to complete the identity challenge
-            # with sigstore/fulcio when running outside of PRs.
-            id-token: write
+    env:
+      IMAGE_NAME: st7ma784/superdarn_rstbase
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-            - name: Login to Docker Hub
-              uses: docker/login-action@v3
-              with:
-                username: ${{ secrets.DOCKER_USERNAME }}
-                password: ${{ secrets.DOCKER_PASSWORD }}
-            
-            - name: Set up QEMU
-              uses: docker/setup-qemu-action@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-            - name: Build and push Docker RSTDocker
-              uses: docker/build-push-action@v5
-              with:
-                context: . # Path to the Dockerfile
-                push: true
-                platforms: linux/amd64,linux/arm64
-                #tags are both for pushing and for later builds to reference, first is the name of the image, second is the tag of the image
-                tags: ${{ secrets.DOCKER_USERNAME }}/superdarn_rstbase:latest 
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: st7ma784
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build image (PR validation)
+        if: github.event_name == 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: production
+          push: false
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ env.IMAGE_NAME }}:pr-${{ github.event.pull_request.number }}
+
+      - name: Build and push image (main)
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: production
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
 

@@ -5,6 +5,8 @@
 
 ARG CUDA_VERSION=12.0
 ARG UBUNTU_VERSION=22.04
+ARG CUPY_PACKAGE=cupy-cuda12x
+ARG INSTALL_CUPY=1
 
 # =============================================================================
 # Stage 1: Base Dependencies
@@ -77,14 +79,20 @@ ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
 # =============================================================================
 FROM base as rst-build
 
+ARG CUPY_PACKAGE
+ARG INSTALL_CUPY
+
 # Create working directory
 WORKDIR /opt/rst
 
 # Copy source code
 COPY codebase/ ./codebase/
+COPY CUDArst/ ./CUDArst/
+COPY pythonv2/ ./pythonv2/
 COPY test_data/ ./test_data/
 COPY build/ ./build/
 COPY docs/ ./docs/
+COPY requirements.txt ./requirements.txt
 
 # Set up RST environment variables
 ENV RST_ROOT=/opt/rst
@@ -110,6 +118,15 @@ ENV BUILD_TYPE=${BUILD_TYPE}
 ENV ENABLE_CUDA=${ENABLE_CUDA}
 ENV ENABLE_TESTING=${ENABLE_TESTING}
 ENV ENABLE_BENCHMARKS=${ENABLE_BENCHMARKS}
+
+# Build and install unified CUDA library and Python GPU package into all derived images.
+RUN make -C CUDArst all && \
+    make -C CUDArst install && \
+    pip3 install --no-cache-dir -r requirements.txt && \
+    if [ "$INSTALL_CUPY" = "1" ]; then pip3 install --no-cache-dir "$CUPY_PACKAGE"; fi && \
+    pip3 install --no-cache-dir --no-deps -e ./pythonv2
+
+ENV PYTHONPATH=/opt/rst/pythonv2:${PYTHONPATH}
 
 # =============================================================================
 # Stage 3: CPU-Only Build (for compatibility testing)

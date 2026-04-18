@@ -1,0 +1,8 @@
+date,radar,hemisphere,input_glob,fit_mode,fitacf_version,tdiff_method,tdiff_value,channel_mode,scan_length_sec,grid_interval_sec,grid_extra_flags,map_model,map_order,map_doping,imf_mode,imf_file,bx,by,bz,extra_map_flags,use_cuda
+20080105,sas,north,/data/superdarn/rawacf/2008/01/05/*sas*rawacf*,fitacf3,3.0,-,-,all,60,120,-,PSR,8,l,file,/data/superdarn/imf/imf_20080105.txt,-,-,-,-,auto
+20080105,pgr,north,/data/superdarn/rawacf/2008/01/05/*pgr*rawacf*,fitacf3,3.0,-,-,all,60,120,-,PSR,8,l,file,/data/superdarn/imf/imf_20080105.txt,-,-,-,-,auto
+20080105,rkn,north,/data/superdarn/rawacf/2008/01/05/*rkn*rawacf*,fitacf3,3.0,-,-,all,60,120,-,PSR,8,l,file,/data/superdarn/imf/imf_20080105.txt,-,-,-,-,auto
+20080105,cly,north,/data/superdarn/rawacf/2008/01/05/*cly*rawacf*,fitacf3,3.0,-,-,all,60,120,-,PSR,8,l,file,/data/superdarn/imf/imf_20080105.txt,-,-,-,-,auto
+20080105,inv,north,/data/superdarn/rawacf/2008/01/05/*inv*rawacf*,fitacf3,3.0,-,-,all,60,120,-,PSR,8,l,file,/data/superdarn/imf/imf_20080105.txt,-,-,-,-,auto
+20080105,san,south,/data/superdarn/rawacf/2008/01/05/*san*rawacf*,fitacf3,3.0,-,-,all,60,120,-,PSR,8,l,fixed,-,0,-2,1,-,auto
+20080105,ker,south,/data/superdarn/rawacf/2008/01/05/*ker*rawacf*,fitacf3,3.0,-,-,all,60,120,-,PSR,8,l,fixed,-,0,-2,1,-,auto

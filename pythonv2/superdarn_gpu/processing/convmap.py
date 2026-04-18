@@ -419,6 +419,14 @@ class ConvMapProcessor(Stage):
         )
         
         v_mag_grid = xp.sqrt(v_n_grid**2 + v_e_grid**2)
+
+        # Enforce physical velocity cap to keep results bounded and stable.
+        over_limit = v_mag_grid > self.config.velocity_limit
+        if xp.any(over_limit):
+            scale = self.config.velocity_limit / (v_mag_grid + 1e-10)
+            v_n_grid = xp.where(over_limit, v_n_grid * scale, v_n_grid)
+            v_e_grid = xp.where(over_limit, v_e_grid * scale, v_e_grid)
+            v_mag_grid = xp.sqrt(v_n_grid**2 + v_e_grid**2)
         
         # Compute HM boundary
         hm_boundary = self._compute_hm_boundary(imf_by, imf_bz)

@@ -146,8 +146,37 @@ class FitACFProcessor(Stage):
         
         # Total with safety margin
         return int((input_size + output_size + intermediate_size) * 1.5)
+
+    def _normalize_input(self, rawacf_input: Union[RawACF, Dict[str, Any]]) -> RawACF:
+        """Normalize input into a RawACF instance for processing."""
+        if isinstance(rawacf_input, RawACF):
+            return rawacf_input
+
+        if not isinstance(rawacf_input, dict):
+            raise TypeError(f"Unsupported FITACF input type: {type(rawacf_input)}")
+
+        acf = self.xp.asarray(rawacf_input.get('acf'))
+        if acf.ndim != 2:
+            raise ValueError("FITACF dict input must contain 2D 'acf' array")
+
+        nrang, mplgs = acf.shape
+        nave = 1
+        prm = rawacf_input.get('prm')
+        if prm is not None and hasattr(prm, 'nave'):
+            nave = int(getattr(prm, 'nave'))
+
+        rawacf = RawACF(nrang=nrang, mplgs=mplgs, nave=nave, use_gpu=(get_backend() == Backend.CUPY))
+        rawacf.acf = acf
+        rawacf.power = self.xp.asarray(rawacf_input.get('power', self.xp.real(acf[:, 0])))
+        rawacf.noise = self.xp.asarray(rawacf_input.get('noise', self.xp.zeros(nrang, dtype=self.xp.float32)))
+        rawacf.slist = self.xp.asarray(rawacf_input.get('slist', self.xp.arange(nrang, dtype=self.xp.int16)))
+        rawacf.qflg = self.xp.asarray(rawacf_input.get('qflg', self.xp.zeros(nrang, dtype=self.xp.int8)))
+        rawacf.gflg = self.xp.asarray(rawacf_input.get('gflg', self.xp.zeros(nrang, dtype=self.xp.int8)))
+        rawacf.prm = prm
+
+        return rawacf
     
-    def process(self, rawacf: RawACF) -> FitACF:
+    def process(self, rawacf: Union[RawACF, Dict[str, Any]]) -> FitACF:
         """
         Process RawACF data to produce FITACF parameters
         
@@ -161,6 +190,8 @@ class FitACFProcessor(Stage):
         FitACF
             Fitted parameters
         """
+        rawacf = self._normalize_input(rawacf)
+
         with MemoryMonitor(f"FITACF Processing (nrang={rawacf.nrang})"):
             
             # Create output structure
@@ -285,6 +316,7 @@ class FitACFProcessor(Stage):
             # Perform batch fitting
             results = self.fitter.fit_lorentzian_batch(
                 batch_acf, batch_power, 
+                lag_time_step_sec=((getattr(rawacf.prm, 'mpinc', 1500) if rawacf.prm is not None else 1500) * 1e-6),
                 max_velocity=self.config.max_velocity,
                 max_width=self.config.max_spectral_width
             )
@@ -296,6 +328,18 @@ class FitACFProcessor(Stage):
             fitacf.spectral_width_error[batch_indices] = results['spectral_width_error']
             fitacf.power[batch_indices] = results['power']
             fitacf.power_error[batch_indices] = results['power_error']
+
+            # Keep outputs within configured physical ranges.
+            fitacf.velocity[batch_indices] = self.xp.clip(
+                fitacf.velocity[batch_indices],
+                -self.config.max_velocity,
+                self.config.max_velocity,
+            )
+            fitacf.spectral_width[batch_indices] = self.xp.clip(
+                fitacf.spectral_width[batch_indices],
+                0.0,
+                self.config.max_spectral_width,
+            )
     
     def _detect_ground_scatter(self, rawacf: RawACF, fitacf: FitACF):
         """Detect ground scatter using spectral characteristics"""

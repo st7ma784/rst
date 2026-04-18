@@ -1,0 +1,142 @@
+name: Python FITACF GPU Benchmark and Regression
+
+'on':
+  push:
+    branches: [ main, develop ]
+    paths:
+      - "pythonv2/**"
+      - ".github/workflows/python-fitacf-gpu-benchmark.yml"
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - "pythonv2/**"
+      - ".github/workflows/python-fitacf-gpu-benchmark.yml"
+  workflow_dispatch:
+    inputs:
+      run_gpu:
+        description: "Run GPU benchmark/regression on self-hosted GPU runner"
+        required: false
+        type: boolean
+        default: false
+      iterations:
+        description: "Benchmark iterations"
+        required: false
+        type: string
+        default: "30"
+      scale:
+        description: "Dataset replication factor for throughput benchmark"
+        required: false
+        type: string
+        default: "32"
+
+env:
+  MIN_GPU_SPEEDUP: "1.10"
+  CUPY_PACKAGE: "cupy-cuda12x"
+
+jobs:
+  cpu-regression-and-baseline:
+    name: CPU Regression and Baseline Benchmark
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy scipy
+          python -m pip install -e ./pythonv2 --no-deps
+
+      - name: Run NumPy regression and baseline benchmark
+        run: |
+          cd pythonv2
+          python scripts/benchmark_fitacf_batch.py \
+            --backend numpy \
+            --mode all \
+            --iterations "${{ github.event.inputs.iterations || '30' }}" \
+            --warmup 2 \
+            --scale "${{ github.event.inputs.scale || '32' }}" \
+            --output benchmark_results/fitacf_numpy_baseline.json
+
+      - name: Upload CPU benchmark artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fitacf-cpu-baseline-${{ github.run_number }}
+          path: |
+            pythonv2/benchmark_results/fitacf_numpy_baseline.json
+          retention-days: 30
+
+  gpu-benchmark-and-regression:
+    name: GPU Benchmark and Regression
+    runs-on: [self-hosted, linux, x64, gpu]
+    needs: cpu-regression-and-baseline
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_gpu == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install runtime dependencies (GPU)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy scipy
+          python -m pip install "${CUPY_PACKAGE}"
+          python -m pip install -e ./pythonv2 --no-deps
+
+      - name: Verify GPU availability
+        run: |
+          nvidia-smi
+          python - <<'PY'
+          import cupy as cp
+          if not cp.cuda.is_available():
+              raise SystemExit("CuPy installed but CUDA runtime not available")
+          print("Detected GPU:", cp.cuda.runtime.getDeviceProperties(0)["name"])
+          PY
+
+      - name: Run CuPy benchmark and fixed-reference regression
+        run: |
+          cd pythonv2
+          python scripts/benchmark_fitacf_batch.py \
+            --backend both \
+            --mode all \
+            --require-cupy \
+            --iterations "${{ github.event.inputs.iterations || '30' }}" \
+            --warmup 3 \
+            --scale "${{ github.event.inputs.scale || '32' }}" \
+            --output benchmark_results/fitacf_gpu_vs_cpu.json
+
+      - name: Enforce minimum GPU speedup
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("pythonv2/benchmark_results/fitacf_gpu_vs_cpu.json").read_text())
+          speedup = report.get("benchmark", {}).get("speedup_cupy_vs_numpy")
+          if speedup is None:
+              raise SystemExit("Missing speedup metric in benchmark report")
+
+          min_speedup = float("${{ env.MIN_GPU_SPEEDUP }}")
+          print(f"Measured speedup: {speedup:.3f}x (threshold {min_speedup:.3f}x)")
+          if speedup < min_speedup:
+              raise SystemExit(f"GPU speedup {speedup:.3f}x below required {min_speedup:.3f}x")
+          PY
+
+      - name: Upload GPU benchmark artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fitacf-gpu-benchmark-${{ github.run_number }}
+          path: |
+            pythonv2/benchmark_results/fitacf_gpu_vs_cpu.json
+          retention-days: 30

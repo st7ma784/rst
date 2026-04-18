@@ -39,6 +39,7 @@ class LeastSquaresFitter:
     def fit_lorentzian_batch(self, 
                            acf_data: Any,
                            power_data: Any,
+                           lag_time_step_sec: float = 1.0,
                            max_velocity: float = 2000.0,
                            max_width: float = 1000.0) -> Dict[str, Any]:
         """
@@ -60,30 +61,130 @@ class LeastSquaresFitter:
         Dict[str, array]
             Fitted parameters for all ranges
         """
+        xp = self.xp
+        acf_data = xp.asarray(acf_data)
+        power_data = xp.asarray(power_data)
         n_ranges, n_lags = acf_data.shape
-        
+        lag_time_step_sec = max(float(lag_time_step_sec), 1e-9)
+
         # Initialize output arrays
-        velocity = self.xp.zeros(n_ranges, dtype=self.xp.float32)
-        velocity_error = self.xp.zeros(n_ranges, dtype=self.xp.float32)
-        spectral_width = self.xp.zeros(n_ranges, dtype=self.xp.float32)
-        spectral_width_error = self.xp.zeros(n_ranges, dtype=self.xp.float32)
-        power_fitted = self.xp.zeros(n_ranges, dtype=self.xp.float32)
-        power_error = self.xp.zeros(n_ranges, dtype=self.xp.float32)
-        
-        # Process each range
-        for i in range(n_ranges):
-            if power_data[i] > 0:  # Valid range
-                acf_range = acf_data[i, :]
-                result = self._fit_single_range(
-                    acf_range, power_data[i], max_velocity, max_width
-                )
-                
-                velocity[i] = result['velocity']
-                velocity_error[i] = result['velocity_error']
-                spectral_width[i] = result['spectral_width'] 
-                spectral_width_error[i] = result['spectral_width_error']
-                power_fitted[i] = result['power']
-                power_error[i] = result['power_error']
+        velocity = xp.zeros(n_ranges, dtype=xp.float32)
+        velocity_error = xp.zeros(n_ranges, dtype=xp.float32)
+        spectral_width = xp.zeros(n_ranges, dtype=xp.float32)
+        spectral_width_error = xp.zeros(n_ranges, dtype=xp.float32)
+        power_fitted = xp.real(acf_data[:, 0]).astype(xp.float32)
+        power_error = xp.abs(power_fitted).astype(xp.float32) * xp.float32(0.05)
+
+        # Keep CPU path on the validated scalar fitter to preserve baseline behavior.
+        if get_backend() != Backend.CUPY:
+            for i in range(n_ranges):
+                if power_data[i] > 0:
+                    result = self._fit_single_range(
+                        acf_data[i, :], power_data[i], lag_time_step_sec, max_velocity, max_width
+                    )
+                    velocity[i] = result['velocity']
+                    velocity_error[i] = result['velocity_error']
+                    spectral_width[i] = result['spectral_width']
+                    spectral_width_error[i] = result['spectral_width_error']
+                    power_fitted[i] = result['power']
+                    power_error[i] = result['power_error']
+
+            return {
+                'velocity': velocity,
+                'velocity_error': velocity_error,
+                'spectral_width': spectral_width,
+                'spectral_width_error': spectral_width_error,
+                'power': power_fitted,
+                'power_error': power_error
+            }
+
+        if n_lags < 3:
+            return {
+                'velocity': velocity,
+                'velocity_error': velocity_error,
+                'spectral_width': spectral_width,
+                'spectral_width_error': spectral_width_error,
+                'power': power_fitted,
+                'power_error': power_error
+            }
+
+        valid_range = power_data > 0
+
+        # ------------------------------------------------------------------
+        # Width from masked linear fit of log(|acf|) vs lag index.
+        # ------------------------------------------------------------------
+        amp0 = xp.abs(acf_data[:, 0]) + xp.float32(1e-10)
+        amps = xp.abs(acf_data[:, 1:])
+        y = xp.log(xp.clip(amps, xp.float32(1e-10), None))
+        x = xp.arange(1, n_lags, dtype=xp.float32)
+
+        w = (amps > (xp.float32(0.01) * amp0[:, None])) & valid_range[:, None]
+        wf = w.astype(xp.float32)
+
+        n = xp.sum(wf, axis=1)
+        sx = xp.sum(wf * x[None, :], axis=1)
+        sy = xp.sum(wf * y, axis=1)
+        sxx = xp.sum(wf * (x[None, :] * x[None, :]), axis=1)
+        sxy = xp.sum(wf * (x[None, :] * y), axis=1)
+
+        den = n * sxx - sx * sx
+        safe = (n >= 2) & (xp.abs(den) > xp.float32(1e-8))
+
+        b1 = xp.zeros(n_ranges, dtype=xp.float32)
+        b1 = xp.where(safe, (n * sxy - sx * sy) / (den + xp.float32(1e-12)), b1)
+        decay_constant = -b1
+        width_est = xp.abs(decay_constant) * xp.float32(100.0 / lag_time_step_sec)
+        width_est = xp.clip(width_est, xp.float32(0.0), xp.float32(max_width))
+        # Preserve prior fallback semantics for underconstrained rows.
+        width_est = xp.where(valid_range & ~safe, xp.float32(50.0), width_est)
+        spectral_width = width_est.astype(xp.float32)
+
+        # ------------------------------------------------------------------
+        # Velocity from phase increments between adjacent lags.
+        # ------------------------------------------------------------------
+        c_prev = acf_data[:, :-1]
+        c_next = acf_data[:, 1:]
+        inc = xp.angle(c_next * xp.conj(c_prev))
+
+        winc = xp.sqrt(xp.abs(c_prev) * xp.abs(c_next))
+        m_prev = xp.abs(c_prev) > (xp.float32(0.01) * amp0[:, None])
+        m_next = xp.abs(c_next) > (xp.float32(0.01) * amp0[:, None])
+        m = (m_prev & m_next & valid_range[:, None]).astype(xp.float32)
+
+        winc = winc * m
+        wsum = xp.sum(winc, axis=1)
+        has_phase = wsum > xp.float32(1e-10)
+
+        mean_inc = xp.where(
+            has_phase,
+            xp.sum(winc * inc, axis=1) / (wsum + xp.float32(1e-12)),
+            xp.float32(0.0),
+        )
+
+        vel_est = mean_inc * xp.float32(200.0 / lag_time_step_sec)
+        vel_est = xp.clip(vel_est, xp.float32(-max_velocity), xp.float32(max_velocity))
+        velocity = xp.where(valid_range & has_phase, vel_est, xp.float32(0.0)).astype(xp.float32)
+
+        # ------------------------------------------------------------------
+        # Error estimates from weighted spread.
+        # ------------------------------------------------------------------
+        vel_step = inc * xp.float32(200.0 / lag_time_step_sec)
+        vel_var = xp.where(
+            has_phase,
+            xp.sum(winc * (vel_step - vel_est[:, None]) ** 2, axis=1) / (wsum + xp.float32(1e-12)),
+            xp.float32(0.0),
+        )
+        vel_err = xp.sqrt(xp.maximum(vel_var, xp.float32(0.0)))
+        velocity_error = xp.maximum(vel_err, xp.float32(1e-6)).astype(xp.float32)
+
+        # Width error: bounded to remain positive and below width for finite widths.
+        width_err = spectral_width * xp.float32(0.1)
+        tiny_width = spectral_width <= xp.float32(1e-6)
+        width_err = xp.where(tiny_width, xp.float32(1e-7), width_err)
+        width_err = xp.where(~tiny_width, xp.minimum(xp.maximum(width_err, xp.float32(1e-7)), spectral_width * xp.float32(0.99)), width_err)
+        spectral_width_error = width_err.astype(xp.float32)
+
+        power_error = xp.maximum(power_error, xp.float32(1e-7)).astype(xp.float32)
         
         return {
             'velocity': velocity,
@@ -97,6 +198,7 @@ class LeastSquaresFitter:
     def _fit_single_range(self, 
                          acf: Any,
                          power: float,
+                         lag_time_step_sec: float,
                          max_velocity: float,
                          max_width: float) -> Dict[str, float]:
         """
@@ -127,37 +229,63 @@ class LeastSquaresFitter:
         valid_phases = phases[valid_mask]
         valid_amps = amplitudes[valid_mask]
         
-        # Fit decay constant (spectral width)
+        # Fit decay constant (spectral width) using short-lag amplitude ratios.
         try:
-            log_amps = self.xp.log(valid_amps + 1e-10)
+            lag_time_step_sec = max(float(lag_time_step_sec), 1e-9)
+
+            # Backend-deterministic fit path.
+            amps = np.asarray(self.xp.abs(acf[1:]), dtype=np.float64)
+            lags_np = np.arange(1, n_lags, dtype=np.float64)
+            amp0 = float(np.abs(complex(acf[0])) + 1e-10)
+
+            valid = amps > 0.01 * amp0
+            if np.sum(valid) < 2:
+                raise ValueError("Insufficient valid amplitudes")
+
+            y = np.log(np.clip(amps[valid], 1e-10, None))
+            x = lags_np[valid]
+            A = np.vstack([np.ones_like(x), x]).T
+            b0, b1 = np.linalg.lstsq(A, y, rcond=None)[0]
+
+            decay_constant = -b1
+            width = min(abs(decay_constant) * (100.0 / lag_time_step_sec), max_width)
             
-            # Linear regression: log(amp) = a + b * lag
-            A = self.xp.vstack([self.xp.ones(len(valid_lags)), valid_lags]).T
-            decay_params = self.xp.linalg.lstsq(A, log_amps, rcond=None)[0]
-            
-            # Convert decay to spectral width (simplified)
-            decay_constant = -decay_params[1]
-            width = min(abs(decay_constant * 100.0), max_width)  # Scale factor
-            
-        except:
+        except Exception:
             width = 50.0  # Default width
         
-        # Fit velocity from phase progression
+        # Fit velocity from unwrapped phase progression.
         try:
-            # Linear regression: phase = a + b * lag  
-            A = self.xp.vstack([self.xp.ones(len(valid_lags)), valid_lags]).T
-            phase_params = self.xp.linalg.lstsq(A, valid_phases, rcond=None)[0]
+            lag_time_step_sec = max(float(lag_time_step_sec), 1e-9)
+            lag_times = np.arange(1, n_lags, dtype=np.float64) * lag_time_step_sec
+            phase_vals = np.angle(np.asarray(acf[1:], dtype=np.complex128))
+            valid_phase_mask = np.asarray(amplitudes > 0.01 * self.xp.abs(acf[0]))
+            if np.sum(valid_phase_mask) < 2:
+                raise ValueError("Insufficient valid phase samples")
+
+            t = lag_times[valid_phase_mask]
+            p = np.unwrap(phase_vals[valid_phase_mask])
+            w = np.asarray(valid_amps, dtype=np.float64)
+
+            # Weighted linear regression p(t) = a + b*t
+            wsum = np.sum(w) + 1e-12
+            t_mean = np.sum(w * t) / wsum
+            p_mean = np.sum(w * p) / wsum
+            cov_tp = np.sum(w * (t - t_mean) * (p - p_mean))
+            var_t = np.sum(w * (t - t_mean) * (t - t_mean)) + 1e-12
+            phase_slope_time = cov_tp / var_t
+
+            # phase = velocity * t / 200 => velocity = slope * 200
+            velocity = float(np.clip(phase_slope_time * 200.0, -max_velocity, max_velocity))
             
-            # Convert phase slope to velocity (simplified)
-            phase_slope = phase_params[1]
-            velocity = max(min(phase_slope * 300.0, max_velocity), -max_velocity)  # Scale
-            
-        except:
+        except Exception:
             velocity = 0.0
         
         # Simple error estimates (would be more sophisticated in full implementation)
-        velocity_error = abs(velocity) * 0.1  # 10% error estimate
-        width_error = width * 0.1
+        velocity_error = max(abs(velocity) * 0.1, 1e-6)  # keep strictly positive
+        if width <= 1e-6:
+            width_error = 1e-7
+        else:
+            width_error = min(max(width * 0.1, 1e-7), width * 0.99)
         power_error = power * 0.05
         
         return {

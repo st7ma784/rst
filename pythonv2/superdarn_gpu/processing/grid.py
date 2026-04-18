@@ -263,7 +263,11 @@ class GridProcessor(Stage):
             if '_raw_vectors' in fitacf_list:
                 vectors = self._convert_raw_vectors(fitacf_list['_raw_vectors'])
             else:
-                vectors = fitacf_list.get('vectors', {})
+                raw_vectors = fitacf_list.get('vectors', {})
+                if isinstance(raw_vectors, list):
+                    vectors = self._convert_raw_vectors(raw_vectors)
+                else:
+                    vectors = raw_vectors
             record_count = len(vectors.get('lat', []))
         else:
             record_count = len(fitacf_list)

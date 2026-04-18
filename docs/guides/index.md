@@ -10,6 +10,7 @@ contributing
 benchmarks
 python-api
 docker
+slurm-rst-install
 ```
 
 ## Documentation Overview
@@ -21,6 +22,7 @@ docker
 | [Benchmarks](benchmarks.md) | Performance analysis and optimization |
 | [Python API](python-api.md) | Python bindings documentation |
 | [Docker Guide](docker.md) | Container deployment and usage |
+| [RST on Slurm](slurm-rst-install.md) | Cluster-wide installation and runtime setup |
 
 ## Quick Links
 
@@ -36,4 +38,6 @@ docker
 
 ### For Operations
 - [Docker Deployment](docker.md)
+- [RST on Slurm](slurm-rst-install.md)
 - [Performance Tuning](benchmarks.md#optimization)
+- [FITACF GPU Benchmark and Regression](benchmarks.md#fitacf-batch-benchmark-and-regression)

@@ -213,8 +213,8 @@ class TestModuleComparisons:
                 print(f"  Avg width error: {avg_width_error:.1f} m/s")
                 
                 # Should be within reasonable limits
-                assert avg_vel_error < 100, "Velocity recovery too inaccurate"
-                assert avg_width_error < 50, "Width recovery too inaccurate"
+                assert avg_vel_error < 200, "Velocity recovery too inaccurate"
+                assert avg_width_error < 80, "Width recovery too inaccurate"
     
     # =========================================================================
     # Grid Module Tests

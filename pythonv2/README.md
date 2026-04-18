@@ -202,6 +202,49 @@ superdarn-benchmark --full-pipeline --compare-backends
 python -m superdarn_gpu.tools.profiler process_files.py
 ```
 
+### Deterministic FITACF Batch Benchmark and Regression
+
+Use the fixed legacy-style reference profile to validate both correctness and speedup:
+
+- Reference dataset: `tests/reference/fitacf_legacy_reference.json`
+- Runner script: `scripts/benchmark_fitacf_batch.py`
+
+NumPy-only baseline:
+
+```bash
+cd pythonv2
+python3 scripts/benchmark_fitacf_batch.py \
+    --backend numpy \
+    --mode all \
+    --iterations 30 \
+    --warmup 2 \
+    --scale 32 \
+    --output benchmark_results/fitacf_numpy_baseline.json
+```
+
+NumPy vs CuPy (GPU required):
+
+```bash
+cd pythonv2
+python3 scripts/benchmark_fitacf_batch.py \
+    --backend both \
+    --mode all \
+    --require-cupy \
+    --iterations 30 \
+    --warmup 3 \
+    --scale 32 \
+    --output benchmark_results/fitacf_gpu_vs_cpu.json
+```
+
+Regression mode exits non-zero if any configured tolerance fails.
+
+### CI Automation
+
+The workflow `.github/workflows/python-fitacf-gpu-benchmark.yml` automates this path:
+
+- CPU job on push/PR: fixed-reference regression + baseline benchmark artifact.
+- GPU job on workflow dispatch (`run_gpu=true`): CuPy benchmark + regression + minimum speedup gate.
+
 ## 🎯 Migration from Original RST
 
 SuperDARN GPU provides backward compatibility and migration tools:

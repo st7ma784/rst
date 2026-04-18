@@ -2,6 +2,87 @@
 
 Analysis of CUDA acceleration performance and optimization guidelines.
 
+## FITACF Batch Benchmark and Regression
+
+RST now includes a deterministic FITACF benchmark and regression path that compares NumPy and CuPy outputs against a fixed legacy-style reference profile.
+
+### Reference and Runner
+
+- Fixed reference dataset: `pythonv2/tests/reference/fitacf_legacy_reference.json`
+- Benchmark/regression runner: `pythonv2/scripts/benchmark_fitacf_batch.py`
+- Typical report outputs:
+    - `pythonv2/benchmark_results/fitacf_numpy_baseline.json`
+    - `pythonv2/benchmark_results/fitacf_gpu_vs_cpu.json`
+
+### What It Checks
+
+- Throughput benchmark on replicated deterministic FITACF input (`--scale`)
+- Regression against fixed expected velocity, spectral width, and power
+- NumPy vs CuPy parity deltas on target ranges
+
+The runner exits non-zero when regression checks fail.
+
+### Local Usage
+
+NumPy baseline (works without GPU):
+
+```bash
+cd pythonv2
+python3 scripts/benchmark_fitacf_batch.py \
+    --backend numpy \
+    --mode all \
+    --iterations 30 \
+    --warmup 2 \
+    --scale 32 \
+    --output benchmark_results/fitacf_numpy_baseline.json
+```
+
+GPU + CPU comparison (requires CuPy + CUDA runtime):
+
+```bash
+cd pythonv2
+python3 scripts/benchmark_fitacf_batch.py \
+    --backend both \
+    --mode all \
+    --require-cupy \
+    --iterations 30 \
+    --warmup 3 \
+    --scale 32 \
+    --output benchmark_results/fitacf_gpu_vs_cpu.json
+```
+
+### CI Workflow
+
+Workflow: `.github/workflows/python-fitacf-gpu-benchmark.yml`
+
+- CPU job on push/PR:
+    - Runs NumPy regression against fixed reference
+    - Produces baseline benchmark artifact
+- GPU job on workflow dispatch (`run_gpu=true`):
+    - Runs combined NumPy/CuPy benchmark + regression on a self-hosted GPU runner
+    - Enforces minimum speedup threshold (`MIN_GPU_SPEEDUP`)
+
+Example dispatch settings:
+
+- `run_gpu=true`
+- `iterations=30`
+- `scale=32`
+
+### Slurm Usage
+
+For cluster validation on GPU nodes:
+
+```bash
+cd scripts/slurm
+sbatch \
+    --export=ALL,ROOT_DIR=/path/to/rst,RST_ENV=/path/to/rst_env.sh,ITERATIONS=40,SCALE=64 \
+    ./rst_fitacf_gpu_benchmark.sbatch
+```
+
+Slurm benchmark script: `scripts/slurm/rst_fitacf_gpu_benchmark.sbatch`
+
+---
+
 ## Benchmark Results
 
 ### Summary

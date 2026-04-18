@@ -16,6 +16,14 @@ The software is maintained by the SuperDARN Data Analysis Working Group (DAWG) o
   - Installation
 	* [Linux](user_guide/linux_install.md)
 	* [MacOSX](user_guide/mac_install.md)
+	* [Quick Start](tutorials/quickstart.md)
+  - CUDA GPU Acceleration
+    * [CUDA Implementation](architecture/cuda-implementation.md)
+    * [Module Architecture](architecture/module-architecture.md)
+    * [CUDA Setup Guide](tutorials/cuda-setup.md)
+  - Python Implementation (superdarn_gpu)
+    * [Python Package (pythonv2/)](../pythonv2/README.md)
+    * [Implementation Guide Notebook](../cuda_python_implementation_guide.ipynb)
   - SuperDARN Data:
     * [Accessing Data](user_guide/data.md)
     * [Citing Data](user_guide/citing.md)
