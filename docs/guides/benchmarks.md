@@ -81,6 +81,25 @@ sbatch \
 
 Slurm benchmark script: `scripts/slurm/rst_fitacf_gpu_benchmark.sbatch`
 
+### Usability Helpers
+
+Environment diagnostic command:
+
+```bash
+cd pythonv2
+superdarn-doctor
+superdarn-doctor --autotune
+```
+
+Auto-tune FITACF batch size during runtime:
+
+```bash
+export SUPERDARN_AUTOTUNE_BATCH=1
+export SUPERDARN_BATCH_CANDIDATES=256,512,1024
+```
+
+The selected batch size is applied automatically by `FitACFProcessor` when tuning is enabled.
+
 ---
 
 ## Benchmark Results

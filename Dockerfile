@@ -73,6 +73,8 @@ RUN pip3 install --no-cache-dir \
 ENV CUDA_HOME=/usr/local/cuda
 ENV PATH=${CUDA_HOME}/bin:${PATH}
 ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
+ENV SUPERDARN_BACKEND=cupy
+ENV RST_DISABLE_CUDA=0
 
 # =============================================================================
 # Stage 2: SUPERDARN RST Build Environment
@@ -282,6 +284,21 @@ if nvidia-smi > /dev/null 2>&1; then
 else
     echo "💻 CPU-only mode"
 fi
+
+echo ""
+echo "🔬 Python backend check:"
+python3 - <<'PY'
+from superdarn_gpu.core.backends import get_backend
+
+try:
+    import cupy as cp
+    cupy_ok = cp.cuda.is_available()
+except Exception:
+    cupy_ok = False
+
+print(f"  SUPERDARN_BACKEND={get_backend().value}")
+print(f"  CuPy CUDA available={cupy_ok}")
+PY
 echo ""
 
 # Execute command or start interactive shell

@@ -6,6 +6,7 @@ porting the sophisticated algorithms from the C CUDA implementation.
 """
 
 from typing import Optional, Dict, Any, List, Tuple, Union
+import os
 import warnings
 from dataclasses import dataclass
 from enum import Enum
@@ -40,6 +41,7 @@ class FitACFConfig:
     
     # GPU optimization
     batch_size: int = 1024            # Process multiple ranges simultaneously
+    auto_tune_batch_size: bool = False # Auto-select best batch size at startup
     use_shared_memory: bool = True    # Use GPU shared memory
     async_processing: bool = True     # Asynchronous processing
     
@@ -57,6 +59,14 @@ class FitACFProcessor(Stage):
         super().__init__(name="FITACF Processor", **kwargs)
         
         self.config = config or FitACFConfig()
+
+        # Optional auto-tuning can be enabled via config or env var.
+        env_auto_tune = os.environ.get("SUPERDARN_AUTOTUNE_BATCH", "0").strip().lower() in {
+            "1", "true", "yes", "on"
+        }
+        if self.config.auto_tune_batch_size or env_auto_tune:
+            self._auto_tune_batch_size()
+
         self.xp = get_array_module()
         
         # Initialize GPU kernels if available
@@ -74,6 +84,25 @@ class FitACFProcessor(Stage):
             'processing_time': 0.0,
             'gpu_utilization': 0.0
         }
+
+    def _auto_tune_batch_size(self):
+        """Pick a good FITACF batch size from a short synthetic benchmark."""
+        backend = "cupy" if get_backend() == Backend.CUPY else "numpy"
+        candidates = os.environ.get("SUPERDARN_BATCH_CANDIDATES", "256,512,1024")
+        candidate_sizes = tuple(
+            int(x) for x in candidates.split(",") if x.strip().isdigit() and int(x) > 0
+        )
+
+        if not candidate_sizes:
+            candidate_sizes = (256, 512, 1024)
+
+        try:
+            from ..tools.autotune import recommend_fitacf_batch_size
+
+            tuned = recommend_fitacf_batch_size(candidate_sizes=candidate_sizes, backend=backend)
+            self.config.batch_size = int(tuned)
+        except Exception as exc:
+            warnings.warn(f"FITACF batch auto-tune failed, using batch_size={self.config.batch_size}: {exc}")
     
     def _init_gpu_kernels(self):
         """Initialize custom CUDA kernels for FITACF processing"""

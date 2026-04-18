@@ -2,6 +2,21 @@
 
 Complete guide for running RST in Docker containers.
 
+## CuPy/CUDA-First Container Defaults
+
+The unified Docker image is configured to prefer GPU acceleration when available:
+
+- `SUPERDARN_BACKEND=cupy`
+- `RST_DISABLE_CUDA=0`
+
+At container startup, the entrypoint reports:
+
+- GPU visibility (`nvidia-smi`)
+- Active `superdarn_gpu` backend
+- CuPy CUDA availability
+
+If CuPy/CUDA is unavailable, backend selection falls back to NumPy automatically.
+
 ## Quick Start
 
 ```bash
@@ -80,6 +95,29 @@ docker run -v $(pwd)/data:/data superdarn-rst bash -c "
 "
 ```
 
+### High-Throughput FITACF Batch Processing (CuPy)
+
+Use the Python benchmark/regression runner inside the container to tune and validate throughput:
+
+```bash
+docker run --gpus all -v $(pwd):/workspace -w /opt/rst/pythonv2 superdarn-rst \
+  python3 scripts/benchmark_fitacf_batch.py \
+  --backend both \
+  --mode all \
+  --require-cupy \
+  --iterations 30 \
+  --warmup 3 \
+  --scale 32 \
+  --output /workspace/fitacf_gpu_vs_cpu.json
+```
+
+Batch tuning tips:
+
+- Increase `--scale` to benchmark sustained throughput.
+- Keep `--warmup` at `2` or `3` to reduce startup noise.
+- Tune `FitACFConfig(batch_size)` in powers of two (`256`, `512`, `1024`).
+- If memory pressure rises, reduce batch size before reducing iteration count.
+
 ## GPU Support
 
 ### Prerequisites
@@ -113,6 +151,22 @@ docker run --gpus '"device=0"' -it superdarn-rst:cuda
 
 # Verify GPU access
 docker run --gpus all superdarn-rst:cuda nvidia-smi
+
+# Verify backend selection
+docker run --gpus all superdarn-rst:cuda python3 - <<'PY'
+from superdarn_gpu.core.backends import get_backend
+print(get_backend().value)
+PY
+```
+
+### Forcing Backend Selection
+
+```bash
+# Force CPU backend
+docker run --gpus all -e SUPERDARN_BACKEND=numpy -it superdarn-rst
+
+# Explicitly prefer CuPy backend (default)
+docker run --gpus all -e SUPERDARN_BACKEND=cupy -it superdarn-rst
 ```
 
 ## Docker Compose

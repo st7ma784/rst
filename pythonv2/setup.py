@@ -78,6 +78,7 @@ setup(
     entry_points={
         "console_scripts": [
             "superdarn-process=superdarn_gpu.tools.cli:main",
+            "superdarn-doctor=superdarn_gpu.tools.doctor:main",
             "superdarn-benchmark=superdarn_gpu.tools.benchmarks:main",
             "superdarn-validate=superdarn_gpu.tools.validation:main",
         ],

@@ -4,6 +4,7 @@ Backend management for CUPy/NumPy abstraction
 
 from typing import Union, Optional, Any
 from enum import Enum
+import os
 import warnings
 
 # Global backend state
@@ -19,7 +20,12 @@ def get_backend() -> Backend:
     """Get current computation backend"""
     global _current_backend
     if _current_backend is None:
-        set_backend("cupy")  # Try GPU first by default
+        preferred = os.environ.get("SUPERDARN_BACKEND", "cupy").strip().lower()
+        if preferred in {Backend.CUPY.value, Backend.NUMPY.value}:
+            set_backend(preferred)
+        else:
+            warnings.warn(f"Unknown SUPERDARN_BACKEND='{preferred}', defaulting to cupy")
+            set_backend("cupy")  # Try GPU first by default
     return _current_backend
 
 def set_backend(backend: Union[str, Backend]) -> Backend:

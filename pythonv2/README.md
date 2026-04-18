@@ -245,6 +245,42 @@ The workflow `.github/workflows/python-fitacf-gpu-benchmark.yml` automates this 
 - CPU job on push/PR: fixed-reference regression + baseline benchmark artifact.
 - GPU job on workflow dispatch (`run_gpu=true`): CuPy benchmark + regression + minimum speedup gate.
 
+## 🩺 Usability Commands
+
+### Environment Doctor
+
+Run a quick health check for backend selection and GPU readiness:
+
+```bash
+superdarn-doctor
+
+# Include quick FITACF auto-tuning probe
+superdarn-doctor --autotune
+
+# JSON output for CI/logging
+superdarn-doctor --json
+```
+
+### FITACF Batch Auto-Tuning
+
+Enable automatic FITACF batch-size tuning at processor startup:
+
+```bash
+export SUPERDARN_AUTOTUNE_BATCH=1
+
+# Optional candidate list (comma-separated)
+export SUPERDARN_BATCH_CANDIDATES=256,512,1024
+```
+
+Programmatic usage:
+
+```python
+from superdarn_gpu.processing.fitacf import FitACFProcessor, FitACFConfig
+
+processor = FitACFProcessor(FitACFConfig(auto_tune_batch_size=True))
+print("Selected batch size:", processor.config.batch_size)
+```
+
 ## 🎯 Migration from Original RST
 
 SuperDARN GPU provides backward compatibility and migration tools:

@@ -336,6 +336,27 @@ observer.join()
 
 ## Performance Optimization
 
+### CuPy-First Backend Behavior
+
+`superdarn_gpu` prefers CuPy by default and falls back to NumPy if CUDA/CuPy is unavailable.
+
+You can control this explicitly:
+
+```bash
+# Prefer GPU path (default in the Docker container)
+export SUPERDARN_BACKEND=cupy
+
+# Force CPU path for debugging or reproducibility checks
+export SUPERDARN_BACKEND=numpy
+```
+
+Programmatic check:
+
+```python
+from superdarn_gpu.core.backends import get_backend
+print(f"Active backend: {get_backend().value}")
+```
+
 ### GPU Memory Optimization
 
 ```python
@@ -391,6 +412,34 @@ def benchmark_batch_sizes(data, batch_sizes=[64, 128, 256, 512, 1024]):
 optimal_batch = benchmark_batch_sizes(sample_data)
 config = sd.processing.FitACFConfig(batch_size=optimal_batch)
 ```
+
+### FITACF Batch Throughput Playbook
+
+Use this sequence to get stable, high-throughput CuPy performance:
+
+1. Start with `FitACFConfig(batch_size=512)`.
+2. Benchmark `256`, `512`, `1024` and keep the fastest stable value.
+3. Keep memory pool limit around `0.8-0.9` for sustained runs.
+4. Use larger external batches (many records) to amortize setup overhead.
+
+Deterministic benchmark/regression command:
+
+```bash
+cd pythonv2
+python3 scripts/benchmark_fitacf_batch.py \
+    --backend both \
+    --mode all \
+    --require-cupy \
+    --iterations 30 \
+    --warmup 3 \
+    --scale 32 \
+    --output benchmark_results/fitacf_gpu_vs_cpu.json
+```
+
+Interpretation:
+
+- `regression.passed=true`: output remains within configured reference tolerances.
+- `benchmark.speedup_cupy_vs_numpy`: achieved GPU speedup over NumPy.
 
 ### Parallel Processing
 
