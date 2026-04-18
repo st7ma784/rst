@@ -95,15 +95,12 @@ install: all
 # Test targets
 test: all test_programs
 	@echo "Running CUDArst library tests..."
-	./tests/test_fitacf_compatibility
-	./tests/test_lmfit_compatibility
-	./tests/test_performance
+	LD_LIBRARY_PATH=$(LIBDIR):$$LD_LIBRARY_PATH ./test_integration
+	LD_LIBRARY_PATH=$(LIBDIR):$$LD_LIBRARY_PATH ./test_real_world_mixing
 
 test_programs:
-	@mkdir -p tests
-	$(CC) -o tests/test_fitacf_compatibility tests/test_fitacf.c -L$(LIBDIR) -lcudarst $(LDFLAGS)
-	$(CC) -o tests/test_lmfit_compatibility tests/test_lmfit.c -L$(LIBDIR) -lcudarst $(LDFLAGS)
-	$(CC) -o tests/test_performance tests/test_performance.c -L$(LIBDIR) -lcudarst $(LDFLAGS)
+	$(CC) $(CFLAGS) -o test_integration test_integration.c -L$(LIBDIR) -lcudarst $(LDFLAGS)
+	$(CC) $(CFLAGS) -o test_real_world_mixing test_real_world_mixing.c -L$(LIBDIR) -lcudarst $(LDFLAGS)
 
 # Package creation
 package: all
@@ -120,7 +117,7 @@ docs:
 
 # Clean
 clean:
-	rm -rf $(BUILDDIR) $(LIBDIR) tests/test_* cudarst-*.tar.gz
+	rm -rf $(BUILDDIR) $(LIBDIR) test_integration test_real_world_mixing cudarst-*.tar.gz
 
 # Help
 help:

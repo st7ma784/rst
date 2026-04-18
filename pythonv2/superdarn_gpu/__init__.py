@@ -21,19 +21,29 @@ from . import core
 from . import io
 from . import processing
 from . import algorithms
-from . import visualization
-from . import tools
+import warnings
+
+try:
+    from . import visualization
+except Exception as exc:
+    visualization = None
+    warnings.warn(f"Visualization module unavailable: {exc}")
+
+try:
+    from . import tools
+except Exception as exc:
+    tools = None
+    warnings.warn(f"Tools module unavailable: {exc}")
 
 # Convenience imports for common usage
 from .core.backends import get_backend, set_backend
 from .io.readers import load, load_rawacf, load_fitacf, load_grid
-from .io.writers import save, save_fitacf, save_grid, save_map
+from .io import save, save_fitacf, save_grid, save_map
 
 # Processing shortcuts
 from .processing import fitacf, grid, mapping
 
 # Check GPU availability on import
-import warnings
 try:
     import cupy as cp
     if cp.cuda.is_available():

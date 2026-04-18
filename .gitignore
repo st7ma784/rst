@@ -12,6 +12,7 @@ bin
 /include
 /lib
 /log
+/extracted_data
 
 codebase/general/src.lib/stdkey.1.5/src/make_palette
 
@@ -26,3 +27,9 @@ docs/latex/
 docs/html 
 
 test-results/enhanced_*
+extracted_data/*
+minio_data/*
+*.pyc
+*venv/lib/python3.12/*
+
+pythonv2/
