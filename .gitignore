@@ -33,3 +33,17 @@ minio_data/*
 *venv/lib/python3.12/*
 
 pythonv2/
+
+# Build artifacts and compiled binaries
+*.log
+*.txt.results
+validation_results/*.log
+validation_results/*.md
+CUDArst/benchmarks/comprehensive_pipeline_test
+CUDArst/benchmarks/cpu_fitacf_processor
+CUDArst/benchmarks/cuda_*_processor
+CUDArst/benchmarks/extended_cuda_benchmark
+CUDArst/benchmarks/interoperability_test
+CUDArst/benchmarks/simple_cuda_benchmark
+CUDArst/benchmarks/test_cuda
+__pycache__/
