@@ -285,6 +285,7 @@ class FitACFProcessor(Stage):
             # Perform batch fitting
             results = self.fitter.fit_lorentzian_batch(
                 batch_acf, batch_power, 
+                lag_time_step_sec=((getattr(rawacf.prm, 'mpinc', 1500) if rawacf.prm is not None else 1500) * 1e-6),
                 max_velocity=self.config.max_velocity,
                 max_width=self.config.max_spectral_width
             )
@@ -296,6 +297,22 @@ class FitACFProcessor(Stage):
             fitacf.spectral_width_error[batch_indices] = results['spectral_width_error']
             fitacf.power[batch_indices] = results['power']
             fitacf.power_error[batch_indices] = results['power_error']
+
+            # Demote unstable fits from quality-flagged outputs.
+            vel = self.xp.abs(fitacf.velocity[batch_indices])
+            vel_err = fitacf.velocity_error[batch_indices]
+            rel_vel_err = vel_err / (vel + 1e-6)
+            width = fitacf.spectral_width[batch_indices]
+            lag_dt = ((getattr(rawacf.prm, 'mpinc', 1500) if rawacf.prm is not None else 1500) * 1e-6)
+            if rawacf.mplgs > 1:
+                phase_obs = self.xp.angle(batch_acf[:, 1])
+                phase_pred = (fitacf.velocity[batch_indices] * lag_dt) / 200.0
+                phase_resid = self.xp.abs(self.xp.angle(self.xp.exp(1j * (phase_obs - phase_pred))))
+            else:
+                phase_resid = self.xp.zeros_like(vel)
+
+            stable_mask = (rel_vel_err < 0.8) & (width > 0) & (vel > 100.0) & (phase_resid < 0.3)
+            fitacf.qflg[batch_indices] = self.xp.where(stable_mask, fitacf.qflg[batch_indices], 0)
     
     def _detect_ground_scatter(self, rawacf: RawACF, fitacf: FitACF):
         """Detect ground scatter using spectral characteristics"""

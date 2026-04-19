@@ -41,7 +41,7 @@ from .io.readers import load, load_rawacf, load_fitacf, load_grid
 from .io import save, save_fitacf, save_grid, save_map
 
 # Processing shortcuts
-from .processing import fitacf, grid, mapping
+from .processing import fitacf, grid
 
 # Check GPU availability on import
 try:
@@ -76,5 +76,5 @@ __all__ = [
     'save', 'save_fitacf', 'save_grid', 'save_map',
     
     # Processing functions
-    'fitacf', 'grid', 'mapping',
+    'fitacf', 'grid',
 ]

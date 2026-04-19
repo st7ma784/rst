@@ -39,6 +39,7 @@ class LeastSquaresFitter:
     def fit_lorentzian_batch(self, 
                            acf_data: Any,
                            power_data: Any,
+                           lag_time_step_sec: float = 1.0,
                            max_velocity: float = 2000.0,
                            max_width: float = 1000.0) -> Dict[str, Any]:
         """
@@ -75,7 +76,7 @@ class LeastSquaresFitter:
             if power_data[i] > 0:  # Valid range
                 acf_range = acf_data[i, :]
                 result = self._fit_single_range(
-                    acf_range, power_data[i], max_velocity, max_width
+                    acf_range, power_data[i], lag_time_step_sec, max_velocity, max_width
                 )
                 
                 velocity[i] = result['velocity']
@@ -97,6 +98,7 @@ class LeastSquaresFitter:
     def _fit_single_range(self, 
                          acf: Any,
                          power: float,
+                         lag_time_step_sec: float,
                          max_velocity: float,
                          max_width: float) -> Dict[str, float]:
         """
@@ -118,7 +120,7 @@ class LeastSquaresFitter:
         lags = self.xp.arange(1, n_lags, dtype=self.xp.float32)
         
         # Filter out bad lags (very low amplitude)
-        valid_mask = amplitudes > 0.01 * self.xp.abs(acf[0])
+        valid_mask = amplitudes > 0.05 * self.xp.abs(acf[0])
         
         if self.xp.sum(valid_mask) < 2:
             return self._zero_result()
@@ -126,31 +128,52 @@ class LeastSquaresFitter:
         valid_lags = lags[valid_mask]
         valid_phases = phases[valid_mask]
         valid_amps = amplitudes[valid_mask]
+        lag_time_step_sec = max(float(lag_time_step_sec), 1e-9)
+        valid_times = valid_lags * lag_time_step_sec
         
         # Fit decay constant (spectral width)
         try:
             log_amps = self.xp.log(valid_amps + 1e-10)
             
-            # Linear regression: log(amp) = a + b * lag
-            A = self.xp.vstack([self.xp.ones(len(valid_lags)), valid_lags]).T
+            # Linear regression: log(amp) = a + b * time
+            A = self.xp.vstack([self.xp.ones(len(valid_times)), valid_times]).T
             decay_params = self.xp.linalg.lstsq(A, log_amps, rcond=None)[0]
             
             # Convert decay to spectral width (simplified)
             decay_constant = -decay_params[1]
-            width = min(abs(decay_constant * 100.0), max_width)  # Scale factor
+            width = min(abs(decay_constant * 100.0), max_width)
             
         except:
             width = 50.0  # Default width
         
         # Fit velocity from phase progression
         try:
-            # Linear regression: phase = a + b * lag  
-            A = self.xp.vstack([self.xp.ones(len(valid_lags)), valid_lags]).T
-            phase_params = self.xp.linalg.lstsq(A, valid_phases, rcond=None)[0]
-            
-            # Convert phase slope to velocity (simplified)
-            phase_slope = phase_params[1]
-            velocity = max(min(phase_slope * 300.0, max_velocity), -max_velocity)  # Scale
+            # Candidate A: lag-1 phase mapping (preferred when available).
+            if n_lags > 1 and self.xp.abs(acf[1]) > 1e-3 * self.xp.abs(acf[0]):
+                vel_a = float(self.xp.angle(acf[1])) * 200.0 / lag_time_step_sec
+            else:
+                lag0 = float(valid_lags[0])
+                vel_a = float(valid_phases[0]) * 200.0 / (lag0 * lag_time_step_sec)
+
+            # Candidate B: weighted unwrapped linear slope in time.
+            unwrapped = self.xp.unwrap(valid_phases)
+            w = self.xp.maximum(valid_amps, 1e-6)
+            wsum = self.xp.sum(w) + 1e-12
+            t_mean = self.xp.sum(w * valid_times) / wsum
+            p_mean = self.xp.sum(w * unwrapped) / wsum
+            cov_tp = self.xp.sum(w * (valid_times - t_mean) * (unwrapped - p_mean))
+            var_t = self.xp.sum(w * (valid_times - t_mean) ** 2) + 1e-12
+            slope = cov_tp / var_t
+            vel_b = float(slope * 200.0)
+
+            # Pick the candidate with lower wrapped phase residual.
+            pred_a = (vel_a / 200.0) * valid_times
+            pred_b = (vel_b / 200.0) * valid_times
+            err_a = self.xp.sum(w * self.xp.abs(self.xp.angle(self.xp.exp(1j * (valid_phases - pred_a)))))
+            err_b = self.xp.sum(w * self.xp.abs(self.xp.angle(self.xp.exp(1j * (valid_phases - pred_b)))))
+
+            velocity = vel_a if err_a <= err_b else vel_b
+            velocity = max(min(velocity, max_velocity), -max_velocity)
             
         except:
             velocity = 0.0
