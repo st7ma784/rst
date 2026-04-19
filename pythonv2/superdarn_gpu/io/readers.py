@@ -235,7 +235,10 @@ def _load_rawacf_hdf5(filename: Path, use_gpu: Optional[bool],
             prm_group = record_group['parameters']
             
             # Filter by time if specified
-            timestamp = datetime.fromisoformat(prm_group.attrs['timestamp'].decode())
+            timestamp = prm_group.attrs['timestamp']
+            if isinstance(timestamp, bytes):
+                timestamp = timestamp.decode()
+            timestamp = datetime.fromisoformat(timestamp)
             if time_range and not (time_range[0] <= timestamp <= time_range[1]):
                 continue
             
@@ -314,7 +317,10 @@ def _load_fitacf_hdf5(filename: Path, use_gpu: Optional[bool],
             prm_group = record_group['parameters']
             
             # Create RadarParameters (similar to rawacf)
-            timestamp = datetime.fromisoformat(prm_group.attrs['timestamp'].decode())
+            timestamp = prm_group.attrs['timestamp']
+            if isinstance(timestamp, bytes):
+                timestamp = timestamp.decode()
+            timestamp = datetime.fromisoformat(timestamp)
             prm = RadarParameters(
                 station_id=prm_group.attrs['stid'],
                 beam_number=prm_group.attrs['bmnum'],
