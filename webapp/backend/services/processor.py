@@ -1,17 +1,20 @@
 """
-Data processing service
-Main processing logic that integrates with CUDArst and SuperDARN GPU
+Processing dispatcher.
+
+Reads BACKEND_TYPE env var (default: pythonv2) and routes every job to the
+corresponding BackendProcessor implementation.
+
+  BACKEND_TYPE=pythonv2  →  processor_pythonv2.Pythonv2Processor
+  BACKEND_TYPE=cuda      →  processor_cuda.CUDArstProcessor
+  BACKEND_TYPE=rst       →  processor_rst.RSTProcessor
 """
 
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Dict, List
 from datetime import datetime
-import sys
-
-# Add pythonv2 to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "pythonv2"))
 
 from models.schemas import (
     JobStatus, ProcessingMode, ProcessingStage, FitACFParameters,
@@ -20,196 +23,157 @@ from models.schemas import (
 
 logger = logging.getLogger(__name__)
 
+# ── Backend selection ──────────────────────────────────────────────────────────
+
+def _get_backend(override: str = None):
+    """
+    Return a BackendProcessor instance.
+
+    Priority: per-request `override` → BACKEND_TYPE env var → 'pythonv2'.
+    """
+    backend_type = (override or os.environ.get("BACKEND_TYPE", "pythonv2")).lower()
+    if backend_type == "cuda":
+        from services.processor_cuda import CUDArstProcessor
+        return CUDArstProcessor()
+    elif backend_type == "rst":
+        from services.processor_rst import RSTProcessor
+        return RSTProcessor()
+    else:
+        from services.processor_pythonv2 import Pythonv2Processor
+        return Pythonv2Processor()
+
+
+def probe_backends() -> list:
+    """
+    Return availability info for all three backends.
+    Each entry: {id, name, available, gpu, active}.
+    """
+    active = os.environ.get("BACKEND_TYPE", "pythonv2").lower()
+    results = []
+    checks = [
+        ("pythonv2", "pythonv2 (Python / CuPy)",
+         "services.processor_pythonv2", "Pythonv2Processor"),
+        ("cuda",     "CUDArst (CUDA / C)",
+         "services.processor_cuda",     "CUDArstProcessor"),
+        ("rst",      "RST (Reference C)",
+         "services.processor_rst",      "RSTProcessor"),
+    ]
+    for bid, name, module, cls in checks:
+        try:
+            import importlib
+            m = importlib.import_module(module)
+            getattr(m, cls)
+            gpu = False
+            if bid in ("pythonv2", "cuda"):
+                try:
+                    import cupy  # noqa
+                    gpu = True
+                except Exception:
+                    pass
+            results.append({"id": bid, "name": name, "available": True,
+                             "gpu": gpu, "active": bid == active})
+        except Exception as exc:
+            results.append({"id": bid, "name": name, "available": False,
+                             "gpu": False, "active": bid == active,
+                             "error": str(exc)})
+    return results
+
+
+# ── Public async entry point (called by the processing route) ─────────────────
+
 async def process_data_async(
     job_id: str,
     file_id: str,
     mode: ProcessingMode,
     parameters: FitACFParameters,
     stages: List[ProcessingStage],
-    jobs: Dict[str, JobInfo]
+    backend_override: str = None,
 ):
-    """
-    Asynchronous data processing function
-    
-    This function runs in the background and processes SuperDARN data
-    through the requested pipeline stages.
-    """
-    job = jobs[job_id]
-    
+    import services.db as _db
+
+    from core.websocket_manager import manager   # singleton, no circular dependency
+
+    async def _update(patch: dict):
+        row = _db.get_job(job_id) or {}
+        _db.upsert_job({**row, **patch})
+        await manager.broadcast({
+            "type":     "job_update",
+            "job_id":   job_id,
+            "status":   patch.get("status", row.get("status", "running")),
+            "progress": patch.get("progress", row.get("progress", 0)),
+            "stage":    patch.get("current_stage", ""),
+        })
+
     try:
-        # Update job status
-        job.status = JobStatus.RUNNING
-        job.started_at = datetime.now()
-        job.progress = 5
-        
-        logger.info(f"Starting processing job {job_id} with mode {mode}")
-        
-        # Load input file
+        await _update({"status": "running", "started_at": str(datetime.now()), "progress": 5})
+
         upload_dir = Path("/tmp/siw_uploads")
-        file_path = list(upload_dir.glob(f"{file_id}_*"))[0]
-        
-        job.progress = 10
-        job.current_stage = ProcessingStage.UPLOAD
-        
-        # Initialize results storage
-        results = {
-            "stages": {},
-            "performance_metrics": {},
-            "timing": {}
-        }
-        
-        start_time = time.time()
-        
-        # Determine processing backend
+        matches    = list(upload_dir.glob(f"{file_id}_*"))
+        if not matches:
+            raise FileNotFoundError(f"Uploaded file {file_id} not found")
+        file_path = matches[0]
+
         use_gpu = False
         if mode == ProcessingMode.CUDA:
             use_gpu = True
         elif mode == ProcessingMode.AUTO:
             try:
-                import cupy as cp
+                import cupy  # noqa
                 use_gpu = True
-                logger.info("GPU available - using CUDA acceleration")
-            except (ImportError, Exception) as e:
-                logger.info(f"GPU not available - using CPU processing: {e}")
-        
-        # Process through each stage
+            except (ImportError, Exception):
+                pass
+
+        backend = _get_backend(backend_override)
+        logger.info(f"Job {job_id} — backend: {type(backend).__name__}, gpu: {use_gpu}")
+
+        stage_results: Dict = {}
+        timing:         Dict = {}
+        progress_map = {
+            ProcessingStage.ACF:    (20, "acf"),
+            ProcessingStage.FITACF: (40, "fitacf"),
+            ProcessingStage.LMFIT:  (60, "lmfit"),
+            ProcessingStage.GRID:   (80, "grid"),
+            ProcessingStage.CNVMAP: (90, "cnvmap"),
+        }
+        start = time.time()
+
         for stage in stages:
-            job.current_stage = stage
-            stage_start = time.time()
-            
-            logger.info(f"Processing stage: {stage}")
-            
+            pct, key = progress_map.get(stage, (50, stage.value))
+            await _update({"progress": pct, "current_stage": stage.value})
+            t0 = time.time()
+
             if stage == ProcessingStage.ACF:
-                job.progress = 20
-                results["stages"]["acf"] = await process_acf_stage(file_path, parameters, use_gpu)
-            
+                result = await backend.process_acf(file_path, parameters, use_gpu)
             elif stage == ProcessingStage.FITACF:
-                job.progress = 40
-                results["stages"]["fitacf"] = await process_fitacf_stage(file_path, parameters, use_gpu)
-            
+                result = await backend.process_fitacf(file_path, parameters, use_gpu)
             elif stage == ProcessingStage.LMFIT:
-                job.progress = 60
-                results["stages"]["lmfit"] = await process_lmfit_stage(results["stages"], parameters, use_gpu)
-            
+                result = await backend.process_lmfit(stage_results, parameters, use_gpu)
             elif stage == ProcessingStage.GRID:
-                job.progress = 80
-                results["stages"]["grid"] = await process_grid_stage(results["stages"], parameters, use_gpu)
-            
+                result = await backend.process_grid(stage_results, parameters, use_gpu)
             elif stage == ProcessingStage.CNVMAP:
-                job.progress = 90
-                results["stages"]["cnvmap"] = await process_cnvmap_stage(results["stages"], parameters, use_gpu)
-            
-            stage_time = time.time() - stage_start
-            results["timing"][stage.value] = stage_time
-            logger.info(f"Stage {stage} completed in {stage_time:.3f}s")
-        
-        # Calculate total time
-        total_time = time.time() - start_time
-        results["performance_metrics"]["total_time"] = total_time
-        results["performance_metrics"]["mode"] = "GPU" if use_gpu else "CPU"
-        
-        # Mark job as complete
-        job.status = JobStatus.COMPLETED
-        job.progress = 100
-        job.completed_at = datetime.now()
-        job.current_stage = ProcessingStage.COMPLETE
-        
-        # Store results (in production, save to database/file storage)
-        from api.routes.results import results as results_storage
-        results_storage[job_id] = ProcessingResult(
-            job_id=job_id,
-            status=JobStatus.COMPLETED,
-            processing_time=total_time,
-            stages=results["stages"],
-            performance_metrics=results["performance_metrics"]
+                result = await backend.process_cnvmap(stage_results, parameters, use_gpu)
+            else:
+                result = {}
+
+            stage_results[key] = result
+            timing[stage.value] = time.time() - t0
+            logger.info(f"Stage {stage} done in {timing[stage.value]:.3f}s")
+
+        total_time = time.time() - start
+
+        clean_stages = {k: {ik: iv for ik, iv in v.items() if not ik.startswith("_")}
+                        for k, v in stage_results.items()}
+
+        _db.upsert_result(
+            job_id, total_time, clean_stages,
+            {"total_time": total_time, "stage_timing": timing,
+             "mode": "GPU" if use_gpu else "CPU",
+             "backend": backend_override or os.environ.get("BACKEND_TYPE", "pythonv2")},
         )
-        
-        logger.info(f"Job {job_id} completed successfully in {total_time:.3f}s")
-        
+        await _update({"status": "completed", "progress": 100,
+                        "completed_at": str(datetime.now()), "current_stage": "complete"})
+        logger.info(f"Job {job_id} completed in {total_time:.3f}s")
+
     except Exception as e:
         logger.error(f"Job {job_id} failed: {e}", exc_info=True)
-        job.status = JobStatus.FAILED
-        job.error = str(e)
-        job.completed_at = datetime.now()
-
-async def process_acf_stage(file_path: Path, params: FitACFParameters, use_gpu: bool) -> Dict:
-    """Process ACF stage"""
-    logger.info(f"ACF processing - GPU: {use_gpu}")
-    
-    # Simulate processing (replace with actual superdarn_gpu calls)
-    await simulate_processing(0.5)
-    
-    return {
-        "nranges": 75,
-        "nlags": 18,
-        "processing_time": 0.5,
-        "backend": "GPU" if use_gpu else "CPU"
-    }
-
-async def process_fitacf_stage(file_path: Path, params: FitACFParameters, use_gpu: bool) -> Dict:
-    """Process FITACF stage"""
-    logger.info(f"FITACF v3.0 processing - GPU: {use_gpu}, min_power: {params.min_power}")
-    
-    # Simulate processing
-    await simulate_processing(1.0)
-    
-    return {
-        "nranges": 75,
-        "good_ranges": 45,
-        "velocity_range": [-500, 500],
-        "power_range": [0, 40],
-        "processing_time": 1.0,
-        "parameters": {
-            "min_power": params.min_power,
-            "phase_tolerance": params.phase_tolerance,
-            "elevation_enabled": params.elevation_enabled
-        },
-        "backend": "GPU" if use_gpu else "CPU"
-    }
-
-async def process_lmfit_stage(previous_stages: Dict, params: FitACFParameters, use_gpu: bool) -> Dict:
-    """Process LMFIT stage"""
-    logger.info(f"LMFIT processing - GPU: {use_gpu}")
-    
-    await simulate_processing(0.8)
-    
-    return {
-        "iterations": 15,
-        "converged": True,
-        "residual": 0.025,
-        "processing_time": 0.8,
-        "backend": "GPU" if use_gpu else "CPU"
-    }
-
-async def process_grid_stage(previous_stages: Dict, params: FitACFParameters, use_gpu: bool) -> Dict:
-    """Process Grid stage"""
-    logger.info(f"Grid processing - GPU: {use_gpu}")
-    
-    await simulate_processing(0.6)
-    
-    return {
-        "grid_resolution": 1.0,
-        "npoints": 2500,
-        "interpolation": "cubic",
-        "processing_time": 0.6,
-        "backend": "GPU" if use_gpu else "CPU"
-    }
-
-async def process_cnvmap_stage(previous_stages: Dict, params: FitACFParameters, use_gpu: bool) -> Dict:
-    """Process Convection Map stage"""
-    logger.info(f"CNVMAP processing - GPU: {use_gpu}")
-    
-    await simulate_processing(0.7)
-    
-    return {
-        "order": 8,
-        "chi_squared": 1.25,
-        "potential_max": 80.0,
-        "processing_time": 0.7,
-        "backend": "GPU" if use_gpu else "CPU"
-    }
-
-async def simulate_processing(duration: float):
-    """Simulate processing delay"""
-    import asyncio
-    await asyncio.sleep(duration)
+        await _update({"status": "failed", "error": str(e), "completed_at": str(datetime.now())})

@@ -67,9 +67,9 @@ export default function HomePage() {
           <Button
             variant="outlined"
             size="large"
-            onClick={() => navigate('/visualization/demo')}
+            onClick={() => navigate('/compare')}
           >
-            View Demo
+            Compare Backends
           </Button>
         </Box>
       </Box>

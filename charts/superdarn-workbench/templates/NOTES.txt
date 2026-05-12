@@ -1,0 +1,38 @@
+SuperDARN Workbench deployed!
+
+  Release:   {{ .Release.Name }}
+  Namespace: {{ .Release.Namespace }}
+
+{{- if .Values.ingress.enabled }}
+  URL: http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.host }}/
+{{- else }}
+  Ingress disabled. Port-forward to access:
+    kubectl port-forward svc/{{ include "superdarn.fullname" . }}-frontend 3000:{{ .Values.frontend.port }} -n {{ .Release.Namespace }}
+    kubectl port-forward svc/{{ include "superdarn.backendServiceName" . }} 8000:{{ .Values.backend.port }} -n {{ .Release.Namespace }}
+{{- end }}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REQUIRED before deploying — two source changes:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. vite.config.ts — make the proxy target read from env:
+
+   proxy: {
+     '/api': { target: process.env.BACKEND_URL || 'http://localhost:8000', changeOrigin: true },
+     '/ws':  { target: (process.env.BACKEND_URL || 'http://localhost:8000').replace('http','ws'), ws: true }
+   }
+
+2. webapp/backend/main.py — read CORS origins from env:
+
+   import os
+   origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+   app.add_middleware(CORSMiddleware, allow_origins=origins, ...)
+
+3. Backend Docker image must bundle pythonv2:
+   Use webapp/backend/Dockerfile.k8s (see charts/superdarn-workbench/README.md)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GPU support (optional):
+  helm upgrade --set backend.gpu.enabled=true ...
+  Requires nvidia-device-plugin DaemonSet in the cluster.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -70,3 +70,7 @@ class ConnectionManager:
             "job_id": job_id,
             "error": error
         })
+
+
+# Module-level singleton — import this everywhere instead of going through main.py
+manager = ConnectionManager()

@@ -80,7 +80,6 @@ typedef struct {
     int16_t frang;     /* distance to first range gate (km) */
     int16_t rsep;      /* range separation (km) */
     int16_t xcf;       /* XCF flag */
-    int16_t tfreq;     /* transmitted frequency */
     int16_t noise;     /* noise level */
     int16_t atten;     /* attenuation level */
     int16_t channel;   /* channel number for stereo radars */
@@ -88,10 +87,19 @@ typedef struct {
     int16_t maxpwr;    /* maximum power */
     int16_t maxnoise;  /* maximum noise */
     int16_t maxatten;  /* maximum attenuation */
+    /* Widened to int32 so physics formulas receive units without silent truncation */
+    int32_t tfreq;     /* transmitted frequency (kHz) — widened from int16 */
+    int32_t mpinc;     /* multi-pulse increment (µs) — widened from int16 */
     /* Additional fields for compatibility */
     int32_t time_sec;  /* time in seconds */
     int32_t time_usec; /* time in microseconds */
+    float antenna_sep; /* main-to-interferometer antenna separation (metres); 0 = use default 100 m */
+    float tdiff;       /* cable time difference (µs) for elevation correction; 0 = no correction */
+    float beam_sep;    /* beam separation (degrees); 0 = use default 3.24° */
 } cudarst_fitacf_prm_t;
+
+/* Sentinel for unavailable elevation (XCF not present or below quality threshold) */
+#define CUDARST_ELEV_UNAVAILABLE (-999.0f)
 
 typedef struct {
     float *acfd;       /* auto-correlation function data (real) */
@@ -100,6 +108,7 @@ typedef struct {
     float *xcfd_imag;  /* cross-correlation function data (imaginary) */
     int nrang;         /* number of range gates */
     int mplgs;         /* number of lags */
+    float noise_pwr;   /* estimated sky noise power (subtracted before log fit); ≤0 means skip */
 } cudarst_fitacf_raw_t;
 
 typedef struct {
@@ -118,8 +127,11 @@ typedef struct {
     float *phi0;       /* phase of lag zero */
     float *phi0_e;     /* phase error */
     float *elv;        /* elevation angle */
-    float *elv_low;    /* lowest elevation angle */
-    float *elv_high;   /* highest elevation angle */
+    float *elv_error;  /* elevation uncertainty (RST 2021: was elv_low) */
+    float *elv_fitted; /* fitted elevation (RST 2021: was elv_high) */
+    /* Backward-compat aliases — deprecated, do not use in new code */
+#define elv_low   elv_error
+#define elv_high  elv_fitted
     float *x_qflg;     /* XCF quality flag */
     float *x_gflg;     /* XCF ground scatter flag */
     float *x_p_l;      /* XCF lambda power */

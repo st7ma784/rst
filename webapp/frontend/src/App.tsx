@@ -8,6 +8,9 @@ import HomePage from './pages/HomePage';
 import ProcessingPage from './pages/ProcessingPage';
 import VisualizationPage from './pages/VisualizationPage';
 import RemoteComputePage from './pages/RemoteComputePage';
+import JobsPage from './pages/JobsPage';
+import ComparisonPage from './pages/ComparisonPage';
+import SettingsPage from './pages/SettingsPage';
 
 const theme = createTheme({
   palette: {
@@ -45,6 +48,9 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/processing" element={<ProcessingPage />} />
+            <Route path="/jobs" element={<JobsPage />} />
+            <Route path="/compare" element={<ComparisonPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="/visualization/:jobId" element={<VisualizationPage />} />
             <Route path="/remote" element={<RemoteComputePage />} />
           </Routes>

@@ -56,23 +56,57 @@ cudarst_error_t cudarst_acf_process(const int16_t *inbuf, float *acfbuf, float *
         }
     }
     
-    /* CPU fallback implementation */
-    printf("ACF: Falling back to CPU implementation\n");
-    
-    /* Simple CPU implementation for basic compatibility */
+    /* CPU fallback: compute ACF from inbuf IQ samples.
+     * inbuf layout: [nave * nrang * mpinc] complex int16 pairs (I,Q interleaved).
+     * lagfr[lag*2], lagfr[lag*2+1] are the two pulse indices for each lag. */
+    fprintf(stderr, "ACF: CUDA unavailable — using CPU fallback\n");
+
     for (int r = 0; r < nrang; r++) {
         for (int lag = 0; lag < mplgs; lag++) {
-            int idx = r * mplgs + lag;
-            acfbuf[idx * 2] = 1000.0f * (1.0f / (lag + 1));      /* Real part */
-            acfbuf[idx * 2 + 1] = 500.0f * (1.0f / (lag + 1));   /* Imaginary part */
-            
+            int out_idx = (r * mplgs + lag) * 2;
+            int p1 = lagfr[lag * 2];
+            int p2 = lagfr[lag * 2 + 1];
+
+            float real_sum = 0.0f, imag_sum = 0.0f;
+            float xreal_sum = 0.0f, ximag_sum = 0.0f;
+            int   valid = 0;
+
+            for (int n = 0; n < nave; n++) {
+                /* Each pulse sequence has mpinc samples per range */
+                int base = (n * nrang * mpinc + r * mpinc);
+                int i1 = base + p1, i2 = base + p2;
+
+                /* Bounds check */
+                if (i1 < 0 || i2 < 0) continue;
+
+                float I1 = (float)inbuf[i1 * 2];
+                float Q1 = (float)inbuf[i1 * 2 + 1];
+                float I2 = (float)inbuf[i2 * 2];
+                float Q2 = (float)inbuf[i2 * 2 + 1];
+
+                /* ACF: s1 * conj(s2) */
+                real_sum += I1 * I2 + Q1 * Q2;
+                imag_sum += Q1 * I2 - I1 * Q2;
+
+                if (xcf_enabled && xcfbuf) {
+                    /* XCF uses different sign convention for cross-correlation */
+                    xreal_sum += I1 * I2 - Q1 * Q2;
+                    ximag_sum += I1 * Q2 + Q1 * I2;
+                }
+                valid++;
+            }
+
+            float scale = (valid > 0) ? 1.0f / valid : 0.0f;
+            acfbuf[out_idx]     = real_sum * scale;
+            acfbuf[out_idx + 1] = imag_sum * scale;
+
             if (xcf_enabled && xcfbuf) {
-                xcfbuf[idx * 2] = 800.0f * (1.0f / (lag + 1));
-                xcfbuf[idx * 2 + 1] = 400.0f * (1.0f / (lag + 1));
+                xcfbuf[out_idx]     = xreal_sum * scale;
+                xcfbuf[out_idx + 1] = ximag_sum * scale;
             }
         }
     }
-    
+
     return CUDARST_SUCCESS;
 }
 
@@ -149,23 +183,15 @@ cudarst_error_t cudarst_cnvmap_spherical_harmonic_fit(const double *theta, const
         }
     }
     
-    /* CPU fallback implementation */
-    printf("CNVMAP: Falling back to CPU implementation\n");
-    
-    /* Simple least squares fitting for basic compatibility */
-    int num_coeffs = (lmax + 1) * (lmax + 2);
-    
-    /* Initialize coefficients */
-    for (int i = 0; i < num_coeffs; i++) {
-        coefficients[i] = 0.0;
-    }
-    
-    /* Set first few coefficients to reasonable values */
-    if (num_coeffs > 0) coefficients[0] = 100.0;  /* Mean velocity */
-    if (num_coeffs > 1) coefficients[1] = 50.0;   /* First harmonic */
-    if (num_coeffs > 2) coefficients[2] = 25.0;   /* Second harmonic */
-    
-    return CUDARST_SUCCESS;
+    /* CPU fallback: delegate to the same host-side least-squares solver used
+     * by the CUDA path (implemented at the bottom of cudarst_kernels.cu).
+     * That function already handles cos(colatitude) conversion and normal equations. */
+    fprintf(stderr, "CNVMAP: CUDA unavailable — using CPU least-squares solver\n");
+    extern int cuda_cnvmap_spherical_harmonic_fit(const double*, const double*,
+                                                  const double*, int, double*, int);
+    int result = cuda_cnvmap_spherical_harmonic_fit(theta, phi, v_los, n_points,
+                                                    coefficients, lmax);
+    return (result == 0) ? CUDARST_SUCCESS : CUDARST_ERROR_PROCESSING_FAILED;
 }
 
 /* ====================================================================

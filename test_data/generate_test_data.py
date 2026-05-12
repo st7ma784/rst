@@ -10,6 +10,8 @@ import random
 import math
 from datetime import datetime, timedelta
 
+random.seed(42)   # deterministic output for reproducible tests
+
 def generate_rawacf_header():
     """Generate a realistic rawacf file header"""
     header = {
@@ -131,35 +133,102 @@ def write_test_rawacf_file(filename, header, acf_real, acf_imag, xcf_real, xcf_i
         for val in xcf_imag:
             f.write(struct.pack('<f', val))
 
+def write_multi_record_rawacf(filename, nrang, mplgs, nbeams):
+    """Write a file containing nbeams sequential records (one per beam)."""
+    with open(filename, 'wb') as f:
+        for beam in range(nbeams):
+            header = generate_rawacf_header()
+            header['nrang']  = nrang
+            header['mplgs']  = mplgs
+            header['bmnum']  = beam
+            header['minute'] = (30 + beam * 3) % 60  # stagger timestamps ~3s apart
+            header['second'] = (beam * 3) % 60
+
+            # Beam power varies: beams pointing more overhead have stronger backscatter
+            beam_power_scale = 1.0 - 0.03 * abs(beam - nbeams / 2)
+
+            acf_real = []
+            acf_imag = []
+            xcf_real = []
+            xcf_imag = []
+
+            for i in range(nrang):
+                range_power = 50.0 * beam_power_scale * math.exp(-i * 0.02)
+
+                for j in range(mplgs):
+                    if j == 0:
+                        acf_real.append(range_power + random.gauss(0, 2.0))
+                        acf_imag.append(random.gauss(0, 0.5))
+                    else:
+                        lag_decay = math.exp(-j * 0.1)
+                        # Velocity phase: slowly drifting across beams
+                        vel_phase = 0.15 * j * (beam - nbeams / 2) / nbeams
+                        amplitude = range_power * lag_decay + random.gauss(0, 1.0)
+                        acf_real.append(amplitude * math.cos(vel_phase))
+                        acf_imag.append(amplitude * math.sin(vel_phase))
+
+                for j in range(mplgs):
+                    xcf_pwr = 30.0 * beam_power_scale * math.exp(-i * 0.025)
+                    if j == 0:
+                        xcf_real.append(xcf_pwr * 0.8 + random.gauss(0, 1.5))
+                        xcf_imag.append(random.gauss(0, 0.3))
+                    else:
+                        lag_decay = math.exp(-j * 0.12)
+                        phase = random.uniform(0, 2 * math.pi) + 0.5
+                        amplitude = xcf_pwr * lag_decay + random.gauss(0, 0.8)
+                        xcf_real.append(amplitude * math.cos(phase))
+                        xcf_imag.append(amplitude * math.sin(phase))
+
+            # Write each record as a complete header+data block
+            f.write(struct.pack('<I', header['radar_id']))
+            f.write(struct.pack('<H', header['year']))
+            f.write(struct.pack('<H', header['month']))
+            f.write(struct.pack('<H', header['day']))
+            f.write(struct.pack('<H', header['hour']))
+            f.write(struct.pack('<H', header['minute']))
+            f.write(struct.pack('<H', header['second']))
+            f.write(struct.pack('<H', header['nrang']))
+            f.write(struct.pack('<H', header['nave']))
+            f.write(struct.pack('<H', header['mplgs']))
+            f.write(struct.pack('<H', header['mpinc']))
+            f.write(struct.pack('<H', header['frang']))
+            f.write(struct.pack('<H', header['rsep']))
+            f.write(struct.pack('<H', header['bmnum']))
+            f.write(struct.pack('<H', header['channel']))
+            f.write(struct.pack('<H', header['cp']))
+            f.write(struct.pack('<H', header['scan']))
+            f.write(struct.pack('<f', header['noise_lev']))
+            f.write(struct.pack('<f', header['tfreq']))
+            for val in acf_real: f.write(struct.pack('<f', val))
+            for val in acf_imag: f.write(struct.pack('<f', val))
+            for val in xcf_real: f.write(struct.pack('<f', val))
+            for val in xcf_imag: f.write(struct.pack('<f', val))
+
+
 def main():
-    """Generate test data files"""
+    """Generate test data files — each file contains a full beam scan."""
     output_dir = "/home/user/rst/test_data/rawacf_samples"
     os.makedirs(output_dir, exist_ok=True)
-    
-    print("🔧 Generating SUPERDARN test data for CI/CD...")
-    
-    # Generate different sized test files
+
+    print("Generating SUPERDARN test data...")
+
     test_configs = [
-        {"name": "small", "nrang": 25, "mplgs": 10, "description": "Small dataset for quick tests"},
-        {"name": "medium", "nrang": 75, "mplgs": 18, "description": "Medium dataset for standard tests"},
-        {"name": "large", "nrang": 150, "mplgs": 25, "description": "Large dataset for performance tests"},
+        {"name": "small",  "nrang": 25,  "mplgs": 10, "nbeams": 4,
+         "description": "4-beam scan, 25 ranges"},
+        {"name": "medium", "nrang": 75,  "mplgs": 18, "nbeams": 8,
+         "description": "8-beam scan, 75 ranges"},
+        {"name": "large",  "nrang": 150, "mplgs": 25, "nbeams": 16,
+         "description": "16-beam scan, 150 ranges"},
     ]
-    
+
     for config in test_configs:
-        print(f"  📊 Creating {config['name']} test file...")
-        
-        header = generate_rawacf_header()
-        header['nrang'] = config['nrang']
-        header['mplgs'] = config['mplgs']
-        
-        acf_real, acf_imag = generate_acf_data(config['nrang'], config['mplgs'])
-        xcf_real, xcf_imag = generate_xcf_data(config['nrang'], config['mplgs'])
-        
+        print(f"  Creating {config['name']} test file ({config['description']})...")
         filename = os.path.join(output_dir, f"test_{config['name']}.rawacf")
-        write_test_rawacf_file(filename, header, acf_real, acf_imag, xcf_real, xcf_imag)
-        
-        file_size = os.path.getsize(filename)
-        print(f"    ✅ {filename} ({file_size} bytes) - {config['description']}")
+        write_multi_record_rawacf(
+            filename, config['nrang'], config['mplgs'], config['nbeams']
+        )
+        size = os.path.getsize(filename)
+        print(f"    {filename} ({size} bytes)")
     
     # Create a README for the test data
     readme_content = """# SUPERDARN Test Data

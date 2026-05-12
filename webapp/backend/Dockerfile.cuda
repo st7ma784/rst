@@ -1,0 +1,31 @@
+# Use standard Python image so the image builds without a CUDA-enabled host.
+# On a GPU host, swap for nvidia/cuda:12.6.0-devel-ubuntu22.04 and un-comment
+# the make / ldconfig lines below.
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y gcc g++ make libhdf5-dev libnetcdf-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Build CUDArst shared library (skipped on CPU-only hosts — processor_cuda.py
+# falls back to its numpy path when libcudarst.so is absent).
+COPY CUDArst/ /opt/cudarst/
+# Un-comment when NVCC is available:
+# RUN cd /opt/cudarst && make all && cp lib/libcudarst.so* /usr/local/lib/ && ldconfig
+
+COPY webapp/backend/requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+COPY pythonv2/ /pythonv2/
+RUN pip3 install --no-cache-dir numpy scipy
+
+COPY webapp/backend/ .
+
+ENV PYTHONPATH=/pythonv2
+ENV BACKEND_TYPE=cuda
+ENV CUDARST_LIB=/usr/local/lib/libcudarst.so
+ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH}
+
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

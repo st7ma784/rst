@@ -7,7 +7,7 @@ scattered FITACF measurements into regular spatial grids for analysis.
 
 from typing import Optional, Dict, Any, List, Tuple, Union
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import math
 
@@ -18,6 +18,36 @@ from ..core.datatypes import FitACF, GridData, RadarParameters
 from ..core.pipeline import Stage
 from ..core.memory import MemoryMonitor
 from ..algorithms.interpolation import SpatialInterpolator
+
+_R_EARTH_KM = 6371.0
+
+
+@dataclass
+class RadarHardware:
+    """Physical site parameters for a SuperDARN radar."""
+    station_id: int
+    lat: float          # Geographic latitude (°N)
+    lon: float          # Geographic longitude (°E)
+    bearing: float      # Boresight direction from geographic north (°)
+    beam_sep: float = 3.24  # Angular beam separation (°)
+    n_beams: int = 16
+
+
+# Partial hardware table — extend by reading hdw.dat files if available.
+# Values from RST hdw/ directory (2024 release).
+_RADAR_HARDWARE: Dict[int, RadarHardware] = {
+    1:  RadarHardware(1,  70.86, -29.27,  -167.0),  # Þykkvibær (Iceland E)
+    2:  RadarHardware(2,  74.50, -94.90,   178.0),  # Rankin Inlet
+    3:  RadarHardware(3,  62.35, -145.15,  202.0),  # Kodiak
+    4:  RadarHardware(4,  51.99,  4.50,    -168.0), # Hankasalmi (placeholder)
+    5:  RadarHardware(5,  53.98, -1.99,    -168.0), # Pykkvibaer W
+    6:  RadarHardware(6,  62.82, -22.02,  -145.0),  # Iceland W
+    8:  RadarHardware(8,  52.16, 106.26,    18.0),  # Irkutsk
+    10: RadarHardware(10, -70.38, -2.32,   176.0),  # Halley
+    16: RadarHardware(16, 62.32,  26.61,   -12.0),  # Hankasalmi
+    33: RadarHardware(33, 56.54, 103.25,    35.0),  # Irkutsk
+    65: RadarHardware(65, 62.82, -82.52,   -32.0),  # Kapuskasing
+}
 
 class GridMethod(Enum):
     """Available gridding methods"""
@@ -121,10 +151,11 @@ class GridProcessor(Stage):
                 for (int v = 0; v < n_vectors; v++) {
                     if (vec_quality[v] == 0) continue; // Skip bad quality vectors
                     
-                    // Calculate distance (simplified spherical distance)
+                    // Equirectangular approx with cos-lat correction (good to ~1% for SuperDARN)
                     float dlat = vec_lat[v] - target_lat;
                     float dlon = vec_lon[v] - target_lon;
-                    float distance = sqrtf(dlat*dlat + dlon*dlon);
+                    float cos_lat = cosf(target_lat * 3.14159265f / 180.0f);
+                    float distance = sqrtf(dlat*dlat + (dlon*cos_lat)*(dlon*cos_lat));
                     
                     if (distance <= search_radius) {
                         float weight = 1.0f / (distance + 0.001f); // Avoid division by zero
@@ -320,7 +351,7 @@ class GridProcessor(Stage):
                 
                 # Calculate lat/lon for this beam and range
                 lat, lon = self._calculate_coordinates(
-                    prm, prm.bmnum, range_gate
+                    prm, prm.beam_number, range_gate
                 )
                 
                 # Apply quality thresholds
@@ -346,35 +377,40 @@ class GridProcessor(Stage):
         
         return all_vectors
     
-    def _calculate_coordinates(self, prm: RadarParameters, 
+    def _calculate_coordinates(self, prm: RadarParameters,
                              beam: int, range_gate: int) -> Tuple[float, float]:
         """
-        Calculate geographic coordinates for beam/range
-        
-        This is a simplified implementation - full version would use
-        proper radar coordinate transformation with hardware description files.
+        Calculate geographic coordinates for a beam/range gate using the spherical
+        law of cosines.  Falls back to a placeholder position when the radar's
+        hardware description is not in the built-in table.
         """
-        # Simplified calculation - would use actual radar position and beam directions
-        # This is just a placeholder for the coordinate transformation
-        
-        # Example: Assume radar at 60°N, -100°W
-        radar_lat = 60.0
-        radar_lon = -100.0
-        
-        # Simple beam azimuth calculation (would use actual beam table)
-        beam_azimuth = beam * 3.24  # degrees, approximate beam separation
-        
-        # Range calculation
-        range_km = prm.frang + range_gate * prm.rsep  # Range in km
-        
-        # Simple coordinate calculation (would use proper spherical geometry)
-        lat_offset = (range_km / 111.0) * math.cos(math.radians(beam_azimuth))
-        lon_offset = (range_km / 111.0) * math.sin(math.radians(beam_azimuth)) / math.cos(math.radians(radar_lat))
-        
-        target_lat = radar_lat + lat_offset
-        target_lon = radar_lon + lon_offset
-        
-        return target_lat, target_lon
+        hw = _RADAR_HARDWARE.get(prm.station_id,
+                                 RadarHardware(prm.station_id, 60.0, -100.0, 0.0))
+
+        # Beam azimuth: boresight ± offset from centre beam
+        centre_beam = hw.n_beams // 2 - 0.5   # half-integer centre (RST convention)
+        az_deg = hw.bearing + (beam - centre_beam) * hw.beam_sep
+        az_rad = math.radians(az_deg)
+
+        # Slant range to centre of gate (km)
+        range_km = prm.frang + range_gate * prm.rsep
+
+        # Spherical law of cosines (exact on sphere)
+        d = range_km / _R_EARTH_KM           # angular distance (radians)
+        lat1 = math.radians(hw.lat)
+        lon1 = math.radians(hw.lon)
+
+        sin_lat2 = (math.sin(lat1) * math.cos(d) +
+                    math.cos(lat1) * math.sin(d) * math.cos(az_rad))
+        sin_lat2 = max(-1.0, min(1.0, sin_lat2))   # clamp numerical noise
+        lat2 = math.asin(sin_lat2)
+
+        lon2 = lon1 + math.atan2(
+            math.sin(az_rad) * math.sin(d) * math.cos(lat1),
+            math.cos(d) - math.sin(lat1) * sin_lat2
+        )
+
+        return math.degrees(lat2), math.degrees(lon2)
     
     def _convert_coordinates(self, vectors: Dict[str, Any]) -> Dict[str, Any]:
         """Convert coordinates to specified coordinate system"""
@@ -446,20 +482,32 @@ class GridProcessor(Stage):
         grid_data.velocity_error = grid_data.velocity_error.reshape((n_lat, n_lon))
         grid_data.num_points = grid_count.reshape((n_lat, n_lon))
     
+    def _great_circle_deg(self, vec_lat: Any, vec_lon: Any,
+                          target_lat: float, target_lon: float) -> Any:
+        """Vectorised haversine distance in degrees."""
+        xp = self.xp
+        lat1 = xp.radians(vec_lat)
+        lon1 = xp.radians(vec_lon)
+        lat2 = math.radians(target_lat)
+        lon2 = math.radians(target_lon)
+        dlat = lat1 - lat2
+        dlon = lon1 - lon2
+        a = xp.sin(dlat * 0.5) ** 2 + math.cos(lat2) * xp.cos(lat1) * xp.sin(dlon * 0.5) ** 2
+        return xp.degrees(2.0 * xp.arcsin(xp.sqrt(xp.clip(a, 0.0, 1.0))))
+
     def _interpolate_cpu(self, vectors: Dict[str, Any], grid_data: GridData):
         """CPU implementation of spatial interpolation"""
-        
+
         n_lat, n_lon = len(grid_data.lat), len(grid_data.lon)
         search_radius = max(self.config.lat_resolution, self.config.lon_resolution) * 2
-        
+
         for i, target_lat in enumerate(grid_data.lat):
             for j, target_lon in enumerate(grid_data.lon):
-                
-                # Find vectors within search radius
-                dlat = vectors['lat'] - target_lat
-                dlon = vectors['lon'] - target_lon
-                distances = self.xp.sqrt(dlat**2 + dlon**2)
-                
+
+                distances = self._great_circle_deg(
+                    vectors['lat'], vectors['lon'], float(target_lat), float(target_lon)
+                )
+
                 nearby_mask = (distances <= search_radius) & (vectors['quality'] > 0)
                 nearby_indices = self.xp.where(nearby_mask)[0]
                 

@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -15,7 +16,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "pythonv2"))
 
 from api.routes import processing, upload, results, remote, settings
-from core.websocket_manager import ConnectionManager
+from core.websocket_manager import manager   # singleton used by processor.py too
+from services.db import init_db
 
 # Configure logging
 logging.basicConfig(
@@ -24,13 +26,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# WebSocket connection manager
-manager = ConnectionManager()
+# WebSocket connection manager (singleton from core module)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     logger.info("Starting SuperDARN Interactive Workbench backend...")
+    init_db()
+    logger.info("SQLite database initialised")
     
     # Initialize services
     try:
@@ -64,7 +67,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],  # React dev server
+    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -17,6 +17,7 @@ from ..core.datatypes import RawACF, FitACF
 from ..core.pipeline import Stage
 from ..core.memory import MemoryMonitor, memory_pool
 from ..algorithms.fitting import LeastSquaresFitter, PhaseUnwrapper
+from ..algorithms.lag_validation import LagValidator
 
 class FitACFAlgorithm(Enum):
     """Available FITACF algorithms"""
@@ -64,8 +65,9 @@ class FitACFProcessor(Stage):
             self._init_gpu_kernels()
         
         # Initialize fitting components
-        self.fitter = LeastSquaresFitter()
+        self.fitter        = LeastSquaresFitter()
         self.phase_unwrapper = PhaseUnwrapper()
+        self.lag_validator = LagValidator()
         
         # Processing statistics
         self.stats = {
@@ -250,105 +252,157 @@ class FitACFProcessor(Stage):
             if rawacf.mplgs > 1:
                 fitacf.phase = self.xp.angle(rawacf.acf[:, 1])
         
-        # Apply phase unwrapping for valid ranges
-        if self.xp.any(valid_ranges):
-            valid_indices = self.xp.where(valid_ranges)[0]
-            if len(valid_indices) > 0:
-                fitacf.phase[valid_indices] = self.phase_unwrapper.unwrap(
-                    fitacf.phase[valid_indices]
-                )
+        # Phase unwrapping must operate across lags within each range, not across ranges.
+        # fitacf.phase holds only the lag-1 angle; full multi-lag unwrapping happens
+        # inside _fit_single_range via xp.unwrap on the valid_phases sequence.
     
     def _fit_acf_parameters(self, rawacf: RawACF, fitacf: FitACF, valid_ranges: Any):
         """
-        Perform least-squares fitting to extract velocity and spectral width
+        Two-pass weighted LS with LagValidator (vectorized over full scan).
+
+        1. Estimate noise floor from lowest-power ranges (RST ACF_cutoff_pwr)
+        2. Compute alpha_2 for all (nrang, mplgs) — vectorized
+        3. Cumsum-based validity mask — propagates cutoff per range in one op
+        4. Bendat-Piersol sigma — vectorized
+        5. Batch fit (valid_mask + bp_sigma → two-pass + quadratic width)
         """
-        if not self.xp.any(valid_ranges):
+        xp = self.xp
+        if not xp.any(valid_ranges):
             return
-        
-        valid_indices = self.xp.where(valid_ranges)[0]
-        n_valid = len(valid_indices)
-        
-        if n_valid == 0:
-            return
-        
-        # Process in batches for memory efficiency
-        batch_size = min(self.config.batch_size, n_valid)
-        
-        for i in range(0, n_valid, batch_size):
-            batch_end = min(i + batch_size, n_valid)
-            batch_indices = valid_indices[i:batch_end]
-            
-            # Extract ACF data for batch
-            batch_acf = rawacf.acf[batch_indices, :]
-            batch_power = rawacf.power[batch_indices]
-            
-            # Perform batch fitting
-            results = self.fitter.fit_lorentzian_batch(
-                batch_acf, batch_power, 
-                lag_time_step_sec=((getattr(rawacf.prm, 'mpinc', 1500) if rawacf.prm is not None else 1500) * 1e-6),
-                max_velocity=self.config.max_velocity,
-                max_width=self.config.max_spectral_width
-            )
-            
-            # Store results
-            fitacf.velocity[batch_indices] = results['velocity']
-            fitacf.velocity_error[batch_indices] = results['velocity_error']
-            fitacf.spectral_width[batch_indices] = results['spectral_width']
-            fitacf.spectral_width_error[batch_indices] = results['spectral_width_error']
-            fitacf.power[batch_indices] = results['power']
-            fitacf.power_error[batch_indices] = results['power_error']
 
-            # Demote unstable fits from quality-flagged outputs.
-            vel = self.xp.abs(fitacf.velocity[batch_indices])
-            vel_err = fitacf.velocity_error[batch_indices]
-            rel_vel_err = vel_err / (vel + 1e-6)
-            width = fitacf.spectral_width[batch_indices]
-            lag_dt = ((getattr(rawacf.prm, 'mpinc', 1500) if rawacf.prm is not None else 1500) * 1e-6)
-            if rawacf.mplgs > 1:
-                phase_obs = self.xp.angle(batch_acf[:, 1])
-                phase_pred = (fitacf.velocity[batch_indices] * lag_dt) / 200.0
-                phase_resid = self.xp.abs(self.xp.angle(self.xp.exp(1j * (phase_obs - phase_pred))))
-            else:
-                phase_resid = self.xp.zeros_like(vel)
+        prm       = rawacf.prm
+        mpinc_us  = getattr(prm, 'mpinc',  1500) if prm is not None else 1500
+        tfreq_khz = getattr(prm, 'tfreq', 12000) if prm is not None else 12000
+        nave      = getattr(prm, 'nave',     20) if prm is not None else 20
+        lag_dt    = mpinc_us * 1e-6
+        tfreq_hz  = tfreq_khz * 1000.0
 
-            stable_mask = (rel_vel_err < 0.8) & (width > 0) & (vel > 100.0) & (phase_resid < 0.3)
-            fitacf.qflg[batch_indices] = self.xp.where(stable_mask, fitacf.qflg[batch_indices], 0)
-    
-    def _detect_ground_scatter(self, rawacf: RawACF, fitacf: FitACF):
-        """Detect ground scatter using spectral characteristics"""
-        
-        # Ground scatter typically has low spectral width and specific power characteristics
-        valid_mask = fitacf.qflg > 0
-        
-        if not self.xp.any(valid_mask):
-            return
-        
-        # Ground scatter criteria
-        low_width = fitacf.spectral_width < (self.config.ground_scatter_threshold * 
-                                           self.config.max_spectral_width)
-        high_power = fitacf.power > self.xp.median(fitacf.power[valid_mask])
-        
-        # Mark ground scatter
-        ground_mask = valid_mask & low_width & high_power
-        fitacf.gflg[ground_mask] = 1
-    
-    def _calculate_elevation(self, rawacf: RawACF, fitacf: FitACF, valid_ranges: Any):
-        """Calculate elevation angle from cross-correlation function"""
-        if rawacf.xcf is None or not self.config.enable_xcf:
-            return
-        
-        valid_indices = self.xp.where(valid_ranges)[0]
-        
+        # ── noise floor (RST ACF_cutoff_pwr approach) ──────────────────────
+        pwr0_all  = xp.abs(rawacf.acf[:, 0])
+        noise_pwr = self.lag_validator.noise_floor_from_acf(rawacf.acf, pwr0_all)
+
+        # ── validity mask + B-P sigma over FULL (nrang, mplgs) ─────────────
+        alpha_2    = self.lag_validator.compute_alpha_2(rawacf.acf, pwr0_all, nave)
+        valid_mask = self.lag_validator.compute_lag_validity_mask(
+            rawacf.acf, pwr0_all, alpha_2, nave, noise_pwr
+        )
+        bp_sigma   = self.lag_validator.compute_bendat_piersol_sigma(
+            rawacf.acf, pwr0_all, alpha_2, nave
+        )
+
+        valid_indices = xp.where(valid_ranges)[0]
         if len(valid_indices) == 0:
             return
-        
-        # Calculate elevation from XCF phase
-        # This is a simplified implementation - full algorithm is more complex
-        xcf_phase = self.xp.angle(rawacf.xcf[valid_indices, 0])
-        
-        # Convert phase to elevation (radar-specific conversion)
-        # This would need actual radar hardware parameters
-        fitacf.elevation[valid_indices] = xcf_phase * (180.0 / self.xp.pi)
+
+        batch_size = min(self.config.batch_size, len(valid_indices))
+        for i in range(0, len(valid_indices), batch_size):
+            idx   = valid_indices[i:i + batch_size]
+            b_acf = rawacf.acf[idx, :]
+            b_pwr = pwr0_all[idx]
+            b_vm  = valid_mask[idx, :]
+            b_sig = bp_sigma[idx, :]
+
+            results = self.fitter.fit_lorentzian_batch(
+                b_acf, b_pwr,
+                lag_time_step_sec=lag_dt,
+                tfreq_hz=tfreq_hz,
+                max_velocity=self.config.max_velocity,
+                max_width=self.config.max_spectral_width,
+                valid_mask=b_vm,
+                bp_sigma=b_sig,
+                noise_pwr=noise_pwr,
+            )
+
+            fitacf.velocity[idx]                   = results['velocity']
+            fitacf.velocity_error[idx]             = results['velocity_error']
+            fitacf.spectral_width[idx]             = results['spectral_width']
+            fitacf.spectral_width_error[idx]       = results['spectral_width_error']
+            fitacf.spectral_width_sigma[idx]       = results['spectral_width_sigma']
+            fitacf.spectral_width_sigma_error[idx] = results['spectral_width_sigma_error']
+            fitacf.power[idx]                      = results['power']
+            fitacf.power_error[idx]                = results['power_error']
+            fitacf.nlag_fit[idx]                   = self.lag_validator.count_valid_lags(b_vm)
+
+            # Quality gate: demote fits where error > 80 % of signal or width ≤ 0
+            bad_fit = (
+                (fitacf.velocity_error[idx] > xp.abs(fitacf.velocity[idx]) * 0.8)
+                | (fitacf.spectral_width[idx] <= 0)
+            )
+            fitacf.qflg[idx] = xp.where(bad_fit, xp.int8(0), fitacf.qflg[idx])
+    
+    def _detect_ground_scatter(self, rawacf: RawACF, fitacf: FitACF):
+        """
+        RST ground-scatter criterion from fitacf.2.5/src/ground_scatter.c.
+
+        gflg = 1  if  |v| < GS_VMAX - (GS_VMAX / GS_WMAX) * |w_l|
+        where GS_VMAX = 30 m/s, GS_WMAX = 90 m/s.
+
+        This is the line in V/W space that separates ground scatter (low velocity,
+        narrow width) from ionospheric scatter.
+        """
+        GS_VMAX = 30.0   # m/s
+        GS_WMAX = 90.0   # m/s
+
+        xp = self.xp
+        valid = fitacf.qflg > 0
+        if not xp.any(valid):
+            return
+
+        v_abs = xp.abs(fitacf.velocity)
+        w_abs = xp.abs(fitacf.spectral_width)
+        threshold = GS_VMAX - (GS_VMAX / GS_WMAX) * w_abs
+        fitacf.gflg[valid & (v_abs < threshold)] = 1
+    
+    def _calculate_elevation(self, rawacf: RawACF, fitacf: FitACF, valid_ranges: Any):
+        """
+        Elevation angle from XCF interferometer phase — RST elevation.1.0 formula.
+
+        sin(θ) = (φ_obs - Δχ_cable) / (k · d · cos(φ_beam))
+
+        where:
+          φ_obs      = lag-0 XCF phase (rad)
+          Δχ_cable   = -2π · f · tdiff · 1e-6  (cable-delay correction, RST elevation.c)
+          k          = 2π · f / c               (wavenumber)
+          d          = antenna separation (m)
+          cos(φ_beam)= cosine of beam azimuth off boresight
+                       φ_beam = (beam - 7.5) * beam_sep_deg  (standard 16-beam radar)
+
+        Refs: RST codebase/superdarn/src.lib/tk/elevation.1.0/src/elevation.c
+        """
+        if rawacf.xcf is None or not self.config.enable_xcf:
+            fitacf.elevation[:] = float('nan')
+            return
+
+        valid_indices = self.xp.where(valid_ranges)[0]
+        if len(valid_indices) == 0:
+            return
+
+        import math
+        prm        = rawacf.prm
+        tfreq_hz   = float(getattr(prm, 'tfreq',      12000)) * 1000.0   # kHz → Hz
+        ant_sep    = float(getattr(prm, 'antenna_sep', 100.0))            # metres
+        tdiff_us   = float(getattr(prm, 'tdiff',       0.0))              # µs
+        beam_num   = float(getattr(prm, 'beam_number', 7))
+        beam_sep   = float(getattr(prm, 'beam_sep',    3.24))             # degrees
+
+        # Cable-delay correction: Δχ = -2π·f·tdiff·1e-6  (RST: elevation.c)
+        dchi_cable = -2.0 * math.pi * tfreq_hz * tdiff_us * 1e-6
+
+        # Beam-direction cosine (16-beam standard radar, centre at beam 7.5)
+        phi_beam   = math.radians((beam_num - 7.5) * beam_sep)
+        cos_phi    = max(math.cos(phi_beam), 0.1)   # clamp to avoid division near 90°
+
+        k      = 2.0 * math.pi * tfreq_hz / 3e8
+        denom  = k * ant_sep * cos_phi
+
+        phi_obs = self.xp.angle(rawacf.xcf[valid_indices, 0])
+        psi     = phi_obs - dchi_cable                              # cable-corrected phase
+
+        if denom > 0.0:
+            sin_elv = self.xp.clip(psi / denom, -1.0, 1.0)
+            fitacf.elevation[valid_indices] = self.xp.degrees(self.xp.arcsin(sin_elv))
+        else:
+            fitacf.elevation[valid_indices] = float('nan')
 
 # Convenience function for direct processing
 def process_fitacf(rawacf: Union[RawACF, List[RawACF]], 

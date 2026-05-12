@@ -1,0 +1,95 @@
+# Default values for superdarn-workbench Helm chart.
+# Suitable for deployment on k3s / Rancher.
+
+# -- Global image pull policy
+imagePullPolicy: IfNotPresent
+
+# ─────────────────────────────────────────────
+# Backend (FastAPI / uvicorn)
+# NOTE: The backend image must bundle the pythonv2 superdarn_gpu package.
+# Build with: docker build -f webapp/backend/Dockerfile.k8s -t <registry>/superdarn-backend:latest .
+# ─────────────────────────────────────────────
+backend:
+  image:
+    repository: superdarn-backend
+    tag: latest
+  replicaCount: 1
+  port: 8000
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+  env:
+    # Semicolon-separated list of allowed CORS origins.
+    # Set to your ingress hostname in production.
+    corsOrigins: "http://localhost:3000"
+    cudaVisibleDevices: "0"
+    # Path inside the container where superdarn_gpu lives (baked into image)
+    pythonPath: "/pythonv2"
+  # Optional: GPU node scheduling
+  gpu:
+    enabled: false
+    # nodeSelector key/value to target GPU nodes
+    nodeSelector:
+      nvidia.com/gpu: "true"
+    limits:
+      # Requires nvidia device plugin in the cluster
+      nvidia.com/gpu: 1
+
+# ─────────────────────────────────────────────
+# Frontend (Vite dev server / React)
+# NOTE: vite.config.ts must read BACKEND_URL from process.env.
+# See charts/superdarn-workbench/README.md for the one-line patch.
+# ─────────────────────────────────────────────
+frontend:
+  image:
+    repository: superdarn-frontend
+    tag: latest
+  replicaCount: 1
+  port: 3000
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+
+# ─────────────────────────────────────────────
+# Ingress
+# Default: Traefik (k3s built-in). Set ingressClassName: nginx for nginx-ingress.
+# ─────────────────────────────────────────────
+ingress:
+  enabled: true
+  className: traefik
+  host: superdarn.local
+  # TLS — set enabled: true and provide a secretName or use cert-manager
+  tls:
+    enabled: false
+    secretName: superdarn-tls
+  annotations: {}
+  # Uncomment for nginx-ingress WebSocket support:
+  # nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+  # nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+
+# ─────────────────────────────────────────────
+# Persistent Storage
+# k3s default storage class is "local-path"
+# ─────────────────────────────────────────────
+persistence:
+  storageClass: "local-path"
+  uploads:
+    size: 10Gi
+    accessMode: ReadWriteOnce
+  results:
+    size: 20Gi
+    accessMode: ReadWriteOnce
+
+# ─────────────────────────────────────────────
+# Service type (ClusterIP recommended — traffic flows via Ingress)
+# ─────────────────────────────────────────────
+service:
+  type: ClusterIP

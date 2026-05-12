@@ -1,0 +1,15 @@
+apiVersion: v2
+name: superdarn-workbench
+description: SuperDARN Interactive Workbench — FastAPI backend + React/Vite frontend
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - superdarn
+  - radar
+  - gpu
+  - scientific
+maintainers:
+  - name: SuperDARN RST Team
+sources:
+  - https://github.com/st7ma784/rst

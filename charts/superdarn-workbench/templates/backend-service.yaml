@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "superdarn.backendServiceName" . }}
+  labels:
+    {{- include "superdarn.labels" . | nindent 4 }}
+    {{- include "superdarn.backendSelectorLabels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.backend.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "superdarn.backendSelectorLabels" . | nindent 4 }}

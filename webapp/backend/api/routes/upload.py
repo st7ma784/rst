@@ -42,24 +42,47 @@ def detect_file_format(filename: str, content: bytes) -> str:
             return "fitacf"
         return "unknown"
 
+MAX_UPLOAD_BYTES = 500 * 1024 * 1024  # 500 MB
+
+def _sweep_old_uploads(max_age_hours: int = 24) -> None:
+    """Delete uploaded files older than max_age_hours."""
+    import time
+    cutoff = time.time() - max_age_hours * 3600
+    for p in UPLOAD_DIR.iterdir():
+        try:
+            if p.stat().st_mtime < cutoff:
+                p.unlink()
+                logger.info(f"Swept old upload: {p.name}")
+        except Exception:
+            pass
+
+
 @router.post("/", response_model=UploadResponse)
 async def upload_file(file: UploadFile = File(...)):
-    """
-    Upload a SuperDARN data file
-    
-    Accepts:
-    - RAWACF files (.rawacf)
-    - FITACF files (.fitacf)
-    - Grid files (.grid)
-    - HDF5 files (.h5, .hdf5)
-    """
+    """Upload a SuperDARN data file (max 500 MB)."""
     try:
-        # Generate unique file ID
+        # Sweep stale uploads opportunistically
+        _sweep_old_uploads()
+
         file_id = str(uuid.uuid4())
-        
-        # Read file content
-        content = await file.read()
-        file_size = len(content)
+
+        # Read in chunks to enforce size limit without buffering the whole file
+        CHUNK = 1 << 20   # 1 MB
+        chunks, total = [], 0
+        while True:
+            chunk = await file.read(CHUNK)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > MAX_UPLOAD_BYTES:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File exceeds maximum allowed size of "
+                           f"{MAX_UPLOAD_BYTES // 1024 // 1024} MB"
+                )
+            chunks.append(chunk)
+        content   = b"".join(chunks)
+        file_size = total
         
         # Detect format
         file_format = detect_file_format(file.filename, content)

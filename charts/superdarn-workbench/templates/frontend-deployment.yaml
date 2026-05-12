@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "superdarn.fullname" . }}-frontend
+  labels:
+    {{- include "superdarn.labels" . | nindent 4 }}
+    {{- include "superdarn.frontendSelectorLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "superdarn.frontendSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "superdarn.labels" . | nindent 8 }}
+        {{- include "superdarn.frontendSelectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.frontend.port }}
+              protocol: TCP
+          env:
+            # Vite dev server proxy target — points at the backend k8s service.
+            # vite.config.ts must read this: process.env.BACKEND_URL || 'http://localhost:8000'
+            - name: BACKEND_URL
+              value: "http://{{ include "superdarn.backendServiceName" . }}:{{ .Values.backend.port }}"
+            - name: VITE_API_URL
+              value: ""
+          resources:
+            {{- toYaml .Values.frontend.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10

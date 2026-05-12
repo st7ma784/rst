@@ -49,6 +49,11 @@ class ProcessingRequest(BaseModel):
         default=[ProcessingStage.ACF, ProcessingStage.FITACF, ProcessingStage.GRID],
         description="Processing stages to execute"
     )
+    backend: Optional[str] = Field(
+        default=None,
+        description="Algorithm backend override: 'pythonv2', 'cuda', or 'rst'. "
+                    "Defaults to the server's BACKEND_TYPE environment variable."
+    )
 
 class JobInfo(BaseModel):
     """Job information and status"""

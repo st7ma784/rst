@@ -6,6 +6,7 @@ import warnings
 
 from .fitting import LeastSquaresFitter, PhaseUnwrapper
 from .interpolation import SpatialInterpolator
+from .lag_validation import LagValidator
 
 try:
     from .statistics import StatisticalProcessor
@@ -15,7 +16,8 @@ except ImportError:
 
 __all__ = [
     'LeastSquaresFitter', 'PhaseUnwrapper',
-    'SpatialInterpolator'
+    'SpatialInterpolator',
+    'LagValidator',
 ]
 
 if StatisticalProcessor is not None:

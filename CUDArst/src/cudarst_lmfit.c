@@ -1,16 +1,16 @@
 /**
  * @file cudarst_lmfit.c
  * @brief LMFIT v2.0 compatible interface implementation
- * 
- * Provides backward-compatible LMFIT processing with CUDA acceleration
  */
 
+#define _GNU_SOURCE  /* enables CLOCK_MONOTONIC, alloca */
 #include "cudarst.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <alloca.h>
 
 /* CUDA kernel declarations (implemented in .cu file) */
 #ifdef __NVCC__
@@ -280,9 +280,10 @@ static cudarst_error_t cpu_lmfit_solve(cudarst_lmfit_data_t *data,
             }
             
             /* Eliminate column */
+            float diag_val = data->alpha[i * data->ma + i];
             for (int j = i + 1; j < data->ma; j++) {
-                if (data->alpha[i * data->ma + i] != 0.0f) {
-                    float factor = data->alpha[j * data->ma + i] / data->alpha[i * data->ma + i];
+                if (fabsf(diag_val) > 1e-10f * fmaxf(fabsf(diag_val), 1.0f)) {
+                    float factor = data->alpha[j * data->ma + i] / diag_val;
                     for (int k = i; k < data->ma; k++) {
                         data->alpha[j * data->ma + k] -= factor * data->alpha[i * data->ma + k];
                     }
@@ -290,11 +291,12 @@ static cudarst_error_t cpu_lmfit_solve(cudarst_lmfit_data_t *data,
                 }
             }
         }
-        
+
         /* Back substitution */
         for (int i = data->ma - 1; i >= 0; i--) {
-            if (data->alpha[i * data->ma + i] != 0.0f) {
-                da[i] /= data->alpha[i * data->ma + i];
+            float d = data->alpha[i * data->ma + i];
+            if (fabsf(d) > 1e-10f * fmaxf(fabsf(d), 1.0f)) {
+                da[i] /= d;
                 for (int j = i - 1; j >= 0; j--) {
                     da[j] -= data->alpha[j * data->ma + i] * da[i];
                 }
@@ -316,11 +318,23 @@ static cudarst_error_t cpu_lmfit_solve(cudarst_lmfit_data_t *data,
         old_chisq = chisq;
     }
     
-    /* Calculate final covariance matrix */
-    /* (This is a simplified version - in practice would need matrix inversion) */
+    /* Covariance diagonal: 1 / alpha[i,i].
+     * Use a relative singularity threshold to avoid NaN from near-zero diagonals. */
+    float max_diag = 0.0f;
+    for (int i = 0; i < data->ma; i++) {
+        float d = fabsf(data->alpha[i * data->ma + i]);
+        if (d > max_diag) max_diag = d;
+    }
+    float sing_thresh = 1e-10f * (max_diag > 0.0f ? max_diag : 1.0f);
+
     for (int i = 0; i < data->ma; i++) {
         for (int j = 0; j < data->ma; j++) {
-            data->covar[i][j] = (i == j) ? 1.0f / data->alpha[i * data->ma + i] : 0.0f;
+            if (i == j) {
+                float d = data->alpha[i * data->ma + i];
+                data->covar[i][j] = (fabsf(d) > sing_thresh) ? 1.0f / d : 0.0f;
+            } else {
+                data->covar[i][j] = 0.0f;
+            }
         }
     }
     

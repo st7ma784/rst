@@ -1,5 +1,5 @@
 """
-Data processing endpoints
+Data processing endpoints — backed by SQLite via services/db.
 """
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks
@@ -11,40 +11,68 @@ from datetime import datetime
 from models.schemas import (
     ProcessingRequest, JobInfo, JobStatus, ProcessingMode, ProcessingStage
 )
-from services.processor import process_data_async
+from services.processor import process_data_async, probe_backends
+import services.db as db
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# In-memory job storage (use Redis/database in production)
-jobs: Dict[str, JobInfo] = {}
+
+def _row_to_jobinfo(row: dict) -> JobInfo:
+    """Convert a DB row dict to a JobInfo Pydantic model."""
+    from models.schemas import FitACFParameters
+    params = row.get("parameters") or {}
+    if isinstance(params, dict):
+        try:
+            params = FitACFParameters(**params)
+        except Exception:
+            params = FitACFParameters()
+
+    def _dt(s):
+        if not s or s == "None":
+            return None
+        try:
+            return datetime.fromisoformat(s)
+        except Exception:
+            return None
+
+    stage = row.get("current_stage")
+    try:
+        stage = ProcessingStage(stage) if stage else None
+    except Exception:
+        stage = None
+
+    return JobInfo(
+        job_id=row["job_id"],
+        status=JobStatus(row.get("status", "queued")),
+        progress=row.get("progress", 0),
+        current_stage=stage,
+        created_at=_dt(row.get("created_at")) or datetime.now(),
+        started_at=_dt(row.get("started_at")),
+        completed_at=_dt(row.get("completed_at")),
+        error=row.get("error"),
+        mode=ProcessingMode(row.get("mode", "auto")),
+        parameters=params,
+    )
+
 
 @router.post("/start", response_model=JobInfo)
 async def start_processing(request: ProcessingRequest, background_tasks: BackgroundTasks):
-    """
-    Start data processing job
-    
-    Creates a new processing job and starts it in the background.
-    Returns job information including job_id for status tracking.
-    """
+    """Start a processing job and return its info."""
     try:
-        # Generate job ID
-        job_id = str(uuid.uuid4())
-        
-        # Create job info
-        job = JobInfo(
-            job_id=job_id,
-            status=JobStatus.QUEUED,
-            progress=0,
-            created_at=datetime.now(),
-            mode=request.mode,
-            parameters=request.parameters
-        )
-        
-        # Store job
-        jobs[job_id] = job
-        
-        # Start processing in background
+        job_id  = str(uuid.uuid4())
+        now     = datetime.now()
+        job_row = {
+            "job_id":     job_id,
+            "status":     "queued",
+            "progress":   0,
+            "created_at": str(now),
+            "mode":       request.mode.value,
+            "parameters": request.parameters.dict(),
+            "backend":    request.backend,
+        }
+        db.upsert_job(job_row)
+
         background_tasks.add_task(
             process_data_async,
             job_id=job_id,
@@ -52,62 +80,57 @@ async def start_processing(request: ProcessingRequest, background_tasks: Backgro
             mode=request.mode,
             parameters=request.parameters,
             stages=request.stages,
-            jobs=jobs
+            backend_override=request.backend,
         )
-        
-        logger.info(f"Processing job started: {job_id} for file {request.file_id}")
-        
-        return job
-        
+
+        logger.info(f"Job {job_id} queued for file {request.file_id}")
+        return _row_to_jobinfo(job_row)
+
     except Exception as e:
-        logger.error(f"Failed to start processing: {e}")
-        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+        logger.error(f"Failed to start processing: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/status/{job_id}", response_model=JobInfo)
 async def get_job_status(job_id: str):
-    """Get current status of a processing job"""
-    if job_id not in jobs:
+    row = db.get_job(job_id)
+    if not row:
         raise HTTPException(status_code=404, detail="Job not found")
-    
-    return jobs[job_id]
+    return _row_to_jobinfo(row)
+
 
 @router.get("/list")
 async def list_jobs():
-    """List all processing jobs"""
-    return {
-        "jobs": list(jobs.values()),
-        "total": len(jobs)
-    }
+    """List all jobs with result summaries from SQLite."""
+    rows    = db.list_jobs()
+    results = []
+    for row in rows:
+        entry = dict(row)
+        entry["created_at"]   = str(row.get("created_at", ""))
+        entry["completed_at"] = str(row.get("completed_at", "")) if row.get("completed_at") else None
+        summary = db.get_result_with_summary(row["job_id"])
+        entry["summary"] = summary
+        results.append(entry)
+    return {"jobs": results, "total": len(results)}
+
 
 @router.delete("/{job_id}")
 async def cancel_job(job_id: str):
-    """Cancel a running job"""
-    if job_id not in jobs:
+    row = db.get_job(job_id)
+    if not row:
         raise HTTPException(status_code=404, detail="Job not found")
-    
-    job = jobs[job_id]
-    
-    if job.status in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]:
+    if row["status"] in ("completed", "failed", "cancelled"):
         raise HTTPException(status_code=400, detail="Job already finished")
-    
-    # Update job status
-    job.status = JobStatus.CANCELLED
-    job.completed_at = datetime.now()
-    
-    logger.info(f"Job cancelled: {job_id}")
-    
+    db.upsert_job({**row, "status": "cancelled", "completed_at": str(datetime.now())})
     return {"message": "Job cancelled", "job_id": job_id}
+
+
+@router.get("/backends")
+async def list_backends():
+    """Return availability and status of all algorithm backends."""
+    return {"backends": probe_backends()}
+
 
 @router.post("/compare")
 async def compare_parameters(request: Dict):
-    """
-    Compare different parameter settings
-    
-    Runs processing with multiple parameter configurations
-    and returns comparison results
-    """
-    # TODO: Implement parameter comparison
-    return {
-        "message": "Parameter comparison not yet implemented",
-        "comparison_id": str(uuid.uuid4())
-    }
+    return {"message": "Use the comparison page instead", "comparison_id": str(uuid.uuid4())}

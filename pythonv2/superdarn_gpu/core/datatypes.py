@@ -35,6 +35,10 @@ class RadarParameters:
     intt_sc: int
     intt_us: int
     timestamp: datetime
+    # Site-specific hardware parameters (from hdw.dat; have safe defaults)
+    tdiff: float = 0.0       # Cable time difference (µs) for elevation correction
+    beam_sep: float = 3.24   # Beam angular separation (degrees)
+    antenna_sep: float = 100.0  # Main-to-interferometer separation (metres)
 
 class RadarData:
     """
@@ -141,10 +145,17 @@ class FitACF(RadarData):
         self.gflg = self.xp.zeros(nrang, dtype=self.xp.int8)  # Ground scatter flag
         self.slist = self.xp.zeros(nrang, dtype=self.xp.int16)  # Range gate list
         
+        # Sigma (Gaussian) spectral width — complements lambda (exponential) width
+        self.spectral_width_sigma       = self.xp.full(nrang, self.xp.nan, dtype=self.xp.float32)
+        self.spectral_width_sigma_error = self.xp.full(nrang, self.xp.nan, dtype=self.xp.float32)
+
+        # Elevation uncertainty (RST 2021 rename: elv.low → elv.error)
+        self.elevation_error = self.xp.full(nrang, self.xp.nan, dtype=self.xp.float32)
+
         # Fitting diagnostics
-        self.chi2 = self.xp.full(nrang, self.xp.nan, dtype=self.xp.float32)
+        self.chi2     = self.xp.full(nrang, self.xp.nan, dtype=self.xp.float32)
         self.nlag_fit = self.xp.zeros(nrang, dtype=self.xp.int8)
-        
+
         # Radar parameters
         self.prm = None
 
@@ -203,8 +214,9 @@ class ConvectionMap(RadarData):
         self.nlat = nlat
         self.nlon = nlon
         
-        # Spherical harmonic coefficients
-        n_coeffs = (lmax + 1) * (lmax + 2) // 2  # Number of coefficients
+        # Spherical harmonic coefficients — real SH basis: (lmax+1)² total
+        # (each l contributes 2l+1 terms: m = -l..l)
+        n_coeffs = (lmax + 1) ** 2
         self.coeffs = self.xp.zeros(n_coeffs, dtype=self.xp.complex64)
         self.coeffs_error = self.xp.zeros(n_coeffs, dtype=self.xp.float32)
         

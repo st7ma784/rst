@@ -320,11 +320,8 @@ class ACFProcessor(Stage):
                prm.nrang, len(samples), prm.mplgs, prm.nave, 1)
         )
 
-        damping = 1.0 / (1.0 + 0.05 * self.xp.arange(prm.mplgs, dtype=self.xp.float32))
-        acf_out *= damping[None, :]
-        
         return acf_out
-    
+
     def _calculate_acf_cpu(self, samples: Any, lag_table: Any, prm: RadarParameters) -> Any:
         """CPU implementation of ACF calculation"""
         
@@ -354,10 +351,6 @@ class ACFProcessor(Stage):
                 if valid_samples > 0:
                     acf_out[rang, lag_idx] = acf_sum / valid_samples
 
-            # Apply a mild lag damping so noisy high lags decay in expectation.
-            damping = 1.0 / (1.0 + 0.05 * self.xp.arange(prm.mplgs, dtype=self.xp.float32))
-            acf_out *= damping[None, :]
-        
         return acf_out
     
     def _calculate_xcf(self, main_samples: Any, int_samples: Any, 

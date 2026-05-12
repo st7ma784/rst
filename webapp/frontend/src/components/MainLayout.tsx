@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import {
   AppBar,
   Box,
@@ -20,6 +20,8 @@ import {
   Cloud as RemoteIcon,
   Settings as SettingsIcon,
   Menu as MenuIcon,
+  List as JobsIcon,
+  CompareArrows as CompareIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -33,16 +35,29 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeBackend, setActiveBackend] = useState<string>('…');
+
+  useEffect(() => {
+    fetch('/api/processing/backends')
+      .then(r => r.json())
+      .then(d => {
+        const active = (d.backends || []).find((b: {active: boolean; id: string}) => b.active);
+        setActiveBackend(active?.id ?? 'unknown');
+      })
+      .catch(() => setActiveBackend('?'));
+  }, []);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
   const menuItems = [
-    { text: 'Home', icon: <HomeIcon />, path: '/' },
-    { text: 'Processing', icon: <ProcessIcon />, path: '/processing' },
-    { text: 'Visualization', icon: <VisualizeIcon />, path: '/visualization/demo' },
-    { text: 'Remote Compute', icon: <RemoteIcon />, path: '/remote' },
+    { text: 'Home',         icon: <HomeIcon />,       path: '/' },
+    { text: 'Processing',   icon: <ProcessIcon />,    path: '/processing' },
+    { text: 'Jobs',         icon: <JobsIcon />,       path: '/jobs' },
+    { text: 'Compare',      icon: <CompareIcon />,    path: '/compare' },
+    { text: 'Remote Compute', icon: <RemoteIcon />,   path: '/remote' },
+    { text: 'Settings',     icon: <SettingsIcon />,   path: '/settings' },
   ];
 
   const drawer = (
@@ -101,8 +116,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Interactive Workbench
           </Typography>
-          <Typography variant="body2" sx={{ mr: 2 }}>
-            CUDArst v2.0.0
+          <Typography variant="body2" sx={{ mr: 2, opacity: 0.7 }}>
+            backend: {activeBackend}
           </Typography>
         </Toolbar>
       </AppBar>

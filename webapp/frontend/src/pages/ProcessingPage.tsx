@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -17,9 +17,16 @@ import {
   LinearProgress,
   Alert,
   Chip,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import { useDropzone } from 'react-dropzone';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import MemoryIcon from '@mui/icons-material/Memory';
+import StorageIcon from '@mui/icons-material/Storage';
+import CodeIcon from '@mui/icons-material/Code';
 
 interface ProcessingParameters {
   minPower: number;
@@ -30,6 +37,27 @@ interface ProcessingParameters {
   xcfEnabled: boolean;
 }
 
+interface BackendInfo {
+  id: string;
+  name: string;
+  available: boolean;
+  gpu: boolean;
+  active: boolean;
+  error?: string;
+}
+
+const BACKEND_ICONS: Record<string, React.ReactNode> = {
+  pythonv2: <CodeIcon fontSize="small" />,
+  cuda:     <MemoryIcon fontSize="small" />,
+  rst:      <StorageIcon fontSize="small" />,
+};
+
+const BACKEND_DESCRIPTIONS: Record<string, string> = {
+  pythonv2: 'Python / CuPy — two-pass Bendat-Piersol LS fit, sigma width, vectorised lag validation',
+  cuda:     'CUDArst — CUDA kernels with CPU fallback, same RST-accurate algorithms',
+  rst:      'RST reference — original C library subprocess or numpy fallback',
+};
+
 export default function ProcessingPage() {
   const navigate = useNavigate();
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -37,6 +65,10 @@ export default function ProcessingPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [selectedBackend, setSelectedBackend] = useState<string | null>(null);
+  const [backends, setBackends] = useState<BackendInfo[]>([]);
+  const [backendsLoading, setBackendsLoading] = useState(true);
+  const [selectedStages, setSelectedStages] = useState<string[]>(['acf', 'fitacf', 'grid']);
   const [parameters, setParameters] = useState<ProcessingParameters>({
     minPower: 3.0,
     phaseTolerance: 25.0,
@@ -45,6 +77,29 @@ export default function ProcessingPage() {
     batchSize: 64,
     xcfEnabled: true,
   });
+
+  // Fetch available backends on mount
+  useEffect(() => {
+    fetch('/api/processing/backends')
+      .then(r => r.json())
+      .then(data => {
+        const list: BackendInfo[] = data.backends || [];
+        setBackends(list);
+        // Pre-select the active backend
+        const active = list.find(b => b.active);
+        if (active) setSelectedBackend(active.id);
+      })
+      .catch(() => {
+        // Fallback: show all three as available if probe fails
+        setBackends([
+          { id: 'pythonv2', name: 'pythonv2', available: true, gpu: false, active: true },
+          { id: 'cuda',     name: 'CUDArst',  available: true, gpu: false, active: false },
+          { id: 'rst',      name: 'RST',       available: true, gpu: false, active: false },
+        ]);
+        setSelectedBackend('pythonv2');
+      })
+      .finally(() => setBackendsLoading(false));
+  }, []);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -94,6 +149,7 @@ export default function ProcessingPage() {
         body: JSON.stringify({
           file_id: fileId,
           mode: 'auto',
+          backend: selectedBackend,
           parameters: {
             min_power: parameters.minPower,
             phase_tolerance: parameters.phaseTolerance,
@@ -102,7 +158,7 @@ export default function ProcessingPage() {
             batch_size: parameters.batchSize,
             xcf_enabled: parameters.xcfEnabled,
           },
-          stages: ['acf', 'fitacf', 'grid'],
+          stages: selectedStages,
         }),
       });
       
@@ -119,28 +175,57 @@ export default function ProcessingPage() {
     }
   };
 
-  const pollJobStatus = async (jobId: string) => {
-    const interval = setInterval(async () => {
-      try {
-        const response = await fetch(`/api/processing/status/${jobId}`);
-        if (response.ok) {
-          const data = await response.json();
-          setProgress(data.progress);
-          
-          if (data.status === 'completed' || data.status === 'failed') {
-            clearInterval(interval);
+  const pollJobStatus = (targetJobId: string) => {
+    // Use WebSocket for live progress; fall back to REST polling if WS unavailable
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/progress`;
+    let ws: WebSocket | null = null;
+    let fallbackInterval: ReturnType<typeof setInterval> | null = null;
+
+    const cleanup = () => {
+      ws?.close();
+      if (fallbackInterval) clearInterval(fallbackInterval);
+    };
+
+    try {
+      ws = new WebSocket(wsUrl);
+      ws.onmessage = (evt) => {
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg.job_id !== targetJobId) return;
+          if (msg.progress !== undefined) setProgress(msg.progress);
+          if (msg.status === 'completed') {
+            cleanup();
             setIsProcessing(false);
-            
-            if (data.status === 'completed') {
-              // Navigate to visualization using React Router
-              navigate(`/visualization/${jobId}`);
-            }
+            navigate(`/visualization/${targetJobId}`);
+          } else if (msg.status === 'failed') {
+            cleanup();
+            setIsProcessing(false);
           }
-        }
-      } catch (error) {
-        console.error('Status check failed:', error);
-      }
-    }, 1000);
+        } catch {}
+      };
+      ws.onerror = () => {
+        ws = null;
+        startFallbackPoll();
+      };
+    } catch {
+      startFallbackPoll();
+    }
+
+    function startFallbackPoll() {
+      fallbackInterval = setInterval(async () => {
+        try {
+          const r = await fetch(`/api/processing/status/${targetJobId}`);
+          if (!r.ok) return;
+          const d = await r.json();
+          setProgress(d.progress);
+          if (d.status === 'completed' || d.status === 'failed') {
+            cleanup();
+            setIsProcessing(false);
+            if (d.status === 'completed') navigate(`/visualization/${targetJobId}`);
+          }
+        } catch {}
+      }, 1500);
+    }
   };
 
   return (
@@ -263,31 +348,125 @@ export default function ProcessingPage() {
           </Paper>
         </Grid>
         
+        {/* Stage selection */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h5" gutterBottom>3. Pipeline Stages</Typography>
+            <FormGroup row>
+              {['acf', 'fitacf', 'lmfit', 'grid', 'cnvmap'].map(s => (
+                <FormControlLabel key={s}
+                  control={
+                    <Switch
+                      checked={selectedStages.includes(s)}
+                      onChange={e => setSelectedStages(prev =>
+                        e.target.checked ? [...prev, s] : prev.filter(x => x !== s)
+                      )}
+                    />
+                  }
+                  label={s.toUpperCase()}
+                />
+              ))}
+            </FormGroup>
+          </Paper>
+        </Grid>
+
+        {/* Backend Selection */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h5" gutterBottom>
+              4. Select Processing Backend
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              All three backends implement the same RST v3.0-compatible algorithms.
+              Switch to compare results.
+            </Typography>
+
+            {backendsLoading ? (
+              <CircularProgress size={24} />
+            ) : (
+              <ToggleButtonGroup
+                value={selectedBackend}
+                exclusive
+                onChange={(_, v) => { if (v !== null) setSelectedBackend(v); }}
+                aria-label="processing backend"
+              >
+                {backends.map(b => (
+                  <Tooltip
+                    key={b.id}
+                    title={
+                      !b.available
+                        ? `Unavailable: ${b.error || 'import failed'}`
+                        : BACKEND_DESCRIPTIONS[b.id] || b.name
+                    }
+                    arrow
+                  >
+                    <span>   {/* span needed so Tooltip works on disabled buttons */}
+                      <ToggleButton
+                        value={b.id}
+                        disabled={!b.available}
+                        sx={{ px: 3, py: 1.5, gap: 1 }}
+                      >
+                        {BACKEND_ICONS[b.id]}
+                        <Box sx={{ textAlign: 'left' }}>
+                          <Typography variant="body2" fontWeight="bold">
+                            {b.id}
+                          </Typography>
+                          {b.gpu && (
+                            <Chip label="GPU" size="small" color="success" sx={{ height: 16, fontSize: 10 }} />
+                          )}
+                          {b.active && (
+                            <Chip label="default" size="small" variant="outlined" sx={{ height: 16, fontSize: 10, ml: 0.5 }} />
+                          )}
+                        </Box>
+                      </ToggleButton>
+                    </span>
+                  </Tooltip>
+                ))}
+              </ToggleButtonGroup>
+            )}
+
+            {selectedBackend && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                {BACKEND_DESCRIPTIONS[selectedBackend] || selectedBackend}
+              </Typography>
+            )}
+          </Paper>
+        </Grid>
+
         {/* Processing Control Section */}
         <Grid item xs={12}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h5" gutterBottom>
-              3. Start Processing
+              5. Start Processing
             </Typography>
-            
+
             <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
               <Button
                 variant="contained"
                 size="large"
                 onClick={handleStartProcessing}
-                disabled={!fileId || isProcessing}
+                disabled={!fileId || isProcessing || !selectedBackend}
               >
                 {isProcessing ? 'Processing...' : 'Start Processing'}
               </Button>
-              
-              <Chip label="GPU Mode" color="primary" />
-              <Chip label="CUDArst v2.0.0" variant="outlined" />
+
+              {selectedBackend && (
+                <Chip
+                  icon={BACKEND_ICONS[selectedBackend] as React.ReactElement}
+                  label={selectedBackend}
+                  color="primary"
+                  variant="outlined"
+                />
+              )}
+              {backends.find(b => b.id === selectedBackend)?.gpu && (
+                <Chip label="GPU" color="success" size="small" />
+              )}
             </Box>
-            
+
             {isProcessing && (
               <Box sx={{ mt: 3 }}>
                 <Typography variant="body2" gutterBottom>
-                  Processing: {progress}%
+                  Processing ({selectedBackend}): {progress}%
                 </Typography>
                 <LinearProgress variant="determinate" value={progress} />
               </Box>
