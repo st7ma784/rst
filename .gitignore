@@ -47,3 +47,9 @@ CUDArst/benchmarks/interoperability_test
 CUDArst/benchmarks/simple_cuda_benchmark
 CUDArst/benchmarks/test_cuda
 __pycache__/
+webapp/frontend/node_modules/
+webapp/frontend/dist/
+webapp/frontend/build/
+webapp/frontend/.cache/
+webapp/frontend/.parcel-cache/
+webapp/frontend/.next/

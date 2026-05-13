@@ -126,7 +126,8 @@ async def process_data_async(
         backend = _get_backend(backend_override)
         logger.info(f"Job {job_id} — backend: {type(backend).__name__}, gpu: {use_gpu}")
 
-        stage_results: Dict = {}
+        # Pass file path so downstream stages can access raw data if fitacf was skipped
+        stage_results: Dict = {"_file_path": str(file_path)}
         timing:         Dict = {}
         progress_map = {
             ProcessingStage.ACF:    (20, "acf"),
@@ -161,8 +162,10 @@ async def process_data_async(
 
         total_time = time.time() - start
 
+        # Skip private keys (prefixed _) — these are pass-through context, not stages
         clean_stages = {k: {ik: iv for ik, iv in v.items() if not ik.startswith("_")}
-                        for k, v in stage_results.items()}
+                        for k, v in stage_results.items()
+                        if not k.startswith("_") and isinstance(v, dict)}
 
         _db.upsert_result(
             job_id, total_time, clean_stages,

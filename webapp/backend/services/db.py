@@ -58,6 +58,10 @@ def init_db() -> None:
                 performance      TEXT,
                 output_files     TEXT
             );
+            CREATE TABLE IF NOT EXISTS app_settings (
+                id       INTEGER PRIMARY KEY DEFAULT 1,
+                settings TEXT NOT NULL DEFAULT '{}'
+            );
         """)
 
 
@@ -154,6 +158,24 @@ def get_result(job_id: str) -> Optional[Dict[str, Any]]:
         "output_files":    _load(row["output_files"]) or [],
     }
 
+
+# ── settings CRUD ─────────────────────────────────────────────────────────────
+
+def get_settings() -> Dict[str, Any]:
+    with _lock, _conn() as c:
+        row = c.execute("SELECT settings FROM app_settings WHERE id = 1").fetchone()
+    return _load(row["settings"]) if row else {}
+
+
+def save_settings(data: Dict[str, Any]) -> None:
+    with _lock, _conn() as c:
+        c.execute("""
+            INSERT INTO app_settings (id, settings) VALUES (1, ?)
+            ON CONFLICT(id) DO UPDATE SET settings = excluded.settings
+        """, (_json(data),))
+
+
+# ── result summary ─────────────────────────────────────────────────────────────
 
 def get_result_with_summary(job_id: str) -> Optional[Dict[str, Any]]:
     r = get_result(job_id)

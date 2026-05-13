@@ -1,15 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Grid, Paper, Box, Tabs, Tab,
-  Chip, CircularProgress, Alert, Button, FormGroup,
-  FormControlLabel, Checkbox, Divider, Table, TableBody,
+  Chip, CircularProgress, Alert, Button,
+  FormControlLabel, Checkbox, Table, TableBody,
   TableCell, TableRow,
 } from '@mui/material';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  Legend, ResponsiveContainer, ReferenceLine, ScatterChart,
-  Scatter, ZAxis, BarChart, Bar,
+  Legend, ResponsiveContainer, ReferenceLine, BarChart, Bar,
 } from 'recharts';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
@@ -398,6 +397,131 @@ function RTITab({ rti, selectedBeam, onBeamClick }: {
   );
 }
 
+// ── CNVMap tab ────────────────────────────────────────────────────────────────
+
+interface CnvmapData {
+  has_map?: boolean;
+  chi_squared?: number | null;
+  potential_max?: number | null;
+  num_vectors?: number;
+  order?: number;
+  nlat?: number;
+  nlon?: number;
+  downsample?: number;
+  potential?: (number | null)[][];
+  velocity_mag?: (number | null)[][];
+  note?: string;
+}
+
+function CnvmapCanvas({ data, field }: { data: (number|null)[][]; field: 'potential'|'velocity' }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !data.length) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const nlat = data.length, nlon = data[0].length;
+    const W = canvas.width, H = canvas.height;
+    const cw = W / nlon, ch = H / nlat;
+
+    // Find range for normalisation
+    let vmin = Infinity, vmax = -Infinity;
+    data.forEach(row => row.forEach(v => { if (v !== null) { vmin = Math.min(vmin, v); vmax = Math.max(vmax, v); } }));
+    const range = (vmax - vmin) || 1;
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, W, H);
+
+    data.forEach((row, yi) => {
+      row.forEach((v, xi) => {
+        if (v === null) return;
+        const t = (v - vmin) / range;  // 0..1
+        let r, g, b;
+        if (field === 'potential') {
+          // Diverging: blue→white→red (like velocity)
+          r = t < 0.5 ? Math.round(255 * t * 2) : 255;
+          g = t < 0.5 ? Math.round(255 * t * 2) : Math.round(255 * (1 - t) * 2);
+          b = t < 0.5 ? 255 : Math.round(255 * (1 - t) * 2);
+        } else {
+          // Sequential: dark→yellow (velocity magnitude)
+          r = Math.round(255 * t);
+          g = Math.round(200 * t);
+          b = 0;
+        }
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.fillRect(Math.round(xi * cw), Math.round(yi * ch),
+                     Math.max(1, Math.ceil(cw)), Math.max(1, Math.ceil(ch)));
+      });
+    });
+    // Labels
+    ctx.fillStyle = '#888'; ctx.font = '10px monospace'; ctx.textAlign = 'left';
+    ctx.fillText('90°N', 2, 12); ctx.fillText('90°S', 2, H - 4);
+    ctx.textAlign = 'right'; ctx.fillText('360°E', W - 2, H - 4);
+  }, [data, field]);
+
+  useEffect(() => { draw(); }, [draw]);
+  if (!data.length) return null;
+  return (
+    <canvas ref={canvasRef} width={720} height={320}
+            style={{ width: '100%', imageRendering: 'pixelated', border: '1px solid #333' }} />
+  );
+}
+
+function CnvmapTab({ jobId }: { jobId?: string }) {
+  const [data, setData]   = useState<CnvmapData | null>(null);
+  const [field, setField] = useState<'potential'|'velocity'>('potential');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!jobId || jobId === 'demo') return;
+    setLoading(true);
+    fetch(`/api/results/${jobId}/cnvmap`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [jobId]);
+
+  if (loading) return <CircularProgress />;
+  if (!data) return <Alert severity="info">Run with the cnvmap stage to see convection maps.</Alert>;
+  if (data.note) return <Alert severity="warning">cnvmap: {data.note}</Alert>;
+
+  const grid = field === 'potential' ? data.potential : data.velocity_mag;
+  return (
+    <Box>
+      <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+        {['potential', 'velocity'].map(f => (
+          <Chip key={f} label={f === 'potential' ? 'Electric potential (V)' : 'Convection speed (m/s)'}
+            clickable color={field === f ? 'primary' : 'default'}
+            onClick={() => setField(f as any)} />
+        ))}
+        <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
+          {data.chi_squared !== undefined && data.chi_squared !== null && (
+            <Chip label={`χ²=${data.chi_squared.toFixed(0)}`} size="small" variant="outlined" />
+          )}
+          {data.potential_max !== undefined && data.potential_max !== null && (
+            <Chip label={`|Φ|max=${(data.potential_max / 1000).toFixed(1)} kV`} size="small" color="success" />
+          )}
+          {data.num_vectors !== undefined && (
+            <Chip label={`${data.num_vectors} vectors`} size="small" variant="outlined" />
+          )}
+          {data.order !== undefined && (
+            <Chip label={`order ${data.order}`} size="small" variant="outlined" />
+          )}
+        </Box>
+      </Box>
+      {grid ? (
+        <CnvmapCanvas data={grid} field={field} />
+      ) : (
+        <Alert severity="info">No map data — pythonv2 cnvmap was not run or failed.</Alert>
+      )}
+      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+        Geographic coordinates. Downsampled {data.downsample ?? 4}× from full 181×361 grid.
+      </Typography>
+    </Box>
+  );
+}
+
 // ── Grid tab ──────────────────────────────────────────────────────────────────
 
 function GridTab({ stages }: { stages: Record<string, Record<string, unknown>> }) {
@@ -417,10 +541,25 @@ function GridTab({ stages }: { stages: Record<string, Record<string, unknown>> }
     count: vals.filter(x => x.v >= min + b * step && x.v < min + (b + 1) * step).length,
   }));
 
+  const pctFilled = grid.velocity.length > 0
+    ? ((vals.length / grid.velocity.length) * 100).toFixed(1)
+    : '0';
+
   return (
     <Box>
+      <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        {grid.nlat !== undefined && grid.nlon !== undefined && (
+          <Chip label={`${grid.nlat}×${grid.nlon} cells`} size="small" variant="outlined" />
+        )}
+        <Chip label={`${vals.length} / ${grid.velocity.length} filled (${pctFilled}%)`}
+          size="small" color="primary" variant="outlined" />
+        {vals.length > 0 && (
+          <Chip label={`vel range: ${Math.min(...vals.map(x=>x.v)).toFixed(0)} … ${Math.max(...vals.map(x=>x.v)).toFixed(0)} m/s`}
+            size="small" variant="outlined" />
+        )}
+      </Box>
       <Typography variant="subtitle2" gutterBottom>
-        Grid velocity distribution ({vals.length} / {grid.velocity.length} cells filled)
+        Grid velocity distribution
       </Typography>
       <ResponsiveContainer width="100%" height={280}>
         <BarChart data={hist} margin={{ left: 10, right: 10 }}>
@@ -486,16 +625,21 @@ function PerformanceTab({ perf, stages }: {
               <TableRow><TableCell>Mode</TableCell><TableCell>{mode}</TableCell></TableRow>
               {Object.entries(stages).map(([stage, data]) => {
                 const d = data as Record<string, unknown>;
+                let summary = '✓';
+                if (d.good_ranges !== undefined)
+                  summary = `${d.good_ranges} / ${d.nranges ?? '?'} good ranges`;
+                else if (d.fitted_ranges !== undefined)
+                  summary = `${d.fitted_ranges} fitted${d.mean_chi_squared != null ? `, χ²=${(d.mean_chi_squared as number).toFixed(2)}` : ''}`;
+                else if (d.nranges !== undefined)
+                  summary = `${d.nranges} ranges`;
+                else if (d.nlat !== undefined)
+                  summary = `${d.nlat}×${d.nlon} grid`;
+                else if (d.order !== undefined)
+                  summary = `SH order ${d.order}${d.potential_max != null ? `, |Φ|max=${((d.potential_max as number)/1000).toFixed(1)} kV` : ''}`;
                 return (
                   <TableRow key={stage}>
                     <TableCell>{stage}</TableCell>
-                    <TableCell>
-                      {d.good_ranges !== undefined
-                        ? `${d.good_ranges} / ${d.nranges} good`
-                        : d.nranges !== undefined
-                          ? `${d.nranges} ranges`
-                          : '✓'}
-                    </TableCell>
+                    <TableCell>{summary}</TableCell>
                   </TableRow>
                 );
               })}
@@ -561,10 +705,20 @@ export default function VisualizationPage() {
           Compare backends
         </Button>
         {jobId && jobId !== 'demo' && (
-          <Button startIcon={<DownloadIcon />} variant="outlined" size="small"
-            href={`/api/results/${jobId}/export/csv`} download>
-            Download CSV
-          </Button>
+          <>
+            <Button startIcon={<DownloadIcon />} variant="outlined" size="small"
+              href={`/api/results/${jobId}/export/csv?stage=fitacf`} download>
+              FITACF CSV
+            </Button>
+            <Button startIcon={<DownloadIcon />} variant="outlined" size="small"
+              href={`/api/results/${jobId}/export/csv?stage=grid`} download>
+              Grid CSV
+            </Button>
+            <Button startIcon={<DownloadIcon />} variant="outlined" size="small"
+              href={`/api/results/${jobId}/export/csv?stage=cnvmap`} download>
+              CNVMap CSV
+            </Button>
+          </>
         )}
       </Box>
 
@@ -584,6 +738,7 @@ export default function VisualizationPage() {
             <Tab label="Range Profile" />
             <Tab label="RTI" />
             <Tab label="Grid" />
+            <Tab label="Convection Map" />
             <Tab label="Performance" />
           </Tabs>
 
@@ -607,6 +762,9 @@ export default function VisualizationPage() {
             <GridTab stages={vizData.stages} />
           </TabPanel>
           <TabPanel value={tab} index={3}>
+            <CnvmapTab jobId={jobId} />
+          </TabPanel>
+          <TabPanel value={tab} index={4}>
             <PerformanceTab perf={vizData.performance} stages={vizData.stages} />
           </TabPanel>
         </Paper>

@@ -175,30 +175,48 @@ export default function ComparisonPage() {
                 <TableHead>
                   <TableRow>
                     <TableCell>Backend</TableCell>
-                    <TableCell align="right">Good ranges</TableCell>
-                    <TableCell align="right">Avg |vel| (m/s)</TableCell>
-                    <TableCell align="right">Avg width (m/s)</TableCell>
+                    <TableCell align="right">Good</TableCell>
+                    <TableCell align="right">Avg|vel|</TableCell>
+                    <TableCell align="right">Avg W</TableCell>
+                    <TableCell align="right">Δvel vs pv2</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {backends.map(bid => {
-                    const fa  = faData[bid];
-                    const vel = (fa.velocity ?? []).filter((v): v is number => v !== null);
-                    const wid = (fa.spectral_width ?? []).filter((v): v is number => v !== null);
-                    const avg = (arr: number[]) =>
-                      arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(0) : '—';
-                    return (
-                      <TableRow key={bid}>
-                        <TableCell>
-                          <Chip label={bid} size="small"
-                            sx={{ bgcolor: BACKEND_COLORS[bid], color: '#fff' }} />
-                        </TableCell>
-                        <TableCell align="right">{fa.good_ranges ?? '?'}</TableCell>
-                        <TableCell align="right">{avg(vel.map(Math.abs))}</TableCell>
-                        <TableCell align="right">{avg(wid)}</TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {(() => {
+                    const baseline = faData['pythonv2'];
+                    const baseVel  = baseline
+                      ? (baseline.velocity ?? []).filter((v): v is number => v !== null)
+                      : [];
+                    const avgNum = (arr: number[]) =>
+                      arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : NaN;
+                    const baseAvgVel = avgNum(baseVel.map(Math.abs));
+
+                    return backends.map(bid => {
+                      const fa  = faData[bid];
+                      const vel = (fa.velocity ?? []).filter((v): v is number => v !== null);
+                      const wid = (fa.spectral_width ?? []).filter((v): v is number => v !== null);
+                      const avgV = avgNum(vel.map(Math.abs));
+                      const delta = bid !== 'pythonv2' && !isNaN(baseAvgVel) && !isNaN(avgV)
+                        ? (avgV - baseAvgVel).toFixed(0)
+                        : '—';
+                      const fmt = (n: number) => isNaN(n) ? '—' : n.toFixed(0);
+                      return (
+                        <TableRow key={bid}>
+                          <TableCell>
+                            <Chip label={bid} size="small"
+                              sx={{ bgcolor: BACKEND_COLORS[bid], color: '#fff' }} />
+                          </TableCell>
+                          <TableCell align="right">{fa.good_ranges ?? '?'}</TableCell>
+                          <TableCell align="right">{fmt(avgV)}</TableCell>
+                          <TableCell align="right">{fmt(avgNum(wid))}</TableCell>
+                          <TableCell align="right"
+                            sx={{ color: delta !== '—' && parseFloat(delta) !== 0 ? 'warning.main' : 'text.secondary' }}>
+                            {delta !== '—' ? `${parseFloat(delta) >= 0 ? '+' : ''}${delta}` : '—'}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    });
+                  })()}
                 </TableBody>
               </Table>
             </Paper>

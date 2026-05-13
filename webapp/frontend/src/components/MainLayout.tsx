@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode } from 'react';
 import {
   AppBar,
   Box,
@@ -16,7 +16,6 @@ import {
 import {
   Home as HomeIcon,
   PlayArrow as ProcessIcon,
-  Visibility as VisualizeIcon,
   Cloud as RemoteIcon,
   Settings as SettingsIcon,
   Menu as MenuIcon,
@@ -24,7 +23,7 @@ import {
   CompareArrows as CompareIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const drawerWidth = 240;
 

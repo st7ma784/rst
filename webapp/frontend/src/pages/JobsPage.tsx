@@ -6,7 +6,7 @@ import {
   TableContainer, Checkbox, IconButton, Tooltip, LinearProgress,
   Dialog, DialogTitle, DialogContent, DialogActions,
   FormControl, InputLabel, Select, MenuItem, Divider,
-  Grid, CircularProgress, TablePagination, Snackbar,
+  CircularProgress, TablePagination, Snackbar,
 } from '@mui/material';
 import { useDropzone } from 'react-dropzone';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -14,6 +14,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import StopIcon from '@mui/icons-material/Stop';
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -193,7 +194,6 @@ export default function JobsPage() {
   const [backends, setBackends]   = useState<BackendInfo[]>([]);
   const [loading, setLoading]     = useState(true);
   const [batchOpen, setBatchOpen] = useState(false);
-  const [autoRefresh]             = useState(true);
   const [page, setPage]           = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [notification, setNotification] = useState<{msg: string; severity: 'success'|'error'} | null>(null);
@@ -242,14 +242,7 @@ export default function JobsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-refresh while any job is running
-  useEffect(() => {
-    if (!autoRefresh) return;
-    const running = jobs.some(j => j.status === 'running' || j.status === 'queued');
-    if (!running) return;
-    const t = setInterval(fetchJobs, 2000);
-    return () => clearInterval(t);
-  }, [jobs, autoRefresh]);
+  // WS subscription above handles live updates — no REST polling needed
 
   const toggleSelect = (id: string) => {
     setSelected(s => {
@@ -366,9 +359,13 @@ export default function JobsPage() {
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="caption" fontFamily="monospace">
-                    {job.job_id.slice(0, 8)}…
-                  </Typography>
+                  <Tooltip title="Click to copy full job ID">
+                    <Typography variant="caption" fontFamily="monospace"
+                      sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
+                      onClick={() => navigator.clipboard?.writeText(job.job_id)}>
+                      {job.job_id.slice(0, 8)}…
+                    </Typography>
+                  </Tooltip>
                 </TableCell>
                 <TableCell>
                   <Chip label={job.summary?.backend || job.mode || '—'}
@@ -396,11 +393,22 @@ export default function JobsPage() {
                       </IconButton>
                     </span>
                   </Tooltip>
+                  {job.status === 'running' && (
+                    <Tooltip title="Cancel job">
+                      <IconButton size="small" color="warning"
+                        onClick={() => {
+                          fetch(`/api/processing/${job.job_id}`, { method: 'DELETE' }).catch(() => {});
+                          setTimeout(fetchJobs, 400);
+                        }}>
+                        <StopIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
                   <Tooltip title="Delete">
                     <IconButton size="small" color="error"
                       onClick={() => {
                         fetch(`/api/results/${job.job_id}`, { method: 'DELETE' }).catch(() => {});
-                        fetchJobs();
+                        setTimeout(fetchJobs, 200);
                       }}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>

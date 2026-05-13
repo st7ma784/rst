@@ -37,6 +37,7 @@ export default function RemoteComputePage() {
     timeLimit: '01:00:00',
   });
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [connDetails, setConnDetails] = useState<{ remote_version?: string; server_host_key?: string } | null>(null);
 
   const handleTestConnection = async () => {
     setTestStatus('testing');
@@ -51,9 +52,15 @@ export default function RemoteComputePage() {
       });
       
       if (response.ok) {
+        const data = await response.json();
         setTestStatus('success');
+        setConnDetails({
+          remote_version:  data.remote_version,
+          server_host_key: data.server_host_key,
+        });
       } else {
         setTestStatus('error');
+        setConnDetails(null);
       }
     } catch (error) {
       setTestStatus('error');
@@ -167,7 +174,15 @@ export default function RemoteComputePage() {
 
             {testStatus === 'success' && (
               <Alert severity="success" sx={{ mt: 2 }}>
-                Connection successful! Configuration saved.
+                <strong>Connection successful!</strong>
+                {connDetails?.remote_version && (
+                  <> Remote: {connDetails.remote_version}</>
+                )}
+                {connDetails?.server_host_key && (
+                  <Box component="pre" sx={{ mt: 1, fontSize: '0.7rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                    Host key: {connDetails.server_host_key}
+                  </Box>
+                )}
               </Alert>
             )}
 

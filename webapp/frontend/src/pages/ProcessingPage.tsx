@@ -9,11 +9,8 @@ import {
   Button,
   Slider,
   FormControlLabel,
+  FormGroup,
   Switch,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   LinearProgress,
   Alert,
   Chip,
@@ -21,7 +18,10 @@ import {
   ToggleButtonGroup,
   Tooltip,
   CircularProgress,
+  Menu,
+  MenuItem,
 } from '@mui/material';
+import TuneIcon from '@mui/icons-material/Tune';
 import { useDropzone } from 'react-dropzone';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import MemoryIcon from '@mui/icons-material/Memory';
@@ -64,11 +64,13 @@ export default function ProcessingPage() {
   const [fileId, setFileId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [jobId, setJobId] = useState<string | null>(null);
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [selectedBackend, setSelectedBackend] = useState<string | null>(null);
   const [backends, setBackends] = useState<BackendInfo[]>([]);
   const [backendsLoading, setBackendsLoading] = useState(true);
   const [selectedStages, setSelectedStages] = useState<string[]>(['acf', 'fitacf', 'grid']);
+  const [presets, setPresets] = useState<Record<string, any>>({});
+  const [presetAnchor, setPresetAnchor] = useState<HTMLElement | null>(null);
   const [parameters, setParameters] = useState<ProcessingParameters>({
     minPower: 3.0,
     phaseTolerance: 25.0,
@@ -77,6 +79,14 @@ export default function ProcessingPage() {
     batchSize: 64,
     xcfEnabled: true,
   });
+
+  // Fetch presets on mount
+  useEffect(() => {
+    fetch('/api/settings/presets')
+      .then(r => r.json())
+      .then(d => setPresets(d.presets || {}))
+      .catch(() => {});
+  }, []);
 
   // Fetch available backends on mount
   useEffect(() => {
@@ -164,7 +174,7 @@ export default function ProcessingPage() {
       
       if (response.ok) {
         const data = await response.json();
-        setJobId(data.job_id);
+        setCurrentJobId(data.job_id);
         
         // Poll for progress
         pollJobStatus(data.job_id);
@@ -279,9 +289,41 @@ export default function ProcessingPage() {
         {/* Parameters Section */}
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 3, height: '100%' }}>
-            <Typography variant="h5" gutterBottom>
-              2. Configure Parameters
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <Typography variant="h5" sx={{ flexGrow: 1 }}>
+                2. Configure Parameters
+              </Typography>
+              {Object.keys(presets).length > 0 && (
+                <>
+                  <Button size="small" startIcon={<TuneIcon />}
+                    onClick={e => setPresetAnchor(e.currentTarget)}>
+                    Load preset
+                  </Button>
+                  <Menu anchorEl={presetAnchor} open={!!presetAnchor}
+                    onClose={() => setPresetAnchor(null)}>
+                    {Object.entries(presets).map(([id, p]: [string, any]) => (
+                      <MenuItem key={id} onClick={() => {
+                        const pp = p.parameters ?? {};
+                        setParameters({
+                          minPower:          pp.min_power         ?? parameters.minPower,
+                          phaseTolerance:    pp.phase_tolerance   ?? parameters.phaseTolerance,
+                          elevationEnabled:  pp.elevation_enabled ?? parameters.elevationEnabled,
+                          elevationModel:    pp.elevation_model   ?? parameters.elevationModel,
+                          batchSize:         pp.batch_size        ?? parameters.batchSize,
+                          xcfEnabled:        pp.xcf_enabled       ?? parameters.xcfEnabled,
+                        });
+                        setPresetAnchor(null);
+                      }}>
+                        <Box>
+                          <Typography variant="body2">{p.name}</Typography>
+                          <Typography variant="caption" color="text.secondary">{p.description}</Typography>
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </>
+              )}
+            </Box>
             
             <Box sx={{ mt: 3 }}>
               <Typography gutterBottom>Minimum Power: {parameters.minPower} dB</Typography>
@@ -348,24 +390,46 @@ export default function ProcessingPage() {
           </Paper>
         </Grid>
         
-        {/* Stage selection */}
+        {/* Stage selection with dependency enforcement */}
         <Grid item xs={12}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h5" gutterBottom>3. Pipeline Stages</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+              Stages run in order. Enabling a later stage automatically enables its prerequisites.
+            </Typography>
             <FormGroup row>
-              {['acf', 'fitacf', 'lmfit', 'grid', 'cnvmap'].map(s => (
-                <FormControlLabel key={s}
-                  control={
-                    <Switch
-                      checked={selectedStages.includes(s)}
-                      onChange={e => setSelectedStages(prev =>
-                        e.target.checked ? [...prev, s] : prev.filter(x => x !== s)
-                      )}
+              {(['acf', 'fitacf', 'lmfit', 'grid', 'cnvmap'] as const).map((s, idx, arr) => {
+                // Dependencies: each stage requires all preceding stages
+                const deps = arr.slice(0, idx);
+                const isOn = selectedStages.includes(s);
+                // A stage is required if any later stage is selected
+                const isRequired = arr.slice(idx + 1).some(later => selectedStages.includes(later));
+                return (
+                  <Tooltip key={s} title={isRequired ? `Required by ${arr.slice(idx+1).filter(l => selectedStages.includes(l)).join(', ')}` : ''}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={isOn}
+                          disabled={isRequired}
+                          onChange={e => {
+                            if (e.target.checked) {
+                              // Enable this stage and all its prerequisites
+                              setSelectedStages(prev => {
+                                const toAdd = [...deps.filter(d => !prev.includes(d)), s];
+                                return [...prev, ...toAdd];
+                              });
+                            } else {
+                              // Disable this stage (downstream already checked via isRequired)
+                              setSelectedStages(prev => prev.filter(x => x !== s));
+                            }
+                          }}
+                        />
+                      }
+                      label={s.toUpperCase()}
                     />
-                  }
-                  label={s.toUpperCase()}
-                />
-              ))}
+                  </Tooltip>
+                );
+              })}
             </FormGroup>
           </Paper>
         </Grid>
@@ -467,6 +531,12 @@ export default function ProcessingPage() {
               <Box sx={{ mt: 3 }}>
                 <Typography variant="body2" gutterBottom>
                   Processing ({selectedBackend}): {progress}%
+                  {currentJobId && (
+                    <Typography component="span" variant="caption"
+                      color="text.secondary" sx={{ ml: 1 }}>
+                      [{currentJobId.slice(0, 8)}]
+                    </Typography>
+                  )}
                 </Typography>
                 <LinearProgress variant="determinate" value={progress} />
               </Box>

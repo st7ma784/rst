@@ -3,26 +3,46 @@ import {
   Container, Typography, Box, Paper, Grid, Button,
   Switch, FormControlLabel, Slider, Alert, Snackbar,
   Divider, Chip, Table, TableBody, TableRow, TableCell,
+  CircularProgress,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import RestoreIcon from '@mui/icons-material/Restore';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
 
 interface Settings {
-  processing: { default_mode: string; max_batch_size: number; enable_gpu: boolean };
+  processing:    { default_mode: string; max_batch_size: number; enable_gpu: boolean };
   visualization: { default_colormap: string; enable_3d: boolean; refresh_rate: number };
-  remote: { timeout: number; retry_attempts: number };
+  remote:        { timeout: number; retry_attempts: number };
+}
+
+interface SysInfo {
+  gpu_available:  boolean;
+  gpu_count:      number;
+  gpus:           { id: number; name: string; compute_capability: string; total_memory_gb: number }[];
+  python_version: string;
+  os:             string;
+  cpu_count:      number;
+  db_path:        string;
 }
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [sysInfo, setSysInfo]   = useState<SysInfo | null>(null);
   const [saved, setSaved]       = useState(false);
   const [error, setError]       = useState<string | null>(null);
+  const [sysLoading, setSysLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/settings/')
       .then(r => r.json())
       .then(setSettings)
       .catch(e => setError(e.message));
+
+    fetch('/api/settings/system-info')
+      .then(r => r.json())
+      .then(d => { setSysInfo(d); setSysLoading(false); })
+      .catch(() => setSysLoading(false));
   }, []);
 
   const save = async () => {
@@ -40,16 +60,16 @@ export default function SettingsPage() {
 
   const reset = async () => {
     try {
-      await fetch('/api/settings/reset', { method: 'POST' });
-      const r = await fetch('/api/settings/');
-      setSettings(await r.json());
+      const r = await fetch('/api/settings/reset', { method: 'POST' });
+      const d = await r.json();
+      setSettings(d.settings);
       setSaved(true);
     } catch (e: any) {
       setError(e.message);
     }
   };
 
-  if (!settings) return null;
+  if (!settings) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}><CircularProgress /></Box>;
 
   const set = (section: keyof Settings, key: string, value: unknown) =>
     setSettings(s => s ? { ...s, [section]: { ...s[section], [key]: value } } : s);
@@ -171,34 +191,78 @@ export default function SettingsPage() {
           </Paper>
         </Grid>
 
-        {/* Info */}
+        {/* System Info */}
         <Grid item xs={12}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>System Info</Typography>
             <Divider sx={{ mb: 2 }} />
-            <Table size="small">
-              <TableBody>
-                <TableRow>
-                  <TableCell>Max upload size</TableCell>
-                  <TableCell>500 MB</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>Upload retention</TableCell>
-                  <TableCell>24 hours (auto-swept)</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>Job storage</TableCell>
-                  <TableCell>SQLite (/tmp/siw_workbench.db)</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>API docs</TableCell>
-                  <TableCell>
-                    <a href="/docs" target="_blank" rel="noreferrer"
-                       style={{ color: '#90caf9' }}>/docs</a>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+            {sysLoading ? (
+              <CircularProgress size={20} />
+            ) : sysInfo ? (
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <Table size="small">
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>GPU</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            {sysInfo.gpu_available
+                              ? <><CheckCircleIcon color="success" fontSize="small" /> {sysInfo.gpu_count} device(s)</>
+                              : <><ErrorIcon color="disabled" fontSize="small" /> not available</>}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                      {sysInfo.gpus.map(g => (
+                        <TableRow key={g.id}>
+                          <TableCell sx={{ pl: 4 }}>GPU {g.id}</TableCell>
+                          <TableCell>
+                            {g.name} · CC {g.compute_capability} · {g.total_memory_gb} GB
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow>
+                        <TableCell>Python</TableCell>
+                        <TableCell>{sysInfo.python_version}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>CPU cores</TableCell>
+                        <TableCell>{sysInfo.cpu_count}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Table size="small">
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>OS</TableCell>
+                        <TableCell>{sysInfo.os}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Database</TableCell>
+                        <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                          {sysInfo.db_path}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Upload retention</TableCell>
+                        <TableCell>24 hours (auto-swept)</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>API docs</TableCell>
+                        <TableCell>
+                          <a href="/docs" target="_blank" rel="noreferrer"
+                             style={{ color: '#90caf9' }}>/docs</a>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </Grid>
+              </Grid>
+            ) : (
+              <Typography color="text.secondary">System info unavailable</Typography>
+            )}
           </Paper>
         </Grid>
       </Grid>

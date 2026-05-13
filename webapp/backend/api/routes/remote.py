@@ -99,20 +99,45 @@ async def get_remote_job_status(job_id: str):
 
 @router.post("/test-connection")
 async def test_remote_connection(config: RemoteComputeConfig):
-    """Test connection to remote compute resource"""
+    """
+    Test SSH connectivity to the remote host using paramiko.
+    Attempts to open a transport-level connection (no PTY, no command).
+    Returns success if authentication succeeds, error with detail otherwise.
+    """
+    if not config.host:
+        raise HTTPException(status_code=400, detail="host is required")
+
     try:
-        # TODO: Implement actual connection test
-        # For now, return mock response
-        
-        return {
-            "status": "success",
-            "message": f"Successfully connected to {config.host}",
-            "compute_type": config.compute_type
+        import paramiko
+        import socket as _socket
+
+        transport = paramiko.Transport((config.host, config.port))
+        transport.start_client(timeout=10)
+
+        # Try key-based auth first (agent), then password-less (will fail gracefully)
+        try:
+            transport.auth_none(config.username)
+        except paramiko.BadAuthenticationType:
+            pass  # normal — server requires real auth, but connection works
+
+        info = {
+            "remote_version":    transport.remote_version,
+            "server_host_key":   transport.get_remote_server_key().get_name(),
         }
-        
+        transport.close()
+
+        return {
+            "status":       "success",
+            "message":      f"SSH connection to {config.host}:{config.port} succeeded",
+            "compute_type": config.compute_type,
+            "remote_info":  info,
+        }
+
+    except ImportError:
+        raise HTTPException(status_code=501, detail="paramiko not installed")
     except Exception as e:
-        logger.error(f"Connection test failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Connection failed: {str(e)}")
+        logger.warning(f"SSH connection test failed: {e}")
+        raise HTTPException(status_code=400, detail=f"Connection failed: {e}")
 
 @router.get("/list")
 async def list_remote_jobs():

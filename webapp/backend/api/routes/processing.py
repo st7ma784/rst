@@ -131,6 +131,3 @@ async def list_backends():
     return {"backends": probe_backends()}
 
 
-@router.post("/compare")
-async def compare_parameters(request: Dict):
-    return {"message": "Use the comparison page instead", "comparison_id": str(uuid.uuid4())}

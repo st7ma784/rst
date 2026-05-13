@@ -67,7 +67,14 @@ class LeastSquaresFitter:
           velocity, velocity_error, spectral_width, spectral_width_error,
           spectral_width_sigma, spectral_width_sigma_error, power, power_error
         """
-        xp        = self.xp
+        xp          = self.xp
+        _np_input   = isinstance(acf_data, np.ndarray)
+        acf_data    = xp.asarray(acf_data)
+        power_data  = xp.asarray(power_data)
+        if valid_mask is not None:
+            valid_mask = xp.asarray(valid_mask)
+        if bp_sigma is not None:
+            bp_sigma = xp.asarray(bp_sigma)
         n_ranges, n_lags = acf_data.shape
 
         # vel_factor = c / (4π·f·Δτ)  [m/s/rad]
@@ -100,6 +107,8 @@ class LeastSquaresFitter:
             for k in out:
                 out[k][i] = r[k]
 
+        if _np_input:
+            return {k: (v.get() if hasattr(v, "get") else np.asarray(v)) for k, v in out.items()}
         return out
 
     # ── single-range fitter ───────────────────────────────────────────────────

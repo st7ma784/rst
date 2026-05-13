@@ -124,6 +124,9 @@ class GridProcessor(Stage):
             
             # Grid interpolation kernel using inverse distance weighting
             self.grid_kernel = cp.RawKernel(r'''
+            #ifndef NAN
+            #define NAN (__int_as_float(0x7fc00000))
+            #endif
             extern "C" __global__
             void grid_vectors_idw(const float* vec_lat, const float* vec_lon,
                                  const float* vec_vel, const float* vec_err,

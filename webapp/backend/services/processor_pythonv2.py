@@ -53,6 +53,29 @@ class Pythonv2Processor(BackendProcessor):
             raise ValueError("No records found in file")
         return [self._record_to_rawacf(r) for r in raw_records]
 
+    def _load_fitacf_objects(self, file_path: Path):
+        """
+        Load pre-processed FitACF data from our binary rawacf format.
+        Used when user uploads a .fitacf that was previously processed by this system
+        and stored as a rawacf-format file (for grid/cnvmap starting point).
+        """
+        from utils.rawacf_parser import parse_rawacf_all_records
+        from superdarn_gpu.core.datatypes import FitACF
+        import numpy as np
+        raw_records = parse_rawacf_all_records(file_path)
+        fitacf_objs = []
+        for rec in raw_records:
+            hdr    = rec["header"]
+            nrang  = int(hdr["nrang"])
+            acf_r  = rec["acf_real"]
+            fitacf = FitACF(nrang=nrang)
+            fitacf.velocity       = acf_r[:, 0].astype(np.float32)   # col 0 = vel
+            fitacf.power          = acf_r[:, 1].astype(np.float32) if acf_r.shape[1] > 1 else np.zeros(nrang, dtype=np.float32)
+            fitacf.spectral_width = acf_r[:, 2].astype(np.float32) if acf_r.shape[1] > 2 else np.zeros(nrang, dtype=np.float32)
+            fitacf.qflg           = (fitacf.power > 0).astype(np.int8)
+            fitacf_objs.append(fitacf)
+        return fitacf_objs
+
     def _record_to_rawacf(self, rec: dict):
         """Convert a parsed record dict to a RawACF object."""
         return self._synthetic_rawacf_from_record(
@@ -68,6 +91,7 @@ class Pythonv2Processor(BackendProcessor):
 
     def _synthetic_rawacf_from_record(self, acf_r, acf_i, xcf_r, xcf_i, hdr):
         from superdarn_gpu.core.datatypes import RawACF, RadarParameters
+        from superdarn_gpu.core.backends import get_backend, Backend
         from datetime import datetime
         nrang = int(hdr["nrang"])
         mplgs = int(hdr["mplgs"])
@@ -77,6 +101,15 @@ class Pythonv2Processor(BackendProcessor):
 
         acf = (acf_r + 1j * acf_i).astype(np.complex64)
         xcf = (xcf_r + 1j * xcf_i).astype(np.complex64)
+
+        # Move to GPU when the CUPY backend is active so CUDA kernels receive cupy arrays
+        if get_backend() == Backend.CUPY:
+            try:
+                import cupy as cp
+                acf = cp.asarray(acf)
+                xcf = cp.asarray(xcf)
+            except Exception:
+                pass
 
         prm = RadarParameters(
             station_id=int(hdr["radar_id"]),
@@ -105,15 +138,22 @@ class Pythonv2Processor(BackendProcessor):
             timestamp=datetime.utcnow()
         )
 
+        # Use the same array module as acf (cupy or numpy)
+        try:
+            import cupy as cp
+            xp = cp if isinstance(acf, cp.ndarray) else np
+        except ImportError:
+            xp = np
+
         rawacf = RawACF(nrang=nrang, mplgs=mplgs, nave=nave)
         rawacf.prm   = prm
         rawacf.acf   = acf
         rawacf.xcf   = xcf
-        rawacf.power = np.abs(acf[:, 0]).astype(np.float32)
-        rawacf.noise = np.full(nrang, float(hdr["noise_lev"]), dtype=np.float32)
-        rawacf.slist = np.arange(nrang, dtype=np.int16)
-        rawacf.qflg  = np.ones(nrang,  dtype=np.int8)
-        rawacf.gflg  = np.zeros(nrang, dtype=np.int8)
+        rawacf.power = xp.abs(acf[:, 0]).astype(np.float32 if xp is np else xp.float32)
+        rawacf.noise = xp.full(nrang, float(hdr["noise_lev"]), dtype=xp.float32)
+        rawacf.slist = xp.arange(nrang, dtype=xp.int16)
+        rawacf.qflg  = xp.ones(nrang,  dtype=xp.int8)
+        rawacf.gflg  = xp.zeros(nrang, dtype=xp.int8)
         return rawacf
 
     async def process_acf(self, file_path: Path, params: FitACFParameters, use_gpu: bool) -> Dict[str, Any]:
@@ -173,28 +213,20 @@ class Pythonv2Processor(BackendProcessor):
                 "nlag_fit":                   _opt(fitacf, "nlag_fit"),
             })
 
-        # Use first record fields for backward-compat single-record consumers
-        first = records[0] if records else {}
         backend_str = "pythonv2-gpu" if use_gpu else "pythonv2-cpu"
+        # Store top-level sigma/elevation (not per-beam) + records for per-beam data.
+        # Viz endpoint reconstructs range-profile scalars from records[0] at read time.
+        first = records[0] if records else {}
         return {
             "nranges":                    all_rawacf[0].nrang,
             "nrecords":                   len(records),
             "good_ranges":                total_good // max(len(records), 1),
-            # First-record arrays (backward compat for range profile tab)
-            "velocity":                   first.get("velocity", []),
-            "velocity_error":             first.get("velocity_error", []),
-            "power":                      first.get("power", []),
-            "power_error":                first.get("power_error", []),
-            "spectral_width":             first.get("spectral_width", []),
-            "spectral_width_error":       first.get("spectral_width_error", []),
+            # Fields only available at scan level (not per-beam in records)
             "spectral_width_sigma":       first.get("spectral_width_sigma", []),
             "spectral_width_sigma_error": first.get("spectral_width_sigma_error", []),
             "elevation":                  first.get("elevation", []),
             "elevation_error":            first.get("elevation_error", []),
-            "quality_flag":               first.get("quality_flag", []),
-            "ground_scatter_flag":        first.get("ground_scatter_flag", []),
-            "nlag_fit":                   first.get("nlag_fit", []),
-            # Full scan: all beams (for RTI)
+            # Per-beam arrays (RTI + beam selector)
             "records":                    records,
             "backend":                    backend_str,
             "_fitacf_objs": all_fitacf_objs,
@@ -202,15 +234,55 @@ class Pythonv2Processor(BackendProcessor):
         }
 
     async def process_lmfit(self, previous: Dict, params: FitACFParameters, use_gpu: bool) -> Dict[str, Any]:
-        # LMFIT is performed inside FitACFProcessor (LeastSquaresFitter).
-        # Expose the convergence info extracted from the fit.
-        fitacf_stage = previous.get("fitacf", {})
-        good = fitacf_stage.get("good_ranges", 0)
+        """
+        Extract real fit quality metrics from the FitACF objects.
+        RST LMFIT is a separate module for non-linear fitting; here we expose
+        the chi² and convergence diagnostics from the linear LS fits already done.
+        """
+        import numpy as np
+        fa = previous.get("fitacf", {})
+        fitacf_objs = fa.get("_fitacf_objs") or (
+            [fa["_fitacf_obj"]] if fa.get("_fitacf_obj") else []
+        )
+
+        def _to_np(arr):
+            if arr is None:
+                return None
+            if hasattr(arr, "get"):          # cupy array
+                return arr.get()
+            return np.asarray(arr)
+
+        all_chi2  = []
+        all_nlags = []
+        total_fit = 0
+
+        for fitacf_obj in fitacf_objs:
+            if not hasattr(fitacf_obj, "qflg"):
+                continue
+            qmask = _to_np(fitacf_obj.qflg) > 0
+            total_fit += int(np.sum(qmask))
+
+            if hasattr(fitacf_obj, "chi2"):
+                chi2_vals = _to_np(fitacf_obj.chi2)[qmask]
+                valid_chi2 = chi2_vals[np.isfinite(chi2_vals) & (chi2_vals > 0)]
+                if len(valid_chi2):
+                    all_chi2.extend(valid_chi2.tolist())
+
+            if hasattr(fitacf_obj, "nlag_fit"):
+                nlags = _to_np(fitacf_obj.nlag_fit)[qmask]
+                all_nlags.extend(nlags[nlags > 0].tolist())
+
+        mean_chi2  = float(np.mean(all_chi2))  if all_chi2  else None
+        mean_nlags = float(np.mean(all_nlags)) if all_nlags else None
+        converged  = total_fit > 0 and (mean_chi2 is None or mean_chi2 < 1000)
+
         return {
-            "iterations": 10,
-            "converged":  good > 0,
-            "chi_squared": 1.0,
-            "backend": "pythonv2-cpu",
+            "converged":    converged,
+            "fitted_ranges": total_fit,
+            "mean_chi_squared": mean_chi2,
+            "mean_nlag_fit":    mean_nlags,
+            "nrecords":    len(fitacf_objs),
+            "backend":     "pythonv2-cpu",
         }
 
     async def process_grid(self, previous: Dict, params: FitACFParameters, use_gpu: bool) -> Dict[str, Any]:
@@ -220,6 +292,15 @@ class Pythonv2Processor(BackendProcessor):
         fitacf_objs = fa.get("_fitacf_objs") or (
             [fa["_fitacf_obj"]] if fa.get("_fitacf_obj") else None
         )
+        # If fitacf stage was skipped (e.g. user uploaded pre-processed data)
+        # try to load from the uploaded file path stored in context
+        if not fitacf_objs:
+            file_path = previous.get("_file_path")
+            if file_path:
+                try:
+                    fitacf_objs = self._load_fitacf_objects(Path(file_path))
+                except Exception:
+                    pass
         if not fitacf_objs:
             return {"nlat": 0, "nlon": 0, "velocity": [], "backend": "pythonv2-cpu"}
 
@@ -251,18 +332,54 @@ class Pythonv2Processor(BackendProcessor):
             from superdarn_gpu.processing.grid import GridProcessor, GridConfig
             grid_obj = GridProcessor(GridConfig()).process(fitacf_objs)
 
+        # Ensure grid_obj arrays are numpy (cnvmap uses pure numpy; grid may hold cupy arrays)
+        try:
+            import cupy as cp
+            def _cpu(arr):
+                return arr.get() if isinstance(arr, cp.ndarray) else arr
+            if hasattr(grid_obj, "velocity"):
+                grid_obj.velocity       = _cpu(grid_obj.velocity)
+            if hasattr(grid_obj, "velocity_error"):
+                grid_obj.velocity_error = _cpu(grid_obj.velocity_error)
+            if hasattr(grid_obj, "lat"):
+                grid_obj.lat = _cpu(grid_obj.lat)
+            if hasattr(grid_obj, "lon"):
+                grid_obj.lon = _cpu(grid_obj.lon)
+        except ImportError:
+            pass
+
         try:
             proc = CNVMAPProcessor(lmax=8)
             cmap = proc.process([grid_obj])
+            import numpy as np
+
+            def _to_np(arr):
+                if hasattr(arr, "get"):   # cupy
+                    return arr.get().astype(np.float32)
+                return np.asarray(arr, dtype=np.float32)
+            pot  = _to_np(cmap.potential)
+            vmag = _to_np(cmap.velocity_magnitude)
+
+            # Downsample to ~46×91 (step=4) for storage/API — ~4 KB vs 255 KB full
+            s = 4
+            def _compact(arr):
+                return [[None if np.isnan(v) else round(float(v), 2)
+                         for v in row] for row in arr[::s, ::s].tolist()]
+
             return {
                 "order":         proc.lmax,
                 "chi_squared":   float(cmap.chi2) if cmap.chi2 else None,
-                "potential_max": float(abs(cmap.potential).max()) if cmap.potential is not None and cmap.potential.size else None,
+                "potential_max": float(np.nanmax(np.abs(pot))) if pot.size else None,
                 "num_vectors":   cmap.num_vectors,
+                "has_map":       True,
+                "downsample":    s,
+                "nlat":          pot.shape[0] // s,
+                "nlon":          pot.shape[1] // s,
+                "potential":     _compact(pot),
+                "velocity_mag":  _compact(vmag),
                 "backend":       "pythonv2-cpu",
-                "_cmap_obj":     cmap,
             }
         except Exception as e:
             logger.warning(f"CNVMAPProcessor failed: {e}")
             return {"order": 8, "chi_squared": None, "potential_max": None,
-                    "backend": "pythonv2-cpu", "note": str(e)}
+                    "has_map": False, "backend": "pythonv2-cpu", "note": str(e)}
