@@ -1,0 +1,164 @@
+# Default values for superdarn-workbench.
+# Override with: helm install ... -f my-values.yaml
+# Rancher App UI reads questions.yaml to build a form over these values.
+
+# ── Rancher / global registry override ───────────────────────────────────────
+# Rancher automatically injects global.cattle.systemDefaultRegistry when a
+# cluster-level or namespace-level registry mirror is configured.
+# Individual image.registry takes precedence if set explicitly.
+global:
+  cattle:
+    systemDefaultRegistry: ""   # injected by Rancher; do not set manually
+
+# ── Image settings ────────────────────────────────────────────────────────────
+image:
+  # Override registry for both images (overrides global.cattle.systemDefaultRegistry).
+  # Include trailing slash, e.g. "ghcr.io/your-org/".
+  registry: ""
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# ── Backend ───────────────────────────────────────────────────────────────────
+backend:
+  image:
+    repository: siw-backend
+
+  # Algorithm backend: pythonv2 | cuda | rst
+  backendType: pythonv2
+
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "4"
+      memory: "4Gi"
+
+  # GPU support — requires NVIDIA device plugin on the cluster
+  gpu:
+    enabled: false
+    count: 1
+    nodeSelector:
+      nvidia.com/gpu.present: "true"
+
+  extraEnv: []
+  # - name: LOG_LEVEL
+  #   value: "debug"
+
+  service:
+    type: ClusterIP
+    port: 8000
+
+  podAnnotations: {}
+  podSecurityContext:
+    fsGroup: 1000
+  # PSS restricted-compatible: non-root, no privilege escalation, drop ALL caps
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false   # uvicorn writes tmp files
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop: ["ALL"]
+
+  probes:
+    liveness:
+      initialDelaySeconds: 40
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 3
+    readiness:
+      initialDelaySeconds: 20
+      periodSeconds: 15
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+# ── Frontend ──────────────────────────────────────────────────────────────────
+frontend:
+  image:
+    # nginxinc/nginx-unprivileged runs on port 8080 as uid 101 (PSS restricted-safe)
+    repository: siw-frontend
+
+  replicaCount: 1
+
+  # Internal port the nginx-unprivileged container listens on
+  containerPort: 8080
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
+
+  service:
+    type: ClusterIP
+    port: 8080
+
+  podAnnotations: {}
+  podSecurityContext:
+    fsGroup: 101                   # nginx group in unprivileged image
+  # PSS restricted-compatible: nginx-unprivileged runs as uid 101
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 101
+    runAsGroup: 101
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false   # nginx writes tmp/cache files
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop: ["ALL"]
+
+# ── Ingress ───────────────────────────────────────────────────────────────────
+ingress:
+  enabled: false
+  # Use "nginx" for ingress-nginx, "traefik" for Rancher's built-in Traefik
+  className: nginx
+  annotations: {}
+    # nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    # nginx.ingress.kubernetes.io/proxy-body-size: "500m"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # traefik.ingress.kubernetes.io/router.entrypoints: websecure
+  host: superdarn.example.com
+  tls: []
+  # - secretName: superdarn-tls
+  #   hosts:
+  #     - superdarn.example.com
+
+# ── Persistent storage ────────────────────────────────────────────────────────
+persistence:
+  enabled: true
+  # Common Rancher storage classes: longhorn, local-path, nfs-client
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 20Gi
+  existingClaim: ""
+
+# ── Horizontal Pod Autoscaler ─────────────────────────────────────────────────
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+# ── Service Account ───────────────────────────────────────────────────────────
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# ── Node / affinity / tolerations ─────────────────────────────────────────────
+nodeSelector: {}
+tolerations: []
+affinity: {}

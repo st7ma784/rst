@@ -1,0 +1,27 @@
+apiVersion: v2
+name: superdarn-workbench
+description: SuperDARN Interactive Workbench — GPU-accelerated SuperDARN radar data processing with three interchangeable backends (pythonv2, CUDArst, RST reference).
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - superdarn
+  - radar
+  - science
+  - gpu
+  - cuda
+home: https://github.com/your-org/rst
+maintainers:
+  - name: Steve Mander
+    email: st7ma784@gmail.com
+annotations:
+  # Rancher catalog metadata
+  catalog.cattle.io/certified: community
+  catalog.cattle.io/display-name: SuperDARN Interactive Workbench
+  catalog.cattle.io/type: app
+  catalog.cattle.io/release-name: superdarn-workbench
+  catalog.cattle.io/namespace: superdarn
+  catalog.cattle.io/permits-os: linux
+  catalog.cattle.io/rancher-version: ">= 2.7.0"
+  catalog.cattle.io/kube-version: ">= 1.25.0-0"
+  catalog.cattle.io/auto-install: ""

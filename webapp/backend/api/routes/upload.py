@@ -15,8 +15,9 @@ from models.schemas import UploadResponse
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Upload directory
-UPLOAD_DIR = Path("/tmp/siw_uploads")
+# Upload directory — override with DATA_DIR env var in production
+_DATA_DIR  = Path(os.environ.get("DATA_DIR", "/tmp"))
+UPLOAD_DIR = _DATA_DIR / "siw_uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 def detect_file_format(filename: str, content: bytes) -> str:

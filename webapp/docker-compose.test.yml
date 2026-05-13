@@ -1,17 +1,29 @@
-version: '3.8'
-
-# Launches all three processing backends + frontend for cross-backend testing.
-# Run with:
-#   docker compose -f docker-compose.test.yml up --build
-# Then in another terminal:
-#   cd webapp/tests && pytest test_backends.py -v \
+# Cross-backend integration test stack.
+# Launches all three processing backends + frontend, then runs the test suite.
+#
+# Usage:
+#   docker compose -f docker-compose.test.yml up --build -d
+#   cd tests && pytest test_backends.py -v \
 #       --backend-urls http://localhost:8001,http://localhost:8002,http://localhost:8003
+#   docker compose -f docker-compose.test.yml down -v
+name: superdarn-test
 
 x-backend-common: &backend-common
+  restart: "no"
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+    interval: 20s
+    timeout: 8s
+    retries: 5
+    start_period: 45s
   volumes:
-    - uploads_shared:/tmp/siw_uploads
-    - results_shared:/tmp/siw_results
-  depends_on: []
+    - uploads_shared:/data/siw_uploads
+    - results_shared:/data/siw_results
+    - db_shared:/data
+  environment: &backend-env
+    DATA_DIR:     /data
+    PYTHONPATH:   /pythonv2
+    CORS_ORIGINS: http://localhost:3000
 
 services:
 
@@ -23,9 +35,8 @@ services:
     ports:
       - "8001:8000"
     environment:
-      - BACKEND_TYPE=pythonv2
-      - PYTHONPATH=/pythonv2
-      - CORS_ORIGINS=http://localhost:3000
+      <<: *backend-env
+      BACKEND_TYPE: pythonv2
 
   backend-cuda:
     <<: *backend-common
@@ -35,10 +46,9 @@ services:
     ports:
       - "8002:8000"
     environment:
-      - BACKEND_TYPE=cuda
-      - PYTHONPATH=/pythonv2
-      - CORS_ORIGINS=http://localhost:3000
-    # GPU access — uncomment when running on a CUDA host
+      <<: *backend-env
+      BACKEND_TYPE: cuda
+    # GPU — uncomment on CUDA host:
     # deploy:
     #   resources:
     #     reservations:
@@ -55,21 +65,49 @@ services:
     ports:
       - "8003:8000"
     environment:
-      - BACKEND_TYPE=rst
-      - PYTHONPATH=/pythonv2
-      - CORS_ORIGINS=http://localhost:3000
+      <<: *backend-env
+      BACKEND_TYPE: rst
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
     environment:
-      - BACKEND_URL=http://backend-pythonv2:8000
+      BACKEND_URL: http://backend-pythonv2:8000
+    ports:
+      - "3000:8080"
     depends_on:
-      - backend-pythonv2
+      backend-pythonv2:
+        condition: service_healthy
+
+  # One-shot test runner — exits after tests complete
+  test-runner:
+    image: python:3.11-slim
+    working_dir: /tests
+    volumes:
+      - ./tests:/tests
+      - ../test_data:/test_data:ro
+    environment:
+      BACKEND_URLS:    http://backend-pythonv2:8000,http://backend-cuda:8000,http://backend-rst:8000
+      TEST_DATA_DIR:   /test_data/rawacf_samples
+      TEST_TIMEOUT:    120
+    command: >
+      sh -c "pip install -q pytest httpx &&
+             pytest test_backends.py -v -m 'not slow'
+               --backend-urls $$BACKEND_URLS
+               --test-data-dir $$TEST_DATA_DIR
+               --timeout $$TEST_TIMEOUT"
+    depends_on:
+      backend-pythonv2:
+        condition: service_healthy
+      backend-cuda:
+        condition: service_healthy
+      backend-rst:
+        condition: service_healthy
+    profiles:
+      - test          # only starts with: docker compose --profile test up
 
 volumes:
   uploads_shared:
   results_shared:
+  db_shared:

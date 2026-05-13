@@ -1,22 +1,38 @@
-version: '3.8'
+# SuperDARN Interactive Workbench — production Docker Compose
+#
+# Usage:
+#   cp .env.example .env          # fill in your values
+#   docker compose up -d          # start
+#   docker compose logs -f        # tail logs
+#
+# For multi-backend testing see docker-compose.test.yml.
+# For hot-reload development see docker-compose.override.yml.
+name: superdarn-workbench
 
 services:
+
   backend:
+    image: ${REGISTRY:-}siw-backend:${TAG:-latest}
     build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
-      - ../pythonv2:/pythonv2
-      - uploads:/tmp/siw_uploads
-      - results:/tmp/siw_results
+      context: ..
+      dockerfile: webapp/backend/Dockerfile.${BACKEND_TYPE:-pythonv2}
     environment:
-      - PYTHONPATH=/pythonv2
-      - CUDA_VISIBLE_DEVICES=0
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    # Uncomment for GPU support
+      BACKEND_TYPE:  ${BACKEND_TYPE:-pythonv2}
+      DATA_DIR:      /data
+      CORS_ORIGINS:  ${CORS_ORIGINS:-http://localhost}
+      PYTHONPATH:    /pythonv2
+    volumes:
+      - data:/data
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # GPU access — uncomment when running on a CUDA host:
     # deploy:
     #   resources:
     #     reservations:
@@ -26,20 +42,23 @@ services:
     #           capabilities: [gpu]
 
   frontend:
+    image: ${REGISTRY:-}siw-frontend:${TAG:-latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8000
-    command: npm run dev
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "${FRONTEND_PORT:-8080}:8080"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
-  uploads:
-  results:
+  data:
+    driver: local
+
+networks:
+  default:
+    name: superdarn-net

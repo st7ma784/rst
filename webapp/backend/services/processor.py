@@ -107,7 +107,7 @@ async def process_data_async(
     try:
         await _update({"status": "running", "started_at": str(datetime.now()), "progress": 5})
 
-        upload_dir = Path("/tmp/siw_uploads")
+        upload_dir = Path(os.environ.get("DATA_DIR", "/tmp")) / "siw_uploads"
         matches    = list(upload_dir.glob(f"{file_id}_*"))
         if not matches:
             raise FileNotFoundError(f"Uploaded file {file_id} not found")

@@ -5,14 +5,16 @@ Results retrieval endpoints — backed by SQLite via services/db.
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, Response
 from pathlib import Path
-import logging, csv, io
+import logging, csv, io, os
 
 import services.db as db
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-RESULTS_DIR = Path("/tmp/siw_results")
+_DATA_DIR   = Path(os.environ.get("DATA_DIR", "/tmp"))
+RESULTS_DIR = _DATA_DIR / "siw_results"
+UPLOAD_DIR  = _DATA_DIR / "siw_uploads"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -193,8 +195,7 @@ async def get_cnvmap_data(job_id: str):
 async def delete_results(job_id: str):
     """Delete job, results, and the uploaded source file."""
     # Delete uploaded file
-    uploads = Path("/tmp/siw_uploads")
-    for p in uploads.glob(f"{job_id[:8]}*"):
+    for p in UPLOAD_DIR.glob(f"{job_id[:8]}*"):
         try:
             p.unlink()
         except Exception:

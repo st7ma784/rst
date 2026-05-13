@@ -1,0 +1,35 @@
+SuperDARN Interactive Workbench is deployed!
+
+  Release:   {{ .Release.Name }}
+  Namespace: {{ .Release.Namespace }}
+  Backend:   {{ .Values.backend.backendType }}
+  GPU:       {{ .Values.backend.gpu.enabled }}
+
+{{- if .Values.ingress.enabled }}
+
+Access the workbench at:
+  https://{{ .Values.ingress.host }}
+
+{{- else if eq .Values.frontend.service.type "LoadBalancer" }}
+
+Wait for the LoadBalancer IP:
+  kubectl get svc -n {{ .Release.Namespace }} {{ include "superdarn-workbench.fullname" . }}-frontend -w
+
+{{- else }}
+
+Port-forward the frontend locally:
+  kubectl port-forward -n {{ .Release.Namespace }} \
+    svc/{{ include "superdarn-workbench.fullname" . }}-frontend 8080:80
+
+Then open http://localhost:8080
+
+{{- end }}
+
+To view backend logs:
+  kubectl logs -n {{ .Release.Namespace }} \
+    -l app.kubernetes.io/component=backend,app.kubernetes.io/instance={{ .Release.Name }} -f
+
+To check backend health:
+  kubectl exec -n {{ .Release.Namespace }} \
+    deploy/{{ include "superdarn-workbench.fullname" . }}-backend \
+    -- curl -s http://localhost:{{ .Values.backend.service.port }}/api/health

@@ -1,0 +1,39 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "superdarn-workbench.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "superdarn-workbench.labels" . | nindent 4 }}
+  annotations:
+    # WebSocket support (nginx ingress controller)
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "500m"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "Upgrade";
+    # Traefik (Rancher's built-in) — uncomment if className is traefik:
+    # traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-ws-headers@kubernetescrd"
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    {{- toYaml .Values.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "superdarn-workbench.fullname" . }}-frontend
+                port:
+                  name: http
+{{- end }}

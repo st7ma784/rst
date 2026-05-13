@@ -1,20 +1,48 @@
-FROM python:3.10-slim
+# ── pythonv2 backend (Python / CuPy) ─────────────────────────────────────────
+# Build context must be the repo root:
+#   docker build -f webapp/backend/Dockerfile.pythonv2 -t siw-backend-pythonv2 .
+#
+# GPU variant: add --build-arg CUDA_PKG=cupy-cuda12x
+# ─────────────────────────────────────────────────────────────────────────────
+ARG PYTHON_VERSION=3.11
+FROM python:${PYTHON_VERSION}-slim AS base
+
+ARG CUDA_PKG=""
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gcc g++ curl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y gcc g++ make libhdf5-dev libnetcdf-dev && rm -rf /var/lib/apt/lists/*
-
+# Install Python dependencies (layer-cached until requirements change)
 COPY webapp/backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && if [ -n "$CUDA_PKG" ]; then pip install --no-cache-dir "$CUDA_PKG"; fi
 
-# Install pythonv2 superdarn_gpu package
+# Install superdarn_gpu library
 COPY pythonv2/ /pythonv2/
-RUN pip install --no-cache-dir numpy scipy h5py netCDF4 matplotlib
+ENV PYTHONPATH=/pythonv2
 
+# Copy application code
 COPY webapp/backend/ .
 
-ENV PYTHONPATH=/pythonv2
-ENV BACKEND_TYPE=pythonv2
+# ── runtime config ────────────────────────────────────────────────────────────
+ENV BACKEND_TYPE=pythonv2 \
+    DATA_DIR=/data \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
+RUN adduser --disabled-password --gecos "" --uid 1000 appuser \
+    && mkdir -p /data && chown appuser:appuser /data
+USER appuser
+
+VOLUME ["/data"]
 EXPOSE 8000
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health || exit 1
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", \
+     "--workers", "1", "--log-level", "info"]

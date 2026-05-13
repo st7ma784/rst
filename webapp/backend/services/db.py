@@ -7,13 +7,14 @@ Uses the standard-library sqlite3 with a threading.Lock for safe concurrent acce
 """
 
 import json
+import os
 import sqlite3
 import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-DB_PATH = Path("/tmp/siw_workbench.db")
+DB_PATH = Path(os.environ.get("DATA_DIR", "/tmp")) / "siw_workbench.db"
 _lock = threading.Lock()
 
 

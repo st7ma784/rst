@@ -1,0 +1,212 @@
+categories:
+  - Science
+  - GPU
+questions:
+
+  # ── Backend ─────────────────────────────────────────────────────────────────
+
+  - variable: backend.backendType
+    label: Processing Backend
+    description: >
+      pythonv2 — Python / CuPy (RST v3.0 Bendat-Piersol two-pass fitting).
+      cuda     — CUDArst C kernels with CPU fallback.
+      rst      — Original RST reference C library via subprocess.
+    type: enum
+    options:
+      - pythonv2
+      - cuda
+      - rst
+    default: pythonv2
+    required: true
+    group: Backend
+
+  - variable: backend.gpu.enabled
+    label: Enable GPU (NVIDIA)
+    description: >
+      Schedules the backend pod on a GPU node and passes NVIDIA device access.
+      Requires the NVIDIA device plugin to be installed on the cluster.
+    type: boolean
+    default: false
+    group: Backend
+    show_if: "backend.backendType=cuda"
+
+  - variable: backend.replicaCount
+    label: Backend Replicas
+    type: int
+    default: 1
+    min: 1
+    max: 10
+    group: Backend
+
+  - variable: backend.resources.requests.cpu
+    label: Backend CPU Request
+    type: string
+    default: "500m"
+    group: Backend
+
+  - variable: backend.resources.requests.memory
+    label: Backend Memory Request
+    type: string
+    default: "512Mi"
+    group: Backend
+
+  - variable: backend.resources.limits.cpu
+    label: Backend CPU Limit
+    type: string
+    default: "4"
+    group: Backend
+
+  - variable: backend.resources.limits.memory
+    label: Backend Memory Limit
+    type: string
+    default: "4Gi"
+    group: Backend
+
+  # ── Storage ──────────────────────────────────────────────────────────────────
+
+  - variable: persistence.enabled
+    label: Enable Persistent Storage
+    description: >
+      Store uploaded files, processing results, and the SQLite database on a
+      PersistentVolumeClaim. Strongly recommended for production.
+      If disabled, all data is lost when the backend pod restarts.
+    type: boolean
+    default: true
+    required: true
+    group: Storage
+
+  - variable: persistence.storageClass
+    label: Storage Class
+    description: >
+      Leave blank to use the cluster default.
+      Common Rancher classes: longhorn, local-path, nfs-client.
+    type: storageclass
+    default: ""
+    group: Storage
+    show_if: "persistence.enabled=true"
+
+  - variable: persistence.size
+    label: Volume Size
+    type: string
+    default: "20Gi"
+    group: Storage
+    show_if: "persistence.enabled=true"
+
+  - variable: persistence.existingClaim
+    label: Existing PVC Name
+    description: Bind to an existing PersistentVolumeClaim instead of creating one.
+    type: pvc
+    default: ""
+    group: Storage
+    show_if: "persistence.enabled=true"
+
+  # ── Networking ───────────────────────────────────────────────────────────────
+
+  - variable: ingress.enabled
+    label: Enable Ingress
+    type: boolean
+    default: false
+    group: Networking
+
+  - variable: ingress.className
+    label: Ingress Class
+    description: >
+      "nginx" for ingress-nginx.
+      "traefik" for Rancher's built-in Traefik ingress controller.
+    type: enum
+    options:
+      - nginx
+      - traefik
+    default: nginx
+    group: Networking
+    show_if: "ingress.enabled=true"
+
+  - variable: ingress.host
+    label: Hostname
+    description: e.g. superdarn.youruni.ac.uk
+    type: hostname
+    default: ""
+    group: Networking
+    show_if: "ingress.enabled=true"
+
+  - variable: ingress.tls
+    label: Enable TLS
+    description: >
+      Add a TLS entry for the hostname above.
+      Provide a secretName containing a certificate, or use cert-manager
+      (set annotation cert-manager.io/cluster-issuer in ingress.annotations).
+    type: boolean
+    default: false
+    group: Networking
+    show_if: "ingress.enabled=true"
+
+  - variable: ingress.annotations
+    label: Extra Ingress Annotations
+    description: YAML map of additional ingress annotations.
+    type: multiline
+    default: ""
+    group: Networking
+    show_if: "ingress.enabled=true"
+
+  # ── Images ───────────────────────────────────────────────────────────────────
+
+  - variable: image.registry
+    label: Image Registry
+    description: >
+      Override the image registry for both backend and frontend images.
+      Include a trailing slash, e.g. "ghcr.io/your-org/".
+      Leave blank to use Rancher's cluster-level registry mirror if configured.
+    type: string
+    default: ""
+    group: Images
+
+  - variable: image.tag
+    label: Image Tag
+    type: string
+    default: "latest"
+    group: Images
+
+  - variable: image.pullPolicy
+    label: Image Pull Policy
+    type: enum
+    options:
+      - IfNotPresent
+      - Always
+      - Never
+    default: IfNotPresent
+    group: Images
+
+  # ── Autoscaling ──────────────────────────────────────────────────────────────
+
+  - variable: autoscaling.enabled
+    label: Enable Horizontal Pod Autoscaler
+    description: Scale backend pods based on CPU utilisation. Requires metrics-server.
+    type: boolean
+    default: false
+    group: Autoscaling
+
+  - variable: autoscaling.minReplicas
+    label: Min Replicas
+    type: int
+    default: 1
+    min: 1
+    group: Autoscaling
+    show_if: "autoscaling.enabled=true"
+
+  - variable: autoscaling.maxReplicas
+    label: Max Replicas
+    type: int
+    default: 5
+    min: 2
+    max: 20
+    group: Autoscaling
+    show_if: "autoscaling.enabled=true"
+
+  - variable: autoscaling.targetCPUUtilizationPercentage
+    label: Target CPU %
+    type: int
+    default: 70
+    min: 10
+    max: 100
+    group: Autoscaling
+    show_if: "autoscaling.enabled=true"
