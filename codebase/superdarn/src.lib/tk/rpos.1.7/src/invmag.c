@@ -30,6 +30,7 @@ Modifications:
 #include "rmath.h"
 #include "aacgm.h"
 #include "aacgmlib_v2.h"
+#include "igrflib.h"
 #include "magcmp.h"
 #include "radar.h"
 #include "rpos.h"
@@ -217,7 +218,7 @@ int RPosRngBmAzmElv(int bm, int rn, int year,
     double gbx,gby,gbz; 
     double ghx,ghy,ghz;
     double bx,by,bz,b;
-    double dummy;
+    double dummy,srng;
     int s;
 
     /* Get geodetic latitude/longitude from radar hardware info [deg] */
@@ -232,7 +233,7 @@ int RPosRngBmAzmElv(int bm, int rn, int year,
      * surface of the oblate spheroid (ie not constant with latitude) plus
      * virtual height (frho) */
     RPosGeo(1,bm,rn,hdw,frang,rsep,rx,
-            height,&frho,&flat,&flon,chisham);
+            height,&frho,&flat,&flon,&srng,chisham);
 
     /* Convert range/beam position from geocentric spherical coordinates
      * (frho,flat,flon) to global Cartesian coordinates (fx,fy,fz) */
@@ -297,8 +298,8 @@ int RPosRngBmAzmElv(int bm, int rn, int year,
  **/
 int RPosInvMag(int bm, int rn, int year, struct RadarSite *hdw, double frang,
                double rsep, double rx, double height,
-               double *mlat, double *mlon, double *azm, 
-               int chisham, int old_aacgm) {
+               double *mlat, double *mlon, double *azm, double *srng,
+               int chisham, int magflg) {
 
     double flat,flon,frho;
     double fx,fy,fz;
@@ -316,6 +317,8 @@ int RPosInvMag(int bm, int rn, int year, struct RadarSite *hdw, double frang,
     double xlat,xlon,nlat,nlon;
     int s;
 
+    double out[3];
+
     /* Get geodetic latitude/longitude from radar hardware info [deg] */
     gdlat=hdw->geolat;
     gdlon=hdw->geolon;
@@ -328,7 +331,7 @@ int RPosInvMag(int bm, int rn, int year, struct RadarSite *hdw, double frang,
      * surface of the oblate spheroid (ie not constant with latitude) plus
      * virtual height (frho) */
     RPosGeo(1,bm,rn,hdw,frang,rsep,rx,
-            height,&frho,&flat,&flon,chisham);
+            height,&frho,&flat,&flon,srng,chisham);
 
     /* Convert range/beam position from geocentric spherical coordinates
      * (frho,flat,flon) to global Cartesian coordinates (fx,fy,fz) */
@@ -391,7 +394,11 @@ int RPosInvMag(int bm, int rn, int year, struct RadarSite *hdw, double frang,
     /* Convert range/beam position from geocentric latitude/longitude (flat,flon)
      * at virtual height (tmp_ht) to AACGM magnetic latitude/longitude
      * coordinates (mlat,mlon) */
-    if (old_aacgm) s=AACGMConvert(flat,flon,tmp_ht,mlat,mlon,&dummy,0);
+    if (magflg == 2) {
+      s=geod2ecdip(gdlat,gdlon,tmp_ht,out);
+      *mlat = out[0];
+      *mlon = out[1];
+    } else if (magflg == 1) s=AACGMConvert(flat,flon,tmp_ht,mlat,mlon,&dummy,0);
     else s=AACGM_v2_Convert(flat,flon,tmp_ht,mlat,mlon,&dummy,0);
     if (s==-1) return -1;
 
@@ -403,7 +410,12 @@ int RPosInvMag(int bm, int rn, int year, struct RadarSite *hdw, double frang,
     /* Convert pointing direction position from geocentric latitude/longitude
      * (xlat,xlon) at virtual height (tmp_height) to AACGM magnetic
      * latitude/longitude coordinates (nlat,nlon) */
-    if (old_aacgm) s=AACGMConvert(xlat,xlon,tmp_ht,&nlat,&nlon,&dummy,0);
+    if (magflg == 2) {
+      geodtgc(-1,&gdlat,&gdlon,&gdrho,&xlat,&xlon,&dummy);
+      s=geod2ecdip(gdlat,gdlon,tmp_ht,out);
+      nlat = out[0];
+      nlon = out[1];
+    } else if (magflg == 1) s=AACGMConvert(xlat,xlon,tmp_ht,&nlat,&nlon,&dummy,0);
     else s=AACGM_v2_Convert(xlat,xlon,tmp_ht,&nlat,&nlon,&dummy,0);
     if (s==-1) return -1;
 

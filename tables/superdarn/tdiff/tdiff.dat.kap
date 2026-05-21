@@ -1,0 +1,33 @@
+# Filename: tdiff.dat.kap
+# Description: Kapuskasing phase calibration values (tdiff)
+#
+# References
+#-------------------------------------------------------------------------------
+# 0: Ponomarenko, et al. (2015), doi:10.1186/s40623-015-0310-3.
+# 1: Burrell, et al. (2016), doi:10.1002/2016RS006089.
+# 2: Ponomarenko, et al. (2018), doi:10.1029/2018rs006638.
+# 3: Chisham, (2018), doi:10.1029/2017rs006492.
+# 4: Chisham, et al. (2021), doi:10.1016/j.polar.2021.100638.
+# 5: Thomas, et al. (2024), doi:10.1029/2024RS007957
+#-------------------------------------------------------------------------------
+#
+# Values
+#-------------------------------------------------------------------------------
+# M: Reference number from the section above
+# C: Radar channel number
+# FMIN/FMAX: Transmission frequency band limits in kHz
+# SDATE/EDATE: Starting/ending date (YYYYMMDD)
+# STIME/ETIME: Starting/ending time of day (HH:MM:SS)
+# TDIFF: Estimated tdiff (microsec)
+# ERR: Uncertainty in tdiff (microsec)
+# NPNTS: Number of points used in calibration (0, 1, 2) or median (3, 4)
+# VAL: Has tdiff estimate been validated? 1=True, 0=False
+#-------------------------------------------------------------------------------
+#
+# Comments
+#-------------------------------------------------------------------------------
+# Inline comments provide more information about reasons behind gaps in data or
+# changes in tdiff estimates
+#-------------------------------------------------------------------------------
+#M C  FMIN  FMAX   SDATE    STIME    EDATE    ETIME   TDIFF  ERR  NPNTS VAL
+5  0  9600 18500 20230404 00:00:00 20240705 23:59:59 -0.034 0.002 3.6e6   1
