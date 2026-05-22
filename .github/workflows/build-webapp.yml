@@ -1,0 +1,94 @@
+# Build and push the SuperDARN Workbench webapp images.
+#
+# Produces the three tags the rst-workbench Helm chart expects:
+#   <DOCKER_USERNAME>/rst-webapp-backend:latest-cpu
+#   <DOCKER_USERNAME>/rst-webapp-backend:latest-cuda
+#   <DOCKER_USERNAME>/rst-webapp-frontend:latest
+#
+# Both backend tags are built from webapp/backend/Dockerfile.cuda (single
+# source of truth, switched via BASE_IMAGE build-arg). Build context is the
+# repo root because Dockerfile.cuda pulls in CUDArst/, pythonv2/, and
+# webapp/backend/ together.
+#
+# Runs on the self-hosted clusteros runner so the heavy CUDA layer build
+# stays inside the cluster network. linux/amd64 only — the nvidia/cuda
+# base has no arm64 variant for the deep-learning runtime.
+
+name: Build and Push Webapp Images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'webapp/**'
+      - 'pythonv2/**'
+      - 'CUDArst/**'
+      - '.github/workflows/build-webapp.yml'
+  workflow_dispatch:
+
+jobs:
+  backend:
+    runs-on: [self-hosted, clusteros]
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - tag: latest-cpu
+            base: python:3.11-slim
+          - tag: latest-cuda
+            base: nvidia/cuda:12.6.3-devel-ubuntu22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push backend (${{ matrix.tag }})
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: webapp/backend/Dockerfile.cuda
+          push: true
+          platforms: linux/amd64
+          build-args: |
+            BASE_IMAGE=${{ matrix.base }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/rst-webapp-backend:${{ matrix.tag }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rst-webapp-backend:${{ matrix.tag }}-cache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rst-webapp-backend:${{ matrix.tag }}-cache,mode=max
+
+  frontend:
+    runs-on: [self-hosted, clusteros]
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: webapp/frontend
+          file: webapp/frontend/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: ${{ secrets.DOCKER_USERNAME }}/rst-webapp-frontend:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rst-webapp-frontend:latest-cache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rst-webapp-frontend:latest-cache,mode=max
