@@ -3,7 +3,11 @@
 # Multi-stage build supporting both CPU and CUDA configurations
 # Includes all dependencies for SUPERDARN processing and CUDA acceleration
 
-ARG CUDA_VERSION=12.0
+# NVIDIA delisted the short `12.0` tag from Docker Hub — only full semver
+# patch tags (e.g. 12.6.3) resolve now. Pinned to 12.6.3 to match
+# webapp/backend/Dockerfile.cuda and .github/workflows/build-webapp.yml so
+# both build paths use the same base image.
+ARG CUDA_VERSION=12.6.3
 ARG UBUNTU_VERSION=22.04
 
 # =============================================================================
