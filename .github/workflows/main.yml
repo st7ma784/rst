@@ -19,15 +19,31 @@
 
 name: Compilation Test
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main, develop ]
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '.github/workflows/**'
+      - '*.md'
+      - 'LICENSE'
+  pull_request:
+    branches: [ main, develop ]
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '.github/workflows/**'
+      - '*.md'
+      - 'LICENSE'
 
 env:
   CDF_VERSION: "39_0"
 
 jobs:
   build:
-    name: Compile RST on Ubuntu (clusteros-runner)
-    runs-on: clusteros-runner
+    name: Compile RST on Ubuntu
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4

@@ -2,9 +2,26 @@ name: SuperDARN Performance Tests & Benchmarks
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ main, develop ]
+    paths:
+      - 'codebase/superdarn/**'
+      - 'dockerfile.fitacf'
+      - '.github/workflows/superdarn-performance-tests.yml'
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '*.md'
+      - 'LICENSE'
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
+    paths:
+      - 'codebase/superdarn/**'
+      - 'dockerfile.fitacf'
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '*.md'
+      - 'LICENSE'
   
   workflow_dispatch:
     inputs:
@@ -29,7 +46,7 @@ env:
 
 jobs:
   build-test-image:
-    runs-on: clusteros-runner
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
@@ -79,8 +96,8 @@ jobs:
 
   fitacf-array-tests:
     needs: build-test-image
-    runs-on: clusteros-runner
-    if: github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'fitacf-only' || github.event.inputs.test_type == null
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'fitacf-only' || github.event.inputs.test_type == null))
     strategy:
       matrix:
         thread_count: [1, 2, 4, 8]
@@ -114,8 +131,8 @@ jobs:
 
   speck-removal-tests:
     needs: build-test-image
-    runs-on: clusteros-runner
-    if: github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'speck-removal-only' || github.event.inputs.test_type == null
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'speck-removal-only' || github.event.inputs.test_type == null))
     strategy:
       matrix:
         file_size: [small, medium, large]

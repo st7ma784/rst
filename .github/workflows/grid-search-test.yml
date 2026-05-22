@@ -2,15 +2,25 @@ name: Grid Search Optimization Tests
 
 on:
   push:
-    branches: [ main, develop, grid-optimization-* ]
-    paths:
-      - 'codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/**'
-      - '.github/workflows/grid-search-test.yml'
-  pull_request:
     branches: [ main, develop ]
     paths:
       - 'codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/**'
       - '.github/workflows/grid-search-test.yml'
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '*.md'
+      - 'LICENSE'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/**'
+      - '.github/workflows/grid-search-test.yml'
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '*.md'
+      - 'LICENSE'
   workflow_dispatch:
     inputs:
       test_type:
@@ -33,7 +43,7 @@ env:
 jobs:
   test:
     name: Grid Search Tests
-    runs-on: clusteros-runner
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         gcc-version: [9, 10, 11]
@@ -90,8 +100,8 @@ jobs:
   benchmark:
     name: Grid Search Benchmark
     needs: test
-    if: github.event.inputs.test_type == 'benchmark' || github.event_name == 'workflow_dispatch'
-    runs-on: clusteros-runner
+    if: github.event.inputs.test_type == 'benchmark'
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4

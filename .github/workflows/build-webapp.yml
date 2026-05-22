@@ -24,11 +24,16 @@ on:
       - 'pythonv2/**'
       - 'CUDArst/**'
       - '.github/workflows/build-webapp.yml'
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '*.md'
+      - 'LICENSE'
   workflow_dispatch:
 
 jobs:
   backend:
-    runs-on: clusteros-runner
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     strategy:
@@ -66,7 +71,7 @@ jobs:
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rst-webapp-backend:${{ matrix.tag }}-cache,mode=max
 
   frontend:
-    runs-on: clusteros-runner
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:

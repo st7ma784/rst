@@ -2,9 +2,26 @@ name: SuperDARN CUDA Ecosystem CI/CD
 
 on:
   push:
-    branches: [ main, develop, cuda-* ]
-  pull_request:
     branches: [ main, develop ]
+    paths:
+      - 'codebase/superdarn/**'
+      - '.github/workflows/cuda-ecosystem.yml'
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '*.md'
+      - 'LICENSE'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'codebase/superdarn/**'
+      - '.github/workflows/cuda-ecosystem.yml'
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '*.md'
+      - 'LICENSE'
+  workflow_dispatch:
 
 
 env:
@@ -15,7 +32,7 @@ jobs:
   # Build matrix for CUDA ecosystem
   build-cuda-ecosystem:
     name: Build CUDA Modules
-    runs-on: clusteros-runner
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -88,7 +105,7 @@ jobs:
   # Comprehensive ecosystem validation
   validate-ecosystem:
     name: Validate CUDA Ecosystem
-    runs-on: clusteros-runner
+    runs-on: ubuntu-latest
     needs: build-cuda-ecosystem
     
     steps:

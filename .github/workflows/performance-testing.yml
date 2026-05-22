@@ -5,19 +5,27 @@ name: SuperDARN RST Performance Testing
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
-      - 'codebase/**'
-      - 'build/**'
+      - 'codebase/superdarn/**'
       - 'Dockerfile'
       - '.github/workflows/performance-testing.yml'
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '*.md'
+      - 'LICENSE'
   
   pull_request:
     branches: [ main ]
     paths:
-      - 'codebase/**'
-      - 'build/**'
+      - 'codebase/superdarn/**'
       - 'Dockerfile'
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '*.md'
+      - 'LICENSE'
   
   # schedule:
     # Scheduled runs disabled to conserve GitHub Actions credits
@@ -57,7 +65,7 @@ jobs:
   # Setup and Configuration
   # ============================================================================
   setup:
-    runs-on: clusteros-runner
+    runs-on: ubuntu-latest
     outputs:
       test_suite: ${{ steps.config.outputs.test_suite }}
       data_sets: ${{ steps.config.outputs.data_sets }}
@@ -118,7 +126,7 @@ jobs:
   # Build Docker Containers
   # ============================================================================
   build-containers:
-    runs-on: clusteros-runner
+    runs-on: ubuntu-latest
     needs: setup
     if: needs.setup.outputs.should_run_tests == 'true'
     timeout-minutes: 45
@@ -175,7 +183,7 @@ jobs:
   # Prepare Test Data
   # ============================================================================
   prepare-test-data:
-    runs-on: clusteros-runner
+    runs-on: ubuntu-latest
     needs: setup
     if: needs.setup.outputs.should_run_tests == 'true'
     timeout-minutes: 15

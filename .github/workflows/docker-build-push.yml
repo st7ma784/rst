@@ -2,13 +2,22 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ "main" ]
-    # Publish semver tags as releases.
+    branches: [ main ]
+    paths:
+      - 'CUDArst/**'
+      - 'pythonv2/**'
+      - '.github/workflows/docker-build-push.yml'
+      - 'Dockerfile'
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '*.md'
+      - 'LICENSE'
+  workflow_dispatch:
 
 jobs:
     build:
-
-        runs-on: clusteros-runner
+        runs-on: ubuntu-latest
         permissions:
             contents: read
             packages: write

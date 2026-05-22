@@ -2,15 +2,25 @@ name: SUPERDARN CUDA Performance Validation
 
 on:
   push:
-    branches: [ main, develop, cuda-*, performance-* ]
-    paths:
-      - 'codebase/superdarn/src.lib/tk/fitacf_v3.0/**'
-      - '.github/workflows/cuda-validation.yml'
-  pull_request:
     branches: [ main, develop ]
     paths:
       - 'codebase/superdarn/src.lib/tk/fitacf_v3.0/**'
       - '.github/workflows/cuda-validation.yml'
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '*.md'
+      - 'LICENSE'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'codebase/superdarn/src.lib/tk/fitacf_v3.0/**'
+      - '.github/workflows/cuda-validation.yml'
+    paths-ignore:
+      - 'docs/**'
+      - 'helm/**'
+      - '*.md'
+      - 'LICENSE'
   # schedule:
     # Scheduled runs disabled to conserve GitHub Actions credits
     # Re-enable if needed for production monitoring
@@ -50,7 +60,7 @@ jobs:
   # Build and test on different configurations
   test-matrix:
     name: Test CUDA Implementation
-    runs-on: clusteros-runner
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
