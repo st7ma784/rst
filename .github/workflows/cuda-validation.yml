@@ -50,7 +50,7 @@ jobs:
   # Build and test on different configurations
   test-matrix:
     name: Test CUDA Implementation
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     strategy:
       fail-fast: false
       matrix:
@@ -174,7 +174,7 @@ jobs:
   # Memory leak testing (CPU only)
   memory-test:
     name: Memory Leak Testing
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: test-matrix
     
     steps:
@@ -232,7 +232,7 @@ jobs:
   # Performance benchmarking
   benchmark:
     name: Performance Benchmark
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     if: github.event.inputs.run_benchmarks == true || github.event_name == 'schedule'
     needs: test-matrix
     
@@ -348,7 +348,7 @@ jobs:
   # Collect and summarize results
   summary:
     name: Test Summary
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: [test-matrix, memory-test]
     if: always()
     

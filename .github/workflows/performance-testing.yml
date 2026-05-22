@@ -57,7 +57,7 @@ jobs:
   # Setup and Configuration
   # ============================================================================
   setup:
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     outputs:
       test_suite: ${{ steps.config.outputs.test_suite }}
       data_sets: ${{ steps.config.outputs.data_sets }}
@@ -118,7 +118,7 @@ jobs:
   # Build Docker Containers
   # ============================================================================
   build-containers:
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: setup
     if: needs.setup.outputs.should_run_tests == 'true'
     timeout-minutes: 45
@@ -175,7 +175,7 @@ jobs:
   # Prepare Test Data
   # ============================================================================
   prepare-test-data:
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: setup
     if: needs.setup.outputs.should_run_tests == 'true'
     timeout-minutes: 15
@@ -260,7 +260,7 @@ jobs:
   # Run Performance Tests
   # ============================================================================
   performance-tests:
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: [setup, build-containers, prepare-test-data]
     if: needs.setup.outputs.should_run_tests == 'true'
     timeout-minutes: ${{ fromJson(needs.setup.outputs.timeout_minutes) }}
@@ -397,7 +397,7 @@ jobs:
   # Generate Performance Dashboard
   # ============================================================================
   generate-dashboard:
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: [setup, performance-tests]
     if: always() && needs.setup.outputs.should_run_tests == 'true'
     timeout-minutes: 10
@@ -720,7 +720,7 @@ jobs:
   # Deploy Dashboard and Report Results
   # ============================================================================
   deploy-and-report:
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: [setup, generate-dashboard]
     if: always() && needs.setup.outputs.should_run_tests == 'true'
     
@@ -850,7 +850,7 @@ jobs:
   # Cleanup
   # ============================================================================
   cleanup:
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: [deploy-and-report]
     if: always()
     

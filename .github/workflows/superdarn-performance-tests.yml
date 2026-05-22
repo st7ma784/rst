@@ -29,7 +29,7 @@ env:
 
 jobs:
   build-test-image:
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     permissions:
       contents: read
       packages: write
@@ -79,7 +79,7 @@ jobs:
 
   fitacf-array-tests:
     needs: build-test-image
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     if: github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'fitacf-only' || github.event.inputs.test_type == null
     strategy:
       matrix:
@@ -114,7 +114,7 @@ jobs:
 
   speck-removal-tests:
     needs: build-test-image
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     if: github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'speck-removal-only' || github.event.inputs.test_type == null
     strategy:
       matrix:
@@ -166,7 +166,7 @@ jobs:
   # Comprehensive SuperDARN component testing
   comprehensive-tests:
     needs: build-test-image
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     strategy:
       matrix:
         test_scope: ['libraries', 'binaries', 'fitacf_detailed']
@@ -212,7 +212,7 @@ jobs:
 
   generate-performance-report:
     needs: [fitacf-array-tests, speck-removal-tests]
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     if: always() && (needs.fitacf-array-tests.result == 'success' || needs.speck-removal-tests.result == 'success')
     
     steps:
@@ -257,7 +257,7 @@ jobs:
 
   performance-comparison:
     needs: [generate-performance-report]
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     if: github.event_name == 'pull_request'
     
     steps:
@@ -302,7 +302,7 @@ jobs:
 
   benchmark-regression-check:
     needs: [fitacf-array-tests, speck-removal-tests]
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     if: github.event_name == 'pull_request'
     
     steps:
@@ -331,7 +331,7 @@ jobs:
   # Generate integrated performance dashboard
   generate-comprehensive-dashboard:
     needs: [fitacf-array-tests, speck-removal-tests, comprehensive-tests]
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     
     steps:
       - name: Checkout code

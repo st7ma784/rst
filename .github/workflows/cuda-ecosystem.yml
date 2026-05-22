@@ -15,7 +15,7 @@ jobs:
   # Build matrix for CUDA ecosystem
   build-cuda-ecosystem:
     name: Build CUDA Modules
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     strategy:
       fail-fast: false
       matrix:
@@ -88,7 +88,7 @@ jobs:
   # Comprehensive ecosystem validation
   validate-ecosystem:
     name: Validate CUDA Ecosystem
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: build-cuda-ecosystem
     
     steps:
@@ -129,7 +129,7 @@ jobs:
   # Performance benchmarking
   performance-benchmarks:
     name: Performance Benchmarks
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: build-cuda-ecosystem
     if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[benchmark]')
     
@@ -187,7 +187,7 @@ jobs:
   # API compatibility testing
   api-compatibility:
     name: API Compatibility Tests
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: build-cuda-ecosystem
     
     steps:
@@ -226,7 +226,7 @@ jobs:
   # Memory testing and leak detection
   memory-testing:
     name: Memory Testing
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: build-cuda-ecosystem
     
     steps:
@@ -272,7 +272,7 @@ jobs:
   # Documentation generation
   generate-docs:
     name: Generate Documentation
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: [validate-ecosystem, api-compatibility]
     
     steps:
@@ -328,7 +328,7 @@ jobs:
   # Release automation
   create-release:
     name: Create Release
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: [validate-ecosystem, performance-benchmarks, api-compatibility, memory-testing]
     if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release]')
     
@@ -371,7 +371,7 @@ jobs:
   # Notification and reporting
   notify-results:
     name: Notify Results
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: [validate-ecosystem, performance-benchmarks, api-compatibility, memory-testing]
     if: always()
     

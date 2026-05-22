@@ -42,7 +42,7 @@ concurrency:
 jobs:
   # Build documentation
   build:
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     
     steps:
     - name: Checkout repository
@@ -396,7 +396,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: build
     
     steps:
@@ -426,7 +426,7 @@ jobs:
 
   # Validate documentation links and structure
   validate:
-    runs-on: ubuntu-latest
+    runs-on: clusteros-runner
     needs: build
     if: github.event_name == 'pull_request'
     
