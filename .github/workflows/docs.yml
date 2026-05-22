@@ -12,10 +12,6 @@ on:
       - 'codebase/**/*.cu'
       - 'README.md'
       - '.github/workflows/docs.yml'
-    paths-ignore:
-      - 'helm/**'
-      - 'build/**'
-      - 'LICENSE'
   
   pull_request:
     branches: [ main ]

@@ -6,21 +6,11 @@ on:
     paths:
       - 'codebase/superdarn/**'
       - '.github/workflows/cuda-ecosystem.yml'
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '*.md'
-      - 'LICENSE'
   pull_request:
     branches: [ main ]
     paths:
       - 'codebase/superdarn/**'
       - '.github/workflows/cuda-ecosystem.yml'
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '*.md'
-      - 'LICENSE'
   workflow_dispatch:
 
 

@@ -8,11 +8,6 @@ on:
       - 'pythonv2/**'
       - '.github/workflows/docker-build-push.yml'
       - 'Dockerfile'
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '*.md'
-      - 'LICENSE'
   workflow_dispatch:
 
 jobs:

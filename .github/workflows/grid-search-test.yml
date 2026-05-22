@@ -6,21 +6,11 @@ on:
     paths:
       - 'codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/**'
       - '.github/workflows/grid-search-test.yml'
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '*.md'
-      - 'LICENSE'
   pull_request:
     branches: [ main ]
     paths:
       - 'codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/**'
       - '.github/workflows/grid-search-test.yml'
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '*.md'
-      - 'LICENSE'
   workflow_dispatch:
     inputs:
       test_type:

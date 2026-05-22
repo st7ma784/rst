@@ -7,21 +7,11 @@ on:
       - 'codebase/superdarn/**'
       - 'dockerfile.fitacf'
       - '.github/workflows/superdarn-performance-tests.yml'
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '*.md'
-      - 'LICENSE'
   pull_request:
     branches: [ main ]
     paths:
       - 'codebase/superdarn/**'
       - 'dockerfile.fitacf'
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '*.md'
-      - 'LICENSE'
   
   workflow_dispatch:
     inputs:

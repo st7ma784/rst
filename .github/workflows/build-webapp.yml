@@ -24,11 +24,6 @@ on:
       - 'pythonv2/**'
       - 'CUDArst/**'
       - '.github/workflows/build-webapp.yml'
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '*.md'
-      - 'LICENSE'
   workflow_dispatch:
 
 jobs:

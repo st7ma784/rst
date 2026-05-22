@@ -10,22 +10,12 @@ on:
       - 'codebase/superdarn/**'
       - 'Dockerfile'
       - '.github/workflows/performance-testing.yml'
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '*.md'
-      - 'LICENSE'
   
   pull_request:
     branches: [ main ]
     paths:
       - 'codebase/superdarn/**'
       - 'Dockerfile'
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '*.md'
-      - 'LICENSE'
   
   # schedule:
     # Scheduled runs disabled to conserve GitHub Actions credits

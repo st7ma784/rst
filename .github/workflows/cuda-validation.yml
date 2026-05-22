@@ -6,21 +6,11 @@ on:
     paths:
       - 'codebase/superdarn/src.lib/tk/fitacf_v3.0/**'
       - '.github/workflows/cuda-validation.yml'
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '*.md'
-      - 'LICENSE'
   pull_request:
     branches: [ main ]
     paths:
       - 'codebase/superdarn/src.lib/tk/fitacf_v3.0/**'
       - '.github/workflows/cuda-validation.yml'
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '*.md'
-      - 'LICENSE'
   # schedule:
     # Scheduled runs disabled to conserve GitHub Actions credits
     # Re-enable if needed for production monitoring

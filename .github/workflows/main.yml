@@ -22,20 +22,8 @@ name: Compilation Test
 on:
   push:
     branches: [ main, develop ]
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '.github/workflows/**'
-      - '*.md'
-      - 'LICENSE'
   pull_request:
     branches: [ main, develop ]
-    paths-ignore:
-      - 'docs/**'
-      - 'helm/**'
-      - '.github/workflows/**'
-      - '*.md'
-      - 'LICENSE'
 
 env:
   CDF_VERSION: "39_0"
