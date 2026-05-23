@@ -59,8 +59,7 @@ double FitGetTime(struct DataMap *ptr) {
       us=*(s->data.iptr);
    }
    if (yr==0) return -1;
-   int usec = (int)(us % 1000000);
-   return TimeYMDHMSToEpoch(yr, mo, dy, hr, mt, sc, usec);
+   return TimeYMDHMSToEpoch(yr,mo,dy,hr,mt,sc+us/1.0e6); 
 }
 
 
@@ -72,7 +71,7 @@ int FitSeek(int fid,
   struct DataMap *ptr;
   double tfile=0,tval;
 
-  tval=TimeYMDHMSToEpoch(yr, mo, dy, hr, mt, sc, 0);
+  tval=TimeYMDHMSToEpoch(yr,mo,dy,hr,mt,sc);
 
   if (inx !=NULL) {
     int rec=0,prec=-1;
@@ -113,21 +112,16 @@ int FitSeek(int fid,
     return 0;
   } else {
     fptr=lseek(fid,0,SEEK_CUR);
-    if (DataMapRead(fid, &ptr) != 0 || ptr == NULL) {
-      return -1;
-    } else {
+    ptr=DataMapRead(fid);
+    if (ptr !=NULL) {
       tfile=FitGetTime(ptr);
       DataMapFree(ptr);
-      if (tfile>tval) {
-        fptr=lseek(fid,0,SEEK_SET);
-      }
-    }
+      if (tfile>tval) fptr=lseek(fid,0,SEEK_SET);
+    } else fptr=lseek(fid,0,SEEK_SET);
     if (atme!=NULL) *atme=tfile;
     while (tval>=tfile) {
       tptr=lseek(fid,0,SEEK_CUR);
-      if (DataMapRead(fid, &ptr) != 0) {
-        return -1;
-      }
+      ptr=DataMapRead(fid);
       if (ptr==NULL) break;
       tfile=FitGetTime(ptr);
       DataMapFree(ptr);
