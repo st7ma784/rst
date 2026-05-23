@@ -1,0 +1,8 @@
+<binary>
+<name>grid_opt_compare</name>
+<location>superdarn/testing</location>
+<description>
+<p>Equivalence and timing benchmark comparing libgrd (original) vs libgrdopt (parallel/SIMD).</p>
+<p>See RESULTS.md in the source dir for findings.</p>
+</description>
+</binary>
