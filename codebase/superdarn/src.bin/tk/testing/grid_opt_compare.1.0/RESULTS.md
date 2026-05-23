@@ -1,84 +1,100 @@
 # libgrd vs libgrdopt — equivalence & benchmark results
 
-Harness: `/tmp/grid_bench/grid_bench.c` (links both libgrd.1 and libgrdopt.1).
-Host: 14-core CPU, GCC -O2, runtime varied via `OMP_NUM_THREADS`.
+Harness: `grid_opt_compare.c` (links both libgrd.1 and libgrdopt.1).
+Host: 14-core x86_64, GCC 13 -O2 -march=native, runtime varied via
+`OMP_NUM_THREADS`. See sibling `AUDIT.md` (in the optimized library
+directory) for the full bug-list and completion plan.
 
 ## TL;DR
 
-The "optimized" library is **slower than the original on every operation
-measured, at every input size**, and produces **non-equivalent results**
-for sorting. The performance regression is reproducible and structural.
+After round-5 fixes, the optimized library is **bitwise-equivalent**
+to the original on every measured operation, but is still **slower at
+every size**. Single-threaded performance:
 
-## Sort
+| Op            | N        | libgrd  | libgrdopt | speedup |
+|---------------|---------:|--------:|----------:|--------:|
+| Sort          |    1,000 | 0.07ms  |   0.07ms  |   0.93x |
+| Sort          |   10,000 | 0.87ms  |   0.93ms  |   0.93x |
+| Sort          |  100,000 | 12.4ms  |  16.7ms   |   0.74x |
+| Sort          |  500,000 | 88.4ms  | 114.2ms   |   0.77x |
+| LocateCell    |    1,000 | 10.2µs  |  17.8µs   |   0.57x |
+| LocateCell    |   10,000 |  165µs  |   446µs   |   0.37x |
+| LocateCell    |  100,000 | 5,076µs | 12,647µs  |   0.40x |
 
-| N       | original (ms) | libgrdopt (ms) | speedup | equivalent? |
-|---------|--------------:|---------------:|--------:|:-----------:|
-| 1,000   |          0.07 |           0.07 |   0.95x | ✗           |
-| 10,000  |          0.87 |           0.97 |   0.91x | ✗           |
-| 100,000 |         12.82 |          17.43 |   0.74x | ✗           |
-| 500,000 |         90.11 |         121.94 |   0.74x | ✗           |
+All 100 equivalence checks across all rows passed.
 
-OMP_NUM_THREADS=1 and =14 produce identical timings, confirming the
-parallel path is never taken.
+## What changed between round-4 and round-5
 
-## LocateCell (linear search, 100 probes / iter)
+| Issue                                    | Before     | After      |
+|------------------------------------------|------------|------------|
+| Sort equivalence                         | 5/5 fail   | 0/5 fail   |
+| Locate equivalence                       | 20/20 mismatch | 0/20 mismatch |
+| Sort speedup @ N=500k (1 thread)         | 0.74x      | 0.77x      |
+| Locate speedup @ N=100k (1 thread)       | 0.16x      | 0.40x      |
+| Multi-thread sort @ N=100k               | segfault   | segfault (disabled, falls back to serial) |
+| `grid_aligned_malloc/free` definitions   | external stub | in libgrdopt |
 
-| N       | original (µs) | libgrdopt (µs) | speedup | mismatches |
-|---------|--------------:|---------------:|--------:|-----------:|
-| 1,000   |         10.23 |          17.26 |   0.59x | 20/20      |
-| 10,000  |        159.16 |         459.37 |   0.35x | 20/20      |
-| 100,000 |       5036.02 |       13378.10 |   0.38x | 20/20      |
+## Why still slower
 
-## Why the regression
+Root causes haven't changed since the round-4 RESULTS — the new
+round-5 work fixed correctness and one performance regression
+(LocateCell OMP overhead) but the structural costs remain:
 
-1. **Different sort key**. `GridSort` sorts by `(st_id, index)`. `GridSortOpt`
-   wraps `GridSortParallel(grid, NULL)` which calls
-   `GridSortParallelEx(SORT_BY_LATITUDE, SORT_BY_LONGITUDE)`. The "optimized"
-   API is not semantically equivalent to the original.
+1. **`sizeof(GridGVecOpt) ≈ 2 × sizeof(GridGVec)`** (192 vs 96 bytes)
+   due to heavy alignment + padding. Every memory-bound op pays 2×
+   the bandwidth. This is the dominant cost.
 
-2. **Parallel branch is dead**. `GridSortParallelEx`:
-       int num_threads = config ? config->num_threads : 1;
-       if (grid->vcnum > 10000 && num_threads > 1) { /* parallel sort */ }
-   The wrapper `GridSortOpt` passes `config=NULL`, so `num_threads=1` and
-   the parallel-merge-sort branch is never reached. The "optimized" sort
-   is always a single-threaded qsort.
+2. **Indirect comparator dispatch** through `compare_grid_cells` +
+   `global_sort_context`. Original uses an inlined `GridSortVec` in
+   qsort's compare slot. The round-5 fast-path comparator catches
+   the common `(STATION, INDEX, ASC)` case but still goes through a
+   function pointer per compare.
 
-3. **Larger struct, worse cache density**. `sizeof(GridGVec)` is ~96 bytes;
-   `sizeof(GridGVecOpt)` is ~192 bytes (ALIGNED(128), nested aligned
-   sub-structs, padding fields). Sorting twice the bytes, walking
-   twice the bytes per probe — explains the 0.74x on sort and 0.35-0.59x
-   on locate.
+3. **`GridLocateCellOpt` is the same linear scan algorithm** as
+   `GridLocateCell`. The original "Opt" naming was aspirational.
+   `GridDataOpt.spatial_index` field exists but is never populated.
 
-4. **Indirect comparator**. Original qsort calls `GridSortVec` (direct
-   field compare). Optimized qsort calls `parallel_sort_compare` which
-   reads `global_sort_context`, switches on criteria enum, computes a
-   double sort key, then compares. Per-comparison overhead is multiples
-   higher.
+## Round-5 fixes (committed in this push)
 
-5. **LocateCell algorithm is unchanged**. `GridLocateCellOpt` is
-   character-for-character the same linear search as `GridLocateCell` —
-   the only delta is the larger struct it walks. There is no "SIMD"
-   optimization despite the file name.
+- `GridSortOpt` now defaults to `SORT_BY_STATION + SORT_BY_INDEX`
+  (matches original `GridSort` semantics — was `LATITUDE + LONGITUDE`)
+- Added `SORT_BY_INDEX` to the criteria enum + case in `get_sort_key`
+- Added a fast-path direct-compare branch in `compare_grid_cells` for
+  the common case
+- Multi-threaded sort branch disabled (`if (0 && ...)`) with TODO —
+  both attempted parallel impls (OMP-task recursive merge + tile +
+  k-way merge) segfault for N ≥ 50k
+- Removed OMP path from `GridLocateCellOpt` — measured 6x slower than
+  scalar at OMP=1
+- `grid_aligned_malloc` / `grid_aligned_free` now defined inside
+  the library (no external stub needed)
+- Fixed `parallel_merge` AVX copy that was truncating struct moves to
+  32 bytes regardless of `sizeof(GridGVecOpt)`
 
-## What would actually help
+## What this harness does NOT measure
 
-- Pass a non-NULL `GridProcessingConfig` with `num_threads > 1` and run
-  inputs >= 10k records to engage the parallel merge sort branch.
-- Add a `GridSortByStation` entry in the criteria enum and have `GridSortOpt`
-  use it, so the comparison is apples-to-apples.
-- Reduce GridGVecOpt alignment/padding (currently 2x the original) or
-  add a slim representation for sort/locate hot paths.
-- Replace `GridLocateCellOpt`'s linear scan with the spatial index
-  the optimized GridData already provisions (`spatial_index` field is
-  defined but never populated).
-
-## What this doesn't measure
-
-- Aggregation operations (`GridAddParallel`, `GridIntegrateParallel`)
-  could not be compared because they have different signatures than
-  the original (`GridAdd(a, b, recnum)` vs `GridAddParallel(target,
-  source, tolerance)`).
+- Aggregation ops (`GridAdd`/`GridIntegrate`) — different signatures
+  in the optimized API, no apples-to-apples comparison.
 - I/O (`GridFread`/`GridFwrite`) — the optimized `gridio_parallel.c`
-  is excluded from the build (didn't compile; wrong DataMap API).
-- Merge (`GridMerge`) — optimized `mergegrid_parallel.c` is excluded
-  (depends on Intel SVML intrinsics not available in GCC).
+  is excluded from the build (53 errors, wrong DataMap API).
+- Merge (`GridMerge`) — `mergegrid_parallel.c` is excluded (Intel
+  SVML intrinsics not available in GCC).
+- AVX-512 seek (`gridseek_optimized.c`) — excluded (4 residual errors).
+
+See `AUDIT.md` for the full plan to close these gaps (~5 days work).
+
+## What would actually make this faster
+
+Per AUDIT.md section 5 (Phase C):
+
+- **Slim the GridGVecOpt struct** to ≤ 1.2× the original layout —
+  removes the 2x memory bandwidth penalty. Highest impact, highest
+  risk (SIMD code paths assume the current layout).
+- **Inline the sort comparator** — use C11 `qsort_r` or compile-time
+  specialised compares; closes the remaining single-thread gap.
+- **Fix the multi-threaded sort** — either debug the merge OOB or
+  replace with parallel sample sort. Target: 3–5x at N=500k on 14
+  cores.
+- **Build the spatial index** that `GridDataOpt.spatial_index`
+  promises — turns LocateCell from O(N) into O(log N). Big asymptotic
+  win for the hot path in plotting / merging code.

@@ -2,8 +2,8 @@
 include $(MAKECFG).$(SYSTEM)
 
 INCLUDE=-I$(IPATH)/base -I$(IPATH)/general -I$(IPATH)/superdarn
-SRC = grid_opt_compare.c adapter.c stubs.c
-OBJS = grid_opt_compare.o adapter.o stubs.o
+SRC = grid_opt_compare.c adapter.c
+OBJS = grid_opt_compare.o adapter.o
 OUTPUT = grid_opt_compare
 DSTPATH = $(BINPATH)
 

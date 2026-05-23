@@ -41,6 +41,7 @@ typedef enum {
     SORT_BY_LONGITUDE,
     SORT_BY_TIME,
     SORT_BY_STATION,
+    SORT_BY_INDEX,     /* per-cell index field -- matches original GridSort */
     SORT_BY_VELOCITY,
     SORT_BY_POWER,
     SORT_BY_DISTANCE,
@@ -85,6 +86,8 @@ static double get_sort_key(const GridGVecOpt *cell, GridSortCriteria criteria,
             return cell->pwr.median;
         case SORT_BY_STATION:
             return cell->st_id;
+        case SORT_BY_INDEX:
+            return (double)cell->index;
         case SORT_BY_DISTANCE:
             if (context) {
                 return calculate_distance(cell->mlat, cell->mlon,
@@ -101,7 +104,7 @@ static int compare_grid_cells(const void *a, const void *b) {
     const GridGVecOpt *cell_a = (const GridGVecOpt*)a;
     const GridGVecOpt *cell_b = (const GridGVecOpt*)b;
     GridSortContext *ctx = global_sort_context;
-    
+
     if (!ctx) {
         // Default: sort by latitude then longitude
         if (cell_a->mlat != cell_b->mlat) {
@@ -109,7 +112,21 @@ static int compare_grid_cells(const void *a, const void *b) {
         }
         return (cell_a->mlon < cell_b->mlon) ? -1 : 1;
     }
-    
+
+    /* Fast path for the common case GridSortOpt uses
+       (SORT_BY_STATION primary, SORT_BY_INDEX secondary, ascending).
+       Direct field compare matches the original GridSortVec exactly
+       and skips two get_sort_key + fabs calls per comparison. */
+    if (ctx->primary == SORT_BY_STATION &&
+        ctx->secondary == SORT_BY_INDEX &&
+        ctx->ascending) {
+        if (cell_a->st_id != cell_b->st_id)
+            return (cell_a->st_id < cell_b->st_id) ? -1 : 1;
+        if (cell_a->index != cell_b->index)
+            return (cell_a->index < cell_b->index) ? -1 : 1;
+        return 0;
+    }
+
     // Custom comparison function
     if (ctx->primary == SORT_BY_CUSTOM && ctx->custom_compare) {
         return ctx->custom_compare(cell_a, cell_b, ctx->custom_data);
@@ -155,25 +172,13 @@ static void parallel_merge(GridGVecOpt *arr, GridGVecOpt *temp, int left, int mi
     while (i <= mid) temp[k++] = arr[i++];
     while (j <= right) temp[k++] = arr[j++];
     
-    // Copy back to original array
-#ifdef __AVX2__
-    // Use SIMD for faster memory copy
-    int simd_count = (right - left + 1) / 4;
-    for (int idx = 0; idx < simd_count; idx++) {
-        int base = left + idx * 4;
-        __m256d temp_data = _mm256_load_pd((double*)&temp[base]);
-        _mm256_store_pd((double*)&arr[base], temp_data);
-    }
-    
-    // Handle remaining elements
-    for (int idx = left + simd_count * 4; idx <= right; idx++) {
-        arr[idx] = temp[idx];
-    }
-#else
-    for (int idx = left; idx <= right; idx++) {
-        arr[idx] = temp[idx];
-    }
-#endif
+    /* Copy back to original array. The previous AVX path here loaded
+       only 32 bytes per "element" (one __m256d) but the element is
+       sizeof(GridGVecOpt) ~= 192 bytes, so it silently truncated every
+       struct copy and left stale data behind -- caused recursive merges
+       to segfault for N > ~50k. memcpy is plenty fast for this workload
+       and gcc auto-vectorises it on -O2 anyway. */
+    memcpy(&arr[left], &temp[left], (right - left + 1) * sizeof(GridGVecOpt));
 }
 
 /* Recursive parallel merge sort */
@@ -220,32 +225,70 @@ int GridSortParallelEx(GridDataOpt *grid, GridSortCriteria primary, GridSortCrit
     
     global_sort_context = &sort_ctx;
     
-    /* Configure threading */
-    int num_threads = config ? config->num_threads : 1;
-    
+    /* Configure threading -- auto-engage all available cores when caller
+       didn't supply a config (the old behaviour of falling back to 1
+       thread made the parallel path dead code for the common case). */
+    int num_threads = config ? config->num_threads : 0;
+    if (num_threads <= 0) {
+#ifdef _OPENMP
+        num_threads = omp_get_max_threads();
+#else
+        num_threads = 1;
+#endif
+    }
+
 #ifdef _OPENMP
     if (num_threads > 1) {
         omp_set_num_threads(num_threads);
     }
 #endif
-    
-    /* Choose sorting algorithm based on data size */
-    if (grid->vcnum > 10000 && num_threads > 1) {
-        /* Use parallel merge sort for large datasets */
-        GridGVecOpt *temp = (GridGVecOpt*)malloc(grid->vcnum * sizeof(GridGVecOpt));
+
+    /* TODO(parallel-sort): both attempted multi-threaded sort paths --
+       the original recursive OMP-task merge sort and the tile+k-way
+       merge replacement -- segfault for N >= ~50k under thread counts
+       above 1. Disabling the parallel branch until the merge phase
+       is rewritten to avoid the OOB. Falling through to qsort retains
+       the correctness wins from the fast-path comparator. */
+    if (0 && grid->vcnum > 10000 && num_threads > 1) {
+        int k = num_threads;
+        int n = grid->vcnum;
+        int tile_size = (n + k - 1) / k;
+        GridGVecOpt *temp = (GridGVecOpt *)malloc(n * sizeof(GridGVecOpt));
         if (!temp) return -1;
-        
-        int max_depth = (int)log2(num_threads);
-        
-        #pragma omp parallel
-        {
-            #pragma omp single
-            parallel_merge_sort(grid->data, temp, 0, grid->vcnum - 1, max_depth);
+        int *starts = (int *)malloc(sizeof(int) * (k + 1));
+        if (!starts) { free(temp); return -1; }
+        for (int t = 0; t <= k; t++) {
+            int s = t * tile_size;
+            starts[t] = (s > n) ? n : s;
         }
-        
-        free(temp);
+        /* Sort each tile in parallel. */
+        #pragma omp parallel for schedule(static)
+        for (int t = 0; t < k; t++) {
+            int a = starts[t], b = starts[t + 1];
+            if (b > a) {
+                qsort(grid->data + a, b - a, sizeof(GridGVecOpt), compare_grid_cells);
+            }
+        }
+        /* k-way merge into temp, then memcpy back. Simple priority pick:
+           track each tile's current read offset, choose the smallest
+           head each step. Good enough for k up to a few dozen. */
+        int *pos = (int *)malloc(sizeof(int) * k);
+        for (int t = 0; t < k; t++) pos[t] = starts[t];
+        for (int out = 0; out < n; out++) {
+            int best = -1;
+            for (int t = 0; t < k; t++) {
+                if (pos[t] >= starts[t + 1]) continue;
+                if (best < 0 ||
+                    compare_grid_cells(&grid->data[pos[t]],
+                                       &grid->data[pos[best]]) < 0) {
+                    best = t;
+                }
+            }
+            temp[out] = grid->data[pos[best]++];
+        }
+        memcpy(grid->data, temp, n * sizeof(GridGVecOpt));
+        free(pos); free(starts); free(temp);
     } else {
-        /* Use standard qsort for smaller datasets */
         qsort(grid->data, grid->vcnum, sizeof(GridGVecOpt), compare_grid_cells);
     }
     
@@ -412,7 +455,10 @@ int GridPartialSortParallel(GridDataOpt *grid, int k, GridSortCriteria criteria,
 
 /* Legacy compatibility functions */
 int GridSortParallel(GridDataOpt *grid, GridProcessingConfig *config) {
-    return GridSortParallelEx(grid, SORT_BY_LATITUDE, SORT_BY_LONGITUDE, 1, config);
+    /* Match the original GridSort semantics: primary key st_id, secondary
+       key index. RESULTS.md round-4 showed the previous lat/lon default
+       broke equivalence tests against libgrd. */
+    return GridSortParallelEx(grid, SORT_BY_STATION, SORT_BY_INDEX, 1, config);
 }
 
 void GridSortOpt(GridDataOpt *grid) {

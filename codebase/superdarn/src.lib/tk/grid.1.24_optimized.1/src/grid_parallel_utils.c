@@ -425,3 +425,31 @@ void GridPrintPerformanceStats(struct GridDataOpt *grid) {
         printf("  Operations/Second: %.2f\n", ops_per_sec);
     }
 }
+
+/* Aligned allocation helpers used by the parallel/SIMD code paths.
+   Declared as externs in griddata_parallel.h but the implementations were
+   never committed -- consumers had to provide their own stubs (see
+   grid_opt_compare.1.0/src/stubs.c). Defining them here so libgrdopt is
+   self-contained. */
+#include <errno.h>
+void *grid_aligned_malloc(size_t size, size_t alignment) {
+    void *p = NULL;
+    if (size == 0) return NULL;
+    /* posix_memalign requires alignment to be a power of two and a
+       multiple of sizeof(void*); fall back to a regular malloc if the
+       caller asked for something weaker. */
+    if (alignment < sizeof(void *) || (alignment & (alignment - 1)) != 0) {
+        return malloc(size);
+    }
+    if (posix_memalign(&p, alignment, size) != 0) {
+        errno = ENOMEM;
+        return NULL;
+    }
+    return p;
+}
+
+void grid_aligned_free(void *ptr) {
+    /* posix_memalign blocks are freed with plain free(); centralise the
+       call here in case we ever swap allocators. */
+    free(ptr);
+}
