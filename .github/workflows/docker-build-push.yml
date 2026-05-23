@@ -41,8 +41,9 @@ jobs:
               with:
                 context: . # Path to the Dockerfile
                 push: true
-                platforms: linux/amd64,linux/arm64
-                #tags are both for pushing and for later builds to reference, first is the name of the image, second is the tag of the image
-                tags: ${{ secrets.DOCKER_USERNAME }}/superdarn_rstbase:latest 
+                # linux/amd64 only — the NVIDIA CUDA base image used by the
+                # Dockerfile has no arm64 variant.
+                platforms: linux/amd64
+                tags: ${{ secrets.DOCKER_USERNAME }}/superdarn_rstbase:latest
 
 

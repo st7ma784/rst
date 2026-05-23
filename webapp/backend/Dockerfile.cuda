@@ -25,12 +25,17 @@ COPY webapp/backend/requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt \
     && pip3 install --no-cache-dir cupy-cuda12x || true
 
-# Build CUDArst shared library when NVCC is available (GPU build only)
+# Build CUDArst shared library when NVCC is available (GPU build only).
+# Best-effort: the CUDArst port still has compile gaps. If `make all` fails,
+# the image keeps building and the runtime falls back to CPU (main.py probes
+# for CUDARST_LIB at startup). This prevents an in-progress CUDA port from
+# blocking image releases.
 COPY CUDArst/ /opt/cudarst/
 RUN if command -v nvcc > /dev/null 2>&1; then \
-        cd /opt/cudarst && make all \
-        && cp lib/libcudarst.so* /usr/local/lib/ \
-        && ldconfig; \
+        (cd /opt/cudarst && make all \
+         && cp lib/libcudarst.so* /usr/local/lib/ \
+         && ldconfig) \
+        || echo "[skipped] CUDArst build failed; image will rely on CPU fallback at runtime"; \
     else \
         echo "NVCC not found — CPU fallback will be used"; \
     fi
