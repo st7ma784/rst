@@ -35,16 +35,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Jimver/cuda-toolkit needs full semver patch versions.
-        cuda_version: ["11.8.0", "12.0.0"]
-        gcc_version: ["10", "11"]
+        # ubuntu-24.04 runners only have NVIDIA CUDA repos for 12.5+;
+        # Jimver/cuda-toolkit v0.2.35 is the first release that knows
+        # about those versions on Ubuntu 24.04.
+        cuda_version: ["12.5.1", "12.6.3"]
+        gcc_version: ["11", "12"]
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup CUDA
-        uses: Jimver/cuda-toolkit@v0.2.11
+        uses: Jimver/cuda-toolkit@v0.2.35
         with:
           cuda: ${{ matrix.cuda_version }}
           method: 'network'
