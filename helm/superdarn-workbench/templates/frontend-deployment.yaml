@@ -45,6 +45,16 @@ spec:
             - name: http
               containerPort: {{ include "superdarn-workbench.frontendPort" . }}
               protocol: TCP
+          env:
+            # The nginx-unprivileged image runs envsubst on
+            # /etc/nginx/templates/default.conf.template at container start
+            # and writes /etc/nginx/conf.d/default.conf. Without this var
+            # set, envsubst uses the Dockerfile default
+            # BACKEND_URL=http://backend:8000, which doesn't resolve in K8s
+            # ("backend" is not a Service name in any namespace). Point it
+            # at the chart's own backend Service so DNS resolves.
+            - name: BACKEND_URL
+              value: {{ include "superdarn-workbench.backendServiceURL" . | quote }}
           livenessProbe:
             httpGet:
               path: /health
