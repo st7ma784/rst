@@ -29,12 +29,14 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
-concurrency:
-  group: pages
-  cancel-in-progress: false
+# GitHub Pages is not enabled on this fork. Previously this workflow had a
+# deploy job that used environment: github-pages, which left every run
+# sitting in `pending` for hours waiting for an environment that doesn't
+# exist. Re-add the deploy job (and its `pages: write` / `id-token: write`
+# permissions, the `pages` concurrency group, and the configure-pages /
+# upload-pages-artifact / deploy-pages steps) once Pages is enabled in
+# the repo settings.
 
 jobs:
   build:
@@ -73,25 +75,3 @@ jobs:
           name: documentation
           path: docs/build/html/
           retention-days: 7
-
-      - name: Configure Pages
-        if: github.ref == 'refs/heads/main'
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs/build/html/
-
-  deploy:
-    if: github.ref == 'refs/heads/main'
-    needs: build
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4

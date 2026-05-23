@@ -29,7 +29,6 @@ MODULES := \
 	tk/fitcnx.1.16 \
 	tk/freqband.1.0 \
 	tk/grid.1.24 \
-	tk/grid.1.24_optimized.1 \
 	tk/gtable.2.0 \
 	tk/gtablewrite.1.9 \
 	tk/hmb.1.0 \

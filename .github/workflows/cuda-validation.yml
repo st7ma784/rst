@@ -35,7 +35,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cuda_version: ["11.8", "12.0"]
+        # Jimver/cuda-toolkit needs full semver patch versions.
+        cuda_version: ["11.8.0", "12.0.0"]
         gcc_version: ["10", "11"]
 
     steps:
