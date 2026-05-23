@@ -32,23 +32,12 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
-
-/* Forward declarations for compatibility with original grid library */
-struct DataMap {
-    struct {
-        int yr, mo, dy, hr, mt, sc, us;
-    } stime;
-    struct {
-        int yr, mo, dy, hr, mt, sc, us;
-    } etime;
-    /* Additional fields would be defined in actual implementation */
-};
-
-struct GridIndex {
-    int num;
-    double *tme;
-    int *inx;
-};
+#include <stdio.h>
+#include <math.h>      /* for M_PI when _GNU_SOURCE is set */
+#include <zlib.h>      /* needed by dmap.h for gzFile */
+#include "rtypes.h"    /* int16/int32/uint16/... used by dmap.h */
+#include "dmap.h"      /* real DataMap definition */
+#include "gridindex.h" /* real GridIndex definition */
 
 /* Parallel processing configuration */
 #ifndef MAX_GRID_CELLS
@@ -97,16 +86,19 @@ struct GridIndex {
 /* Enhanced statistics structure with vectorization support */
 struct GridStats {
     double mean;
+    double median;
+    double weight;
     double sd;
     double min;
     double max;
     uint32_t count;
+    uint32_t samples;
     double sum;
     double sum_sq;
 } ALIGNED(32);
 
 /* Optimized station vector structure */
-struct GridSVec {
+struct GridSVecOpt {
     int32_t st_id;
     int32_t chn;
     int32_t npnt;
@@ -127,7 +119,7 @@ struct GridSVec {
 } ALIGNED(64);
 
 /* Optimized grid vector structure with enhanced layout */
-struct GridGVec {
+struct GridGVecOpt {
     double mlat, mlon;
     double azm;
     
@@ -173,7 +165,7 @@ struct GridMatrix {
 } ALIGNED(64);
 
 /* Enhanced grid data structure */
-struct GridData {
+struct GridDataOpt {
     double st_time;
     double ed_time;
     int32_t stnum;
@@ -182,8 +174,8 @@ struct GridData {
     unsigned char xtd;
     
     /* Original data structures */
-    struct GridSVec *sdata;
-    struct GridGVec *data;
+    struct GridSVecOpt *sdata;
+    struct GridGVecOpt *data;
     
     /* Enhanced parallel processing structures */
     struct GridMatrix *velocity_matrix;
@@ -202,7 +194,14 @@ struct GridData {
         uint32_t parallel_threads;
         bool use_gpu;
     } perf_stats;
-    
+
+    /* Opaque pointers for parallel runtime, memory pool, and metrics
+       handles. void* keeps the header light; the implementation casts
+       to its own struct types. */
+    void *parallel_ctx;
+    void *memory_pool;
+    void *metrics;
+
 } ALIGNED(128);
 
 /* Performance optimization structure */
@@ -216,38 +215,47 @@ struct GridProcessingConfig {
     uint32_t max_iterations;
 } ALIGNED(64);
 
+/* Typedef aliases so source files can use bare names (the .c files were
+   written against typedef'd names; add the typedefs here in one place). */
+typedef struct GridStats GridStats;
+typedef struct GridSVecOpt GridSVecOpt;
+typedef struct GridGVecOpt GridGVecOpt;
+typedef struct GridMatrix GridMatrix;
+typedef struct GridDataOpt GridDataOpt;
+typedef struct GridProcessingConfig GridProcessingConfig;
+
 /* Function prototypes - Original API compatibility */
-CUDA_CALLABLE struct GridData *GridMake();
-CUDA_CALLABLE void GridFree(struct GridData *ptr);
-CUDA_CALLABLE int GridLocateCell(int npnt, struct GridGVec *ptr, int index);
-CUDA_CALLABLE void GridMerge(struct GridData *mptr, struct GridData *ptr);
-CUDA_CALLABLE void GridAverage(struct GridData *mptr, struct GridData *ptr, int flg);
-CUDA_CALLABLE void GridCopy(struct GridData *a, struct GridData *b);
-CUDA_CALLABLE void GridAdd(struct GridData *a, struct GridData *b, int recnum);
-CUDA_CALLABLE void GridSort(struct GridData *ptr);
-CUDA_CALLABLE void GridIntegrate(struct GridData *a, struct GridData *b, double *err);
+CUDA_CALLABLE struct GridDataOpt *GridMakeOpt();
+CUDA_CALLABLE void GridFreeOpt(struct GridDataOpt *ptr);
+CUDA_CALLABLE int GridLocateCellOpt(int npnt, struct GridGVecOpt *ptr, int index);
+CUDA_CALLABLE void GridMergeOpt(struct GridDataOpt *mptr, struct GridDataOpt *ptr);
+CUDA_CALLABLE void GridAverageOpt(struct GridDataOpt *mptr, struct GridDataOpt *ptr, int flg);
+CUDA_CALLABLE void GridCopyOpt(struct GridDataOpt *a, struct GridDataOpt *b);
+CUDA_CALLABLE void GridAddOpt(struct GridDataOpt *a, struct GridDataOpt *b, int recnum);
+CUDA_CALLABLE void GridSortOpt(struct GridDataOpt *ptr);
+CUDA_CALLABLE void GridIntegrateOpt(struct GridDataOpt *a, struct GridDataOpt *b, double *err);
 
 /* Enhanced parallel processing functions */
-CUDA_CALLABLE struct GridData *GridMakeParallel(uint32_t max_cells, struct GridProcessingConfig *config);
-CUDA_CALLABLE void GridFreeParallel(struct GridData *ptr);
+CUDA_CALLABLE struct GridDataOpt *GridMakeParallel(uint32_t max_cells, struct GridProcessingConfig *config);
+CUDA_CALLABLE void GridFreeParallel(struct GridDataOpt *ptr);
 
 /* Matrix-based parallel operations */
-CUDA_CALLABLE int GridMergeParallel(struct GridData *mptr, struct GridData *ptr, struct GridProcessingConfig *config);
-CUDA_CALLABLE int GridAverageParallel(struct GridData *mptr, struct GridData *ptr, int flg, struct GridProcessingConfig *config);
-CUDA_CALLABLE int GridIntegrateParallel(struct GridData *a, struct GridData *b, double *err, struct GridProcessingConfig *config);
+CUDA_CALLABLE int GridMergeParallel(struct GridDataOpt *mptr, struct GridDataOpt *ptr, struct GridProcessingConfig *config);
+CUDA_CALLABLE int GridAverageParallel(struct GridDataOpt *mptr, struct GridDataOpt *ptr, int flg, struct GridProcessingConfig *config);
+CUDA_CALLABLE int GridIntegrateParallel(struct GridDataOpt *a, struct GridDataOpt *b, double *err, struct GridProcessingConfig *config);
 
 /* Optimized search and indexing */
-CUDA_CALLABLE int GridLocateCellParallel(struct GridData *grid, int index);
-CUDA_CALLABLE int GridBuildSpatialIndex(struct GridData *grid);
-CUDA_CALLABLE int GridSortParallel(struct GridData *ptr, struct GridProcessingConfig *config);
+CUDA_CALLABLE int GridLocateCellParallel(struct GridDataOpt *grid, int index);
+CUDA_CALLABLE int GridBuildSpatialIndex(struct GridDataOpt *grid);
+CUDA_CALLABLE int GridSortParallel(struct GridDataOpt *ptr, struct GridProcessingConfig *config);
 
 /* Memory management for parallel processing */
-CUDA_CALLABLE int GridAllocateMatrices(struct GridData *grid, uint32_t max_cells);
-CUDA_CALLABLE void GridDeallocateMatrices(struct GridData *grid);
+CUDA_CALLABLE int GridAllocateMatrices(struct GridDataOpt *grid, uint32_t max_cells);
+CUDA_CALLABLE void GridDeallocateMatrices(struct GridDataOpt *grid);
 
 /* GPU-specific functions */
 #ifdef __CUDACC__
-CUDA_KERNEL void GridMergeKernel(struct GridGVec *input, struct GridGVec *output, 
+CUDA_KERNEL void GridMergeKernel(struct GridGVecOpt *input, struct GridGVecOpt *output, 
                                 uint32_t *indices, uint32_t num_elements);
 CUDA_KERNEL void GridAverageKernel(double *input_matrix, double *output_matrix,
                                   uint32_t *counts, uint32_t rows, uint32_t cols);
@@ -255,9 +263,9 @@ CUDA_KERNEL void GridIntegrateKernel(double *vel_matrix, double *pwr_matrix, dou
                                     double *errors, uint32_t num_elements);
 
 /* CUDA memory management */
-CUDA_CALLABLE int GridCopyToGPU(struct GridData *grid);
-CUDA_CALLABLE int GridCopyFromGPU(struct GridData *grid);
-CUDA_CALLABLE void GridFreeGPU(struct GridData *grid);
+CUDA_CALLABLE int GridCopyToGPU(struct GridDataOpt *grid);
+CUDA_CALLABLE int GridCopyFromGPU(struct GridDataOpt *grid);
+CUDA_CALLABLE void GridFreeGPU(struct GridDataOpt *grid);
 #endif
 
 /* Vectorized mathematical operations */
@@ -271,12 +279,12 @@ CUDA_CALLABLE double GridParallelStdDev(double *data, uint32_t size, double mean
 CUDA_CALLABLE void GridParallelMinMax(double *data, uint32_t size, double *min, double *max);
 
 /* Linear regression for parallel merge operations */
-CUDA_CALLABLE void GridLinRegParallel(struct GridGVec **data, uint32_t num, double *vpar, double *vper);
+CUDA_CALLABLE void GridLinRegParallel(struct GridGVecOpt **data, uint32_t num, double *vpar, double *vper);
 
 /* Performance measurement and debugging */
-CUDA_CALLABLE void GridStartTiming(struct GridData *grid);
-CUDA_CALLABLE void GridEndTiming(struct GridData *grid);
-CUDA_CALLABLE void GridPrintPerformanceStats(struct GridData *grid);
+CUDA_CALLABLE void GridStartTiming(struct GridDataOpt *grid);
+CUDA_CALLABLE void GridEndTiming(struct GridDataOpt *grid);
+CUDA_CALLABLE void GridPrintPerformanceStats(struct GridDataOpt *grid);
 
 /* Configuration and initialization */
 CUDA_CALLABLE struct GridProcessingConfig *GridCreateConfig();
@@ -284,8 +292,8 @@ CUDA_CALLABLE void GridDestroyConfig(struct GridProcessingConfig *config);
 CUDA_CALLABLE int GridSetOptimalThreads(struct GridProcessingConfig *config);
 
 /* Data validation and error checking */
-CUDA_CALLABLE int GridValidateData(struct GridData *grid);
-CUDA_CALLABLE int GridCheckMemoryAlignment(struct GridData *grid);
+CUDA_CALLABLE int GridValidateData(struct GridDataOpt *grid);
+CUDA_CALLABLE int GridCheckMemoryAlignment(struct GridDataOpt *grid);
 
 /* Memory management utilities */
 void *aligned_malloc(size_t size, size_t alignment);
@@ -298,7 +306,9 @@ void aligned_free(void *ptr);
 #define GRID_MERGE_PREFER_HIGHER_POWER 3
 #define GRID_MERGE_PREFER_LOWER_ERROR 4
 
-/* Performance statistics structure */
+/* Performance statistics structure -- broad superset of every field the
+   parallel sources reference. Keeps counters and timers in one block so
+   adding new probes doesn't require schema migrations. */
 struct GridPerformanceStats {
     double processing_time;
     double memory_usage;
@@ -306,6 +316,47 @@ struct GridPerformanceStats {
     int error_count;
     int cache_hits;
     int cache_misses;
+    /* I/O counters */
+    int read_errors;
+    int write_errors;
+    int grids_read;
+    int grids_written;
+    int cells_read;
+    int cells_written;
+    int stations_read;
+    int stations_written;
+    int indices_loaded;
+    int index_entries;
+    double read_time;
+    double write_time;
+    double index_load_time;
+    /* Seek/index counters */
+    int total_seeks;
+    int sequential_seeks;
+    int index_seeks;
+    double total_seek_time;
+    int cell_locates;
+    int locate_hits;
+    int locate_misses;
+    double total_locate_time;
+    int index_calculations;
+    double total_index_time;
+    int batch_locates;
+    int batch_locate_hits;
+    int batch_locate_misses;
+    double batch_locate_time;
+    /* Aggregation counters */
+    int grid_merges;
+    int grid_averages;
+    int grid_integrations;
+    int cells_merged;
+    int cells_averaged;
+    int merge_conflicts;
+    double merge_time;
+    double integration_time;
+    /* Aggregate timing */
+    double total_time;
+    double average_time;
 } ALIGNED(64);
 
 /* Parallel grid vector structure */
@@ -335,7 +386,7 @@ struct GridDataParallel {
     int vcnum;
     int xtd;
     
-    struct GridSVec *sdata;
+    struct GridSVecOpt *sdata;
     struct GridGVecParallel *data;
     
     /* Enhanced parallel processing structures */

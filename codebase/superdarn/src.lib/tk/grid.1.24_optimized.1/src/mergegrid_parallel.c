@@ -41,7 +41,7 @@
 #include "griddata_parallel.h"
 
 /* SIMD-optimized linear regression for parallel merge operations */
-CUDA_CALLABLE void GridLinRegParallel(struct GridGVec **data, uint32_t num, double *vpar, double *vper) {
+CUDA_CALLABLE void GridLinRegParallel(struct GridGVecOpt **data, uint32_t num, double *vpar, double *vper) {
     if (num == 0 || data == NULL) {
         *vpar = 0.0;
         *vper = 0.0;
@@ -152,7 +152,7 @@ CUDA_CALLABLE void GridLinRegParallel(struct GridGVec **data, uint32_t num, doub
 }
 
 /* Optimized cell grouping using matrix operations */
-static int GridBuildCellMatrix(struct GridData *mptr, uint32_t **unique_indices, 
+static int GridBuildCellMatrix(struct GridDataOpt *mptr, uint32_t **unique_indices, 
                               uint32_t **cell_counts, uint32_t *num_unique) {
     if (mptr->vcnum == 0) {
         *num_unique = 0;
@@ -217,7 +217,7 @@ static int GridBuildCellMatrix(struct GridData *mptr, uint32_t **unique_indices,
 }
 
 /* Parallel merge implementation with optimized data structures */
-int GridMergeParallel(struct GridData *mptr, struct GridData *ptr, struct GridProcessingConfig *config) {
+int GridMergeParallel(struct GridDataOpt *mptr, struct GridDataOpt *ptr, struct GridProcessingConfig *config) {
     if (!mptr || !ptr) return -1;
     
     clock_t start_time = clock();
@@ -235,9 +235,9 @@ int GridMergeParallel(struct GridData *mptr, struct GridData *ptr, struct GridPr
     
     /* Allocate and initialize station data */
     if (ptr->sdata != NULL) {
-        ptr->sdata = (struct GridSVec*)realloc(ptr->sdata, sizeof(struct GridSVec));
+        ptr->sdata = (struct GridSVecOpt*)realloc(ptr->sdata, sizeof(struct GridSVecOpt));
     } else {
-        ptr->sdata = (struct GridSVec*)malloc(sizeof(struct GridSVec));
+        ptr->sdata = (struct GridSVecOpt*)malloc(sizeof(struct GridSVecOpt));
     }
     
     if (!ptr->sdata) return -1;
@@ -276,7 +276,7 @@ int GridMergeParallel(struct GridData *mptr, struct GridData *ptr, struct GridPr
     }
     
     /* Pre-allocate maximum possible output data */
-    ptr->data = (struct GridGVec*)malloc(num_unique * sizeof(struct GridGVec));
+    ptr->data = (struct GridGVecOpt*)malloc(num_unique * sizeof(struct GridGVecOpt));
     if (!ptr->data) {
         free(unique_indices);
         free(cell_counts);
@@ -292,7 +292,7 @@ int GridMergeParallel(struct GridData *mptr, struct GridData *ptr, struct GridPr
         uint32_t current_index = unique_indices[k];
         
         /* Collect all data points for this cell */
-        struct GridGVec **cell_data = (struct GridGVec**)malloc(cell_counts[k] * sizeof(struct GridGVec*));
+        struct GridGVecOpt **cell_data = (struct GridGVecOpt**)malloc(cell_counts[k] * sizeof(struct GridGVecOpt*));
         uint32_t data_count = 0;
         
         for (int i = 0; i < mptr->vcnum; i++) {
@@ -348,7 +348,7 @@ int GridMergeParallel(struct GridData *mptr, struct GridData *ptr, struct GridPr
     /* Update final count and resize array */
     ptr->vcnum = output_count;
     if (output_count > 0) {
-        ptr->data = (struct GridGVec*)realloc(ptr->data, output_count * sizeof(struct GridGVec));
+        ptr->data = (struct GridGVecOpt*)realloc(ptr->data, output_count * sizeof(struct GridGVecOpt));
     } else {
         free(ptr->data);
         ptr->data = NULL;
@@ -369,7 +369,7 @@ int GridMergeParallel(struct GridData *mptr, struct GridData *ptr, struct GridPr
 }
 
 /* Legacy API compatibility wrapper */
-void GridMerge(struct GridData *mptr, struct GridData *ptr) {
+void GridMergeOpt(struct GridDataOpt *mptr, struct GridDataOpt *ptr) {
     struct GridProcessingConfig config = {0};
     config.num_threads = 1;
     config.use_simd = true;

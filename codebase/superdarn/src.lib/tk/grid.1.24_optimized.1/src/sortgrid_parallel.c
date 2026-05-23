@@ -54,7 +54,7 @@ typedef struct {
     int ascending;
     double reference_lat;
     double reference_lon;
-    int (*custom_compare)(const GridGVec*, const GridGVec*, void*);
+    int (*custom_compare)(const GridGVecOpt*, const GridGVecOpt*, void*);
     void *custom_data;
 } GridSortContext;
 
@@ -72,7 +72,7 @@ static double calculate_distance(double lat1, double lon1, double lat2, double l
 }
 
 /* Get sorting key value from grid cell */
-static double get_sort_key(const GridGVec *cell, GridSortCriteria criteria, 
+static double get_sort_key(const GridGVecOpt *cell, GridSortCriteria criteria, 
                           GridSortContext *context) {
     switch (criteria) {
         case SORT_BY_LATITUDE:
@@ -98,8 +98,8 @@ static double get_sort_key(const GridGVec *cell, GridSortCriteria criteria,
 
 /* Enhanced comparison function with multiple criteria */
 static int compare_grid_cells(const void *a, const void *b) {
-    const GridGVec *cell_a = (const GridGVec*)a;
-    const GridGVec *cell_b = (const GridGVec*)b;
+    const GridGVecOpt *cell_a = (const GridGVecOpt*)a;
+    const GridGVecOpt *cell_b = (const GridGVecOpt*)b;
     GridSortContext *ctx = global_sort_context;
     
     if (!ctx) {
@@ -139,7 +139,7 @@ static int compare_grid_cells(const void *a, const void *b) {
 }
 
 /* Parallel merge operation for merge sort */
-static void parallel_merge(GridGVec *arr, GridGVec *temp, int left, int mid, int right) {
+static void parallel_merge(GridGVecOpt *arr, GridGVecOpt *temp, int left, int mid, int right) {
     int i = left, j = mid + 1, k = left;
     
     // Merge the two sorted halves
@@ -177,7 +177,7 @@ static void parallel_merge(GridGVec *arr, GridGVec *temp, int left, int mid, int
 }
 
 /* Recursive parallel merge sort */
-static void parallel_merge_sort(GridGVec *arr, GridGVec *temp, int left, int right, int depth) {
+static void parallel_merge_sort(GridGVecOpt *arr, GridGVecOpt *temp, int left, int right, int depth) {
     if (left >= right) return;
     
     int mid = left + (right - left) / 2;
@@ -201,7 +201,7 @@ static void parallel_merge_sort(GridGVec *arr, GridGVec *temp, int left, int rig
 }
 
 /* Main parallel sorting function */
-int GridSortParallelEx(GridData *grid, GridSortCriteria primary, GridSortCriteria secondary,
+int GridSortParallelEx(GridDataOpt *grid, GridSortCriteria primary, GridSortCriteria secondary,
                        int ascending, GridProcessingConfig *config) {
     if (!grid || !grid->data || grid->vcnum <= 0) return -1;
     
@@ -232,7 +232,7 @@ int GridSortParallelEx(GridData *grid, GridSortCriteria primary, GridSortCriteri
     /* Choose sorting algorithm based on data size */
     if (grid->vcnum > 10000 && num_threads > 1) {
         /* Use parallel merge sort for large datasets */
-        GridGVec *temp = (GridGVec*)malloc(grid->vcnum * sizeof(GridGVec));
+        GridGVecOpt *temp = (GridGVecOpt*)malloc(grid->vcnum * sizeof(GridGVecOpt));
         if (!temp) return -1;
         
         int max_depth = (int)log2(num_threads);
@@ -246,7 +246,7 @@ int GridSortParallelEx(GridData *grid, GridSortCriteria primary, GridSortCriteri
         free(temp);
     } else {
         /* Use standard qsort for smaller datasets */
-        qsort(grid->data, grid->vcnum, sizeof(GridGVec), compare_grid_cells);
+        qsort(grid->data, grid->vcnum, sizeof(GridGVecOpt), compare_grid_cells);
     }
     
     /* Update performance statistics */
@@ -261,7 +261,7 @@ int GridSortParallelEx(GridData *grid, GridSortCriteria primary, GridSortCriteri
 }
 
 /* Sort by spatial distance from reference point */
-int GridSortByDistanceParallel(GridData *grid, double ref_lat, double ref_lon,
+int GridSortByDistanceParallel(GridDataOpt *grid, double ref_lat, double ref_lon,
                                GridProcessingConfig *config) {
     if (!grid || !grid->data || grid->vcnum <= 0) return -1;
     
@@ -279,15 +279,15 @@ int GridSortByDistanceParallel(GridData *grid, double ref_lat, double ref_lon,
     global_sort_context = &sort_ctx;
     
     /* Use standard qsort (distance calculation is expensive for parallel sort) */
-    qsort(grid->data, grid->vcnum, sizeof(GridGVec), compare_grid_cells);
+    qsort(grid->data, grid->vcnum, sizeof(GridGVecOpt), compare_grid_cells);
     
     global_sort_context = NULL;
     return 0;
 }
 
 /* Sort with custom comparison function */
-int GridSortCustomParallel(GridData *grid, 
-                          int (*compare_func)(const GridGVec*, const GridGVec*, void*),
+int GridSortCustomParallel(GridDataOpt *grid, 
+                          int (*compare_func)(const GridGVecOpt*, const GridGVecOpt*, void*),
                           void *user_data, GridProcessingConfig *config) {
     if (!grid || !grid->data || grid->vcnum <= 0 || !compare_func) return -1;
     
@@ -305,14 +305,14 @@ int GridSortCustomParallel(GridData *grid,
     global_sort_context = &sort_ctx;
     
     /* Use qsort for custom comparisons */
-    qsort(grid->data, grid->vcnum, sizeof(GridGVec), compare_grid_cells);
+    qsort(grid->data, grid->vcnum, sizeof(GridGVecOpt), compare_grid_cells);
     
     global_sort_context = NULL;
     return 0;
 }
 
 /* Sort by multiple criteria with priorities */
-int GridSortMultiCriteriaParallel(GridData *grid, GridSortCriteria *criteria,
+int GridSortMultiCriteriaParallel(GridDataOpt *grid, GridSortCriteria *criteria,
                                   int num_criteria, int ascending,
                                   GridProcessingConfig *config) {
     if (!grid || !criteria || num_criteria <= 0) return -1;
@@ -325,13 +325,13 @@ int GridSortMultiCriteriaParallel(GridData *grid, GridSortCriteria *criteria,
 }
 
 /* Stable sort preserving order of equal elements */
-int GridStableSortParallel(GridData *grid, GridSortCriteria criteria, int ascending,
+int GridStableSortParallel(GridDataOpt *grid, GridSortCriteria criteria, int ascending,
                           GridProcessingConfig *config) {
     if (!grid || !grid->data || grid->vcnum <= 0) return -1;
     
     /* Add index as secondary criteria for stability */
     for (int i = 0; i < grid->vcnum; i++) {
-        grid->data[i].index = i;  // Assuming we add this field to GridGVec
+        grid->data[i].index = i;  // Assuming we add this field to GridGVecOpt
     }
     
     /* Sort with original index as tie-breaker */
@@ -346,27 +346,27 @@ int GridStableSortParallel(GridData *grid, GridSortCriteria criteria, int ascend
     };
     
     global_sort_context = &sort_ctx;
-    qsort(grid->data, grid->vcnum, sizeof(GridGVec), compare_grid_cells);
+    qsort(grid->data, grid->vcnum, sizeof(GridGVecOpt), compare_grid_cells);
     global_sort_context = NULL;
     
     return 0;
 }
 
 /* Quick selection algorithm for finding k-th smallest element */
-static int partition(GridGVec *arr, int low, int high) {
-    GridGVec pivot = arr[high];
+static int partition(GridGVecOpt *arr, int low, int high) {
+    GridGVecOpt pivot = arr[high];
     int i = low - 1;
     
     for (int j = low; j < high; j++) {
         if (compare_grid_cells(&arr[j], &pivot) <= 0) {
             i++;
-            GridGVec temp = arr[i];
+            GridGVecOpt temp = arr[i];
             arr[i] = arr[j];
             arr[j] = temp;
         }
     }
     
-    GridGVec temp = arr[i + 1];
+    GridGVecOpt temp = arr[i + 1];
     arr[i + 1] = arr[high];
     arr[high] = temp;
     
@@ -374,7 +374,7 @@ static int partition(GridGVec *arr, int low, int high) {
 }
 
 /* Find k-th smallest element (partial sorting) */
-int GridPartialSortParallel(GridData *grid, int k, GridSortCriteria criteria,
+int GridPartialSortParallel(GridDataOpt *grid, int k, GridSortCriteria criteria,
                            GridProcessingConfig *config) {
     if (!grid || !grid->data || grid->vcnum <= 0 || k >= grid->vcnum) return -1;
     
@@ -411,18 +411,18 @@ int GridPartialSortParallel(GridData *grid, int k, GridSortCriteria criteria,
 }
 
 /* Legacy compatibility functions */
-int GridSortParallel(GridData *grid, GridProcessingConfig *config) {
+int GridSortParallel(GridDataOpt *grid, GridProcessingConfig *config) {
     return GridSortParallelEx(grid, SORT_BY_LATITUDE, SORT_BY_LONGITUDE, 1, config);
 }
 
-void GridSort(GridData *grid) {
+void GridSortOpt(GridDataOpt *grid) {
     if (grid) {
         GridSortParallel(grid, NULL);
     }
 }
 
 /* Utility function to check if grid is sorted */
-int GridIsSorted(GridData *grid, GridSortCriteria criteria) {
+int GridIsSorted(GridDataOpt *grid, GridSortCriteria criteria) {
     if (!grid || !grid->data || grid->vcnum <= 1) return 1;
     
     GridSortContext sort_ctx = {
@@ -449,7 +449,7 @@ int GridIsSorted(GridData *grid, GridSortCriteria criteria) {
 }
 
 /* Shuffle grid data (useful for testing) */
-int GridShuffleParallel(GridData *grid) {
+int GridShuffleParallel(GridDataOpt *grid) {
     if (!grid || !grid->data || grid->vcnum <= 1) return -1;
     
     srand((unsigned int)time(NULL));
@@ -462,7 +462,7 @@ int GridShuffleParallel(GridData *grid) {
         
         #pragma omp critical
         {
-            GridGVec temp = grid->data[i];
+            GridGVecOpt temp = grid->data[i];
             grid->data[i] = grid->data[j];
             grid->data[j] = temp;
         }

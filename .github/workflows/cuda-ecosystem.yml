@@ -53,7 +53,10 @@ jobs:
         with:
           cuda: ${{ matrix.cuda-version }}
           method: 'network'
-          sub-packages: '["nvcc", "cublas", "cusolver", "cufft", "curand"]'
+          # CUDA 12.6 renamed the math libs (cuda-cublas-12-6 → libcublas-12-6)
+          # but Jimver still passes the legacy names. Stick to nvcc+cudart —
+          # this workflow is scaffolding only and the math libs aren't needed.
+          sub-packages: '["nvcc", "cudart"]'
 
       - name: Setup GCC
         uses: egor-tensin/setup-gcc@v1

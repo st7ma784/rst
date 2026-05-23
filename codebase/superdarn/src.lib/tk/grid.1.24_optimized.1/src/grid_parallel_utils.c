@@ -36,8 +36,8 @@
 
 /* Comparison function for sorting */
 static int GridSortVecParallel(const void *a, const void *b) {
-    const struct GridGVec *ga = (const struct GridGVec *)a;
-    const struct GridGVec *gb = (const struct GridGVec *)b;
+    const struct GridGVecOpt *ga = (const struct GridGVecOpt *)a;
+    const struct GridGVecOpt *gb = (const struct GridGVecOpt *)b;
     
     if (ga->st_id < gb->st_id) return -1;
     if (ga->st_id > gb->st_id) return 1;
@@ -47,7 +47,7 @@ static int GridSortVecParallel(const void *a, const void *b) {
 }
 
 /* Parallel merge sort implementation */
-static void merge_sort_parallel(struct GridGVec *arr, struct GridGVec *temp, 
+static void merge_sort_parallel(struct GridGVecOpt *arr, struct GridGVecOpt *temp, 
                                int left, int right, int depth) {
     if (left >= right) return;
     
@@ -88,7 +88,7 @@ static void merge_sort_parallel(struct GridGVec *arr, struct GridGVec *temp,
 }
 
 /* Parallel sorting function */
-int GridSortParallel(struct GridData *ptr, struct GridProcessingConfig *config) {
+static int GridSortParallel_internal(struct GridDataOpt *ptr, struct GridProcessingConfig *config) {
     if (!ptr || !ptr->data || ptr->vcnum == 0) return 0;
     
     clock_t start_time = clock();
@@ -101,7 +101,7 @@ int GridSortParallel(struct GridData *ptr, struct GridProcessingConfig *config) 
     
     /* Use parallel sort for large datasets */
     if (ptr->vcnum > 10000 && num_threads > 1) {
-        struct GridGVec *temp = (struct GridGVec*)malloc(ptr->vcnum * sizeof(struct GridGVec));
+        struct GridGVecOpt *temp = (struct GridGVecOpt*)malloc(ptr->vcnum * sizeof(struct GridGVecOpt));
         if (!temp) return -1;
         
         int max_depth = (int)log2(num_threads);
@@ -115,7 +115,7 @@ int GridSortParallel(struct GridData *ptr, struct GridProcessingConfig *config) 
         free(temp);
     } else {
         /* Use standard qsort for smaller datasets */
-        qsort(ptr->data, ptr->vcnum, sizeof(struct GridGVec), GridSortVecParallel);
+        qsort(ptr->data, ptr->vcnum, sizeof(struct GridGVecOpt), GridSortVecParallel);
     }
     
     /* Update performance statistics */
@@ -129,18 +129,18 @@ int GridSortParallel(struct GridData *ptr, struct GridProcessingConfig *config) 
 }
 
 /* Legacy sorting function */
-void GridSort(struct GridData *ptr) {
+static void GridSortOpt_internal(struct GridDataOpt *ptr) {
     if (ptr && ptr->data && ptr->vcnum > 0) {
-        qsort(ptr->data, ptr->vcnum, sizeof(struct GridGVec), GridSortVecParallel);
+        qsort(ptr->data, ptr->vcnum, sizeof(struct GridGVecOpt), GridSortVecParallel);
     }
 }
 
 /* Enhanced grid creation with parallel optimization */
-struct GridData *GridMakeParallel(uint32_t max_cells, struct GridProcessingConfig *config) {
-    struct GridData *ptr = (struct GridData*)malloc(sizeof(struct GridData));
+struct GridDataOpt *GridMakeParallel(uint32_t max_cells, struct GridProcessingConfig *config) {
+    struct GridDataOpt *ptr = (struct GridDataOpt*)malloc(sizeof(struct GridDataOpt));
     if (!ptr) return NULL;
     
-    memset(ptr, 0, sizeof(struct GridData));
+    memset(ptr, 0, sizeof(struct GridDataOpt));
     
     /* Initialize parallel processing structures */
     ptr->max_cells = max_cells;
@@ -163,11 +163,11 @@ struct GridData *GridMakeParallel(uint32_t max_cells, struct GridProcessingConfi
 }
 
 /* Original grid creation function */
-struct GridData *GridMake() {
-    struct GridData *ptr = (struct GridData*)malloc(sizeof(struct GridData));
+struct GridDataOpt *GridMakeOpt() {
+    struct GridDataOpt *ptr = (struct GridDataOpt*)malloc(sizeof(struct GridDataOpt));
     if (!ptr) return NULL;
     
-    memset(ptr, 0, sizeof(struct GridData));
+    memset(ptr, 0, sizeof(struct GridDataOpt));
     ptr->sdata = NULL;
     ptr->data = NULL;
     
@@ -175,7 +175,7 @@ struct GridData *GridMake() {
 }
 
 /* Enhanced grid cleanup */
-void GridFreeParallel(struct GridData *ptr) {
+static void GridFreeParallel_internal(struct GridDataOpt *ptr) {
     if (!ptr) return;
     
     /* Free original data structures */
@@ -192,7 +192,7 @@ void GridFreeParallel(struct GridData *ptr) {
 }
 
 /* Original grid cleanup */
-void GridFree(struct GridData *ptr) {
+void GridFreeOpt(struct GridDataOpt *ptr) {
     if (!ptr) return;
     if (ptr->sdata) free(ptr->sdata);
     if (ptr->data) free(ptr->data);
@@ -200,7 +200,7 @@ void GridFree(struct GridData *ptr) {
 }
 
 /* Matrix allocation for parallel processing */
-int GridAllocateMatrices(struct GridData *grid, uint32_t max_cells) {
+int GridAllocateMatrices(struct GridDataOpt *grid, uint32_t max_cells) {
     if (!grid) return -1;
     
     /* Allocate velocity matrix */
@@ -285,7 +285,7 @@ int GridAllocateMatrices(struct GridData *grid, uint32_t max_cells) {
 }
 
 /* Matrix deallocation */
-void GridDeallocateMatrices(struct GridData *grid) {
+void GridDeallocateMatrices(struct GridDataOpt *grid) {
     if (!grid) return;
     
     if (grid->velocity_matrix) {
@@ -398,20 +398,20 @@ int GridSetOptimalThreads(struct GridProcessingConfig *config) {
 }
 
 /* Performance monitoring */
-void GridStartTiming(struct GridData *grid) {
+void GridStartTiming(struct GridDataOpt *grid) {
     if (grid) {
         grid->perf_stats.processing_time = (double)clock() / CLOCKS_PER_SEC;
     }
 }
 
-void GridEndTiming(struct GridData *grid) {
+void GridEndTiming(struct GridDataOpt *grid) {
     if (grid) {
         grid->perf_stats.processing_time = 
             (double)clock() / CLOCKS_PER_SEC - grid->perf_stats.processing_time;
     }
 }
 
-void GridPrintPerformanceStats(struct GridData *grid) {
+void GridPrintPerformanceStats(struct GridDataOpt *grid) {
     if (!grid) return;
     
     printf("Grid Performance Statistics:\n");

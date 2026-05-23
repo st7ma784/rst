@@ -34,7 +34,7 @@
  * SIMD-optimized vector addition for statistical data
  */
 #ifdef AVX2_ENABLED
-static void add_statistics_simd(GridStat *result, const GridStat *a, const GridStat *b, int count) {
+static void add_statistics_simd(GridStats *result, const GridStats *a, const GridStats *b, int count) {
     int simd_count = (count / 8) * 8;
     
     // Process 8 statistics at a time using AVX2
@@ -67,7 +67,7 @@ static void add_statistics_simd(GridStat *result, const GridStat *a, const GridS
     }
 }
 #else
-static void add_statistics_simd(GridStat *result, const GridStat *a, const GridStat *b, int count) {
+static void add_statistics_simd(GridStats *result, const GridStats *a, const GridStats *b, int count) {
     for (int i = 0; i < count; i++) {
         result[i].median = (a[i].median + b[i].median) * 0.5f;
         result[i].sd = sqrtf(a[i].sd * a[i].sd + b[i].sd * b[i].sd);
@@ -90,7 +90,7 @@ typedef struct {
     float spatial_tolerance;
 } GridAddHashTable;
 
-static GridAddHashTable* create_spatial_hash(const struct GridData *grid, float tolerance) {
+static GridAddHashTable* create_spatial_hash(const struct GridDataOpt *grid, float tolerance) {
     if (!grid || tolerance <= 0.0f) return NULL;
     
     GridAddHashTable *hash = malloc(sizeof(GridAddHashTable));
@@ -163,7 +163,7 @@ static void free_spatial_hash(GridAddHashTable *hash) {
 /**
  * Add two grids with spatial matching and statistical combination
  */
-int GridAddParallel(struct GridData *target, const struct GridData *source, float spatial_tolerance) {
+int GridAddParallel(struct GridDataOpt *target, const struct GridDataOpt *source, float spatial_tolerance) {
     if (!target || !source) return -1;
     if (spatial_tolerance <= 0.0f) spatial_tolerance = 0.1f; // Default 0.1 degree tolerance
     
@@ -185,7 +185,7 @@ int GridAddParallel(struct GridData *target, const struct GridData *source, floa
 #ifdef OPENMP_ENABLED
     #pragma omp parallel for reduction(+:added_cells,updated_cells)
     for (int i = 0; i < source->vcnum; i++) {
-        const GridGVec *src_cell = &source->data[i];
+        const GridGVecOpt *src_cell = &source->data[i];
         
         // Find matching cell in target grid
         int match_idx = find_matching_cell(hash, src_cell->mlat, src_cell->mlon);
@@ -195,7 +195,7 @@ int GridAddParallel(struct GridData *target, const struct GridData *source, floa
             #pragma omp critical
             {
                 if (!matched_cells[match_idx]) {
-                    GridGVec *tgt_cell = &target->data[match_idx];
+                    GridGVecOpt *tgt_cell = &target->data[match_idx];
                     
                     // Combine velocity statistics
                     float weight_target = 1.0f / (tgt_cell->vel.sd * tgt_cell->vel.sd + 1e-6f);
@@ -235,12 +235,12 @@ int GridAddParallel(struct GridData *target, const struct GridData *source, floa
     }
 #else
     for (int i = 0; i < source->vcnum; i++) {
-        const GridGVec *src_cell = &source->data[i];
+        const GridGVecOpt *src_cell = &source->data[i];
         int match_idx = find_matching_cell(hash, src_cell->mlat, src_cell->mlon);
         
         if (match_idx >= 0) {
             if (!matched_cells[match_idx]) {
-                GridGVec *tgt_cell = &target->data[match_idx];
+                GridGVecOpt *tgt_cell = &target->data[match_idx];
                 
                 // Simple average combination for sequential version
                 tgt_cell->vel.median = (tgt_cell->vel.median + src_cell->vel.median) * 0.5f;
@@ -267,7 +267,7 @@ int GridAddParallel(struct GridData *target, const struct GridData *source, floa
     // Expand grid if new cells need to be added
     if (added_cells > 0) {
         int new_vcnum = target->vcnum + added_cells;
-        GridGVec *new_data = grid_aligned_malloc(new_vcnum * sizeof(GridGVec), 32);
+        GridGVecOpt *new_data = grid_aligned_malloc(new_vcnum * sizeof(GridGVecOpt), 32);
         
         if (!new_data) {
             free(matched_cells);
@@ -276,12 +276,12 @@ int GridAddParallel(struct GridData *target, const struct GridData *source, floa
         }
         
         // Copy existing data
-        memcpy(new_data, target->data, target->vcnum * sizeof(GridGVec));
+        memcpy(new_data, target->data, target->vcnum * sizeof(GridGVecOpt));
         
         // Add new cells
         int new_cell_idx = target->vcnum;
         for (int i = 0; i < source->vcnum; i++) {
-            const GridGVec *src_cell = &source->data[i];
+            const GridGVecOpt *src_cell = &source->data[i];
             int match_idx = find_matching_cell(hash, src_cell->mlat, src_cell->mlon);
             
             if (match_idx < 0) {
@@ -311,7 +311,7 @@ int GridAddParallel(struct GridData *target, const struct GridData *source, floa
 /**
  * Weighted addition of grids
  */
-int GridAddWeightedParallel(struct GridData *target, const struct GridData *source, 
+int GridAddWeightedParallel(struct GridDataOpt *target, const struct GridDataOpt *source, 
                            float target_weight, float source_weight,
                            float spatial_tolerance) {
     if (!target || !source) return -1;
@@ -329,11 +329,11 @@ int GridAddWeightedParallel(struct GridData *target, const struct GridData *sour
 #ifdef OPENMP_ENABLED
     #pragma omp parallel for
     for (int i = 0; i < source->vcnum; i++) {
-        const GridGVec *src_cell = &source->data[i];
+        const GridGVecOpt *src_cell = &source->data[i];
         int match_idx = find_matching_cell(hash, src_cell->mlat, src_cell->mlon);
         
         if (match_idx >= 0) {
-            GridGVec *tgt_cell = &target->data[match_idx];
+            GridGVecOpt *tgt_cell = &target->data[match_idx];
             
             #pragma omp critical
             {
@@ -357,11 +357,11 @@ int GridAddWeightedParallel(struct GridData *target, const struct GridData *sour
     }
 #else
     for (int i = 0; i < source->vcnum; i++) {
-        const GridGVec *src_cell = &source->data[i];
+        const GridGVecOpt *src_cell = &source->data[i];
         int match_idx = find_matching_cell(hash, src_cell->mlat, src_cell->mlon);
         
         if (match_idx >= 0) {
-            GridGVec *tgt_cell = &target->data[match_idx];
+            GridGVecOpt *tgt_cell = &target->data[match_idx];
             
             tgt_cell->vel.median = tgt_cell->vel.median * target_weight + 
                                   src_cell->vel.median * source_weight;
@@ -387,7 +387,7 @@ int GridAddWeightedParallel(struct GridData *target, const struct GridData *sour
 /**
  * Subtract one grid from another
  */
-int GridSubtractParallel(struct GridData *target, const struct GridData *source, float spatial_tolerance) {
+int GridSubtractParallel(struct GridDataOpt *target, const struct GridDataOpt *source, float spatial_tolerance) {
     if (!target || !source) return -1;
     
     GridAddHashTable *hash = create_spatial_hash(target, spatial_tolerance);
@@ -396,11 +396,11 @@ int GridSubtractParallel(struct GridData *target, const struct GridData *source,
 #ifdef OPENMP_ENABLED
     #pragma omp parallel for
     for (int i = 0; i < source->vcnum; i++) {
-        const GridGVec *src_cell = &source->data[i];
+        const GridGVecOpt *src_cell = &source->data[i];
         int match_idx = find_matching_cell(hash, src_cell->mlat, src_cell->mlon);
         
         if (match_idx >= 0) {
-            GridGVec *tgt_cell = &target->data[match_idx];
+            GridGVecOpt *tgt_cell = &target->data[match_idx];
             
             #pragma omp critical
             {
@@ -421,11 +421,11 @@ int GridSubtractParallel(struct GridData *target, const struct GridData *source,
     }
 #else
     for (int i = 0; i < source->vcnum; i++) {
-        const GridGVec *src_cell = &source->data[i];
+        const GridGVecOpt *src_cell = &source->data[i];
         int match_idx = find_matching_cell(hash, src_cell->mlat, src_cell->mlon);
         
         if (match_idx >= 0) {
-            GridGVec *tgt_cell = &target->data[match_idx];
+            GridGVecOpt *tgt_cell = &target->data[match_idx];
             
             tgt_cell->vel.median -= src_cell->vel.median;
             tgt_cell->pwr.median -= src_cell->pwr.median;
@@ -448,7 +448,7 @@ int GridSubtractParallel(struct GridData *target, const struct GridData *source,
 /**
  * Scale grid values by a constant factor
  */
-int GridScaleParallel(GridData *grid, float scale_factor) {
+int GridScaleParallel(GridDataOpt *grid, float scale_factor) {
     if (!grid || grid->vcnum <= 0) return -1;
     
     float abs_scale = fabsf(scale_factor);
@@ -456,7 +456,7 @@ int GridScaleParallel(GridData *grid, float scale_factor) {
 #ifdef OPENMP_ENABLED
     #pragma omp parallel for schedule(static)
     for (int i = 0; i < grid->vcnum; i++) {
-        GridGVec *cell = &grid->data[i];
+        GridGVecOpt *cell = &grid->data[i];
         
         // Scale median values
         cell->vel.median *= scale_factor;
@@ -470,7 +470,7 @@ int GridScaleParallel(GridData *grid, float scale_factor) {
     }
 #else
     for (int i = 0; i < grid->vcnum; i++) {
-        GridGVec *cell = &grid->data[i];
+        GridGVecOpt *cell = &grid->data[i];
         
         cell->vel.median *= scale_factor;
         cell->pwr.median *= scale_factor;
@@ -488,13 +488,13 @@ int GridScaleParallel(GridData *grid, float scale_factor) {
 /**
  * Apply mathematical function to grid values
  */
-int GridApplyFunctionParallel(GridData *grid, float (*func)(float)) {
+int GridApplyFunctionParallel(GridDataOpt *grid, float (*func)(float)) {
     if (!grid || !func || grid->vcnum <= 0) return -1;
     
 #ifdef OPENMP_ENABLED
     #pragma omp parallel for schedule(static)
     for (int i = 0; i < grid->vcnum; i++) {
-        GridGVec *cell = &grid->data[i];
+        GridGVecOpt *cell = &grid->data[i];
         
         // Apply function to median values
         cell->vel.median = func(cell->vel.median);
@@ -508,7 +508,7 @@ int GridApplyFunctionParallel(GridData *grid, float (*func)(float)) {
     }
 #else
     for (int i = 0; i < grid->vcnum; i++) {
-        GridGVec *cell = &grid->data[i];
+        GridGVecOpt *cell = &grid->data[i];
         
         cell->vel.median = func(cell->vel.median);
         cell->pwr.median = func(cell->pwr.median);

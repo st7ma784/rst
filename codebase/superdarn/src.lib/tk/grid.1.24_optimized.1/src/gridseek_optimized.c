@@ -80,7 +80,7 @@ static int grid_vectorized_binary_search(const double *times, int num_times,
     int best = -1;
     double best_diff = INFINITY;
     
-#if VEC_WIDTH > 1
+#ifdef __AVX512F__
     // Vectorized search for the main loop
     if (right - left + 1 >= VEC_WIDTH * 2) {
         vec_double v_target = _mm512_set1_pd(target);

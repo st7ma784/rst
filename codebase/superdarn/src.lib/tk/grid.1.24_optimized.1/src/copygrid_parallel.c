@@ -56,7 +56,7 @@ static void fast_memcpy_simd(void *dest, const void *src, size_t size) {
 /**
  * Parallel grid cell copying with SIMD optimization
  */
-static int copy_grid_cells_parallel(GridGVec *dest, const GridGVec *src, int count) {
+static int copy_grid_cells_parallel(GridGVecOpt *dest, const GridGVecOpt *src, int count) {
     if (!dest || !src || count <= 0) return -1;
     
 #ifdef OPENMP_ENABLED
@@ -77,10 +77,10 @@ static int copy_grid_cells_parallel(GridGVec *dest, const GridGVec *src, int cou
         }
     } else {
         // Use SIMD-optimized memcpy for smaller datasets
-        fast_memcpy_simd(dest, src, count * sizeof(GridGVec));
+        fast_memcpy_simd(dest, src, count * sizeof(GridGVecOpt));
     }
 #else
-    fast_memcpy_simd(dest, src, count * sizeof(GridGVec));
+    fast_memcpy_simd(dest, src, count * sizeof(GridGVecOpt));
 #endif
 
     return 0;
@@ -89,7 +89,7 @@ static int copy_grid_cells_parallel(GridGVec *dest, const GridGVec *src, int cou
 /**
  * Parallel station data copying
  */
-static int copy_station_data_parallel(GridSVec *dest, const GridSVec *src, int count) {
+static int copy_station_data_parallel(GridSVecOpt *dest, const GridSVecOpt *src, int count) {
     if (!dest || !src || count <= 0) return -1;
     
 #ifdef OPENMP_ENABLED
@@ -98,7 +98,7 @@ static int copy_station_data_parallel(GridSVec *dest, const GridSVec *src, int c
         dest[i] = src[i]; // Structure assignment
     }
 #else
-    fast_memcpy_simd(dest, src, count * sizeof(GridSVec));
+    fast_memcpy_simd(dest, src, count * sizeof(GridSVecOpt));
 #endif
     
     return 0;
@@ -107,11 +107,11 @@ static int copy_station_data_parallel(GridSVec *dest, const GridSVec *src, int c
 /**
  * Deep copy grid data with parallel processing
  */
-GridData* GridCopyParallel(const GridData *source) {
+GridDataOpt* GridCopyParallel(const GridDataOpt *source) {
     if (!source) return NULL;
     
     // Allocate new grid structure
-    GridData *dest = malloc(sizeof(GridData));
+    GridDataOpt *dest = malloc(sizeof(GridDataOpt));
     if (!dest) return NULL;
     
     // Copy basic parameters
@@ -122,7 +122,7 @@ GridData* GridCopyParallel(const GridData *source) {
     
     // Allocate and copy velocity cell data
     if (source->vcnum > 0 && source->data) {
-        dest->data = grid_aligned_malloc(source->vcnum * sizeof(GridGVec), 32);
+        dest->data = grid_aligned_malloc(source->vcnum * sizeof(GridGVecOpt), 32);
         if (!dest->data) {
             free(dest);
             return NULL;
@@ -139,7 +139,7 @@ GridData* GridCopyParallel(const GridData *source) {
     
     // Allocate and copy station data
     if (source->stnum > 0 && source->sdata) {
-        dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+        dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVecOpt), 32);
         if (!dest->sdata) {
             grid_aligned_free(dest->data);
             free(dest);
@@ -168,8 +168,8 @@ GridData* GridCopyParallel(const GridData *source) {
 /**
  * Selective grid copying with filtering
  */
-GridData* GridCopySelectiveParallel(const GridData *source, 
-                                    int (*filter_func)(const GridGVec*, void*),
+GridDataOpt* GridCopySelectiveParallel(const GridDataOpt *source, 
+                                    int (*filter_func)(const GridGVecOpt*, void*),
                                     void *filter_data) {
     if (!source || !filter_func) return NULL;
     
@@ -194,7 +194,7 @@ GridData* GridCopySelectiveParallel(const GridData *source,
     if (filtered_count == 0) return NULL;
     
     // Allocate destination grid
-    GridData *dest = malloc(sizeof(GridData));
+    GridDataOpt *dest = malloc(sizeof(GridDataOpt));
     if (!dest) return NULL;
     
     dest->st_time = source->st_time;
@@ -203,7 +203,7 @@ GridData* GridCopySelectiveParallel(const GridData *source,
     dest->stnum = source->stnum;
     
     // Allocate filtered cell array
-    dest->data = grid_aligned_malloc(filtered_count * sizeof(GridGVec), 32);
+    dest->data = grid_aligned_malloc(filtered_count * sizeof(GridGVecOpt), 32);
     if (!dest->data) {
         free(dest);
         return NULL;
@@ -235,7 +235,7 @@ GridData* GridCopySelectiveParallel(const GridData *source,
     
     // Copy station data
     if (source->stnum > 0 && source->sdata) {
-        dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVec), 32);
+        dest->sdata = grid_aligned_malloc(source->stnum * sizeof(GridSVecOpt), 32);
         if (!dest->sdata) {
             grid_aligned_free(dest->data);
             free(dest);
@@ -259,7 +259,7 @@ GridData* GridCopySelectiveParallel(const GridData *source,
 /**
  * Parallel grid region extraction
  */
-GridData* GridCopyRegionParallel(const GridData *source, 
+GridDataOpt* GridCopyRegionParallel(const GridDataOpt *source, 
                                  float min_lat, float max_lat,
                                  float min_lon, float max_lon) {
     if (!source) return NULL;
@@ -272,7 +272,7 @@ GridData* GridCopyRegionParallel(const GridData *source,
     RegionFilter filter_data = {min_lat, max_lat, min_lon, max_lon};
     
     // Region filter function
-    int region_filter(const GridGVec *cell, void *data) {
+    int region_filter(const GridGVecOpt *cell, void *data) {
         RegionFilter *region = (RegionFilter*)data;
         return (cell->mlat >= region->min_lat && cell->mlat <= region->max_lat &&
                 cell->mlon >= region->min_lon && cell->mlon <= region->max_lon);
@@ -284,12 +284,12 @@ GridData* GridCopyRegionParallel(const GridData *source,
 /**
  * Parallel grid time window extraction
  */
-GridData* GridCopyTimeWindowParallel(const GridData *source,
+GridDataOpt* GridCopyTimeWindowParallel(const GridDataOpt *source,
                                      time_t start_time, time_t end_time) {
     if (!source) return NULL;
     
     // Create a new grid with the same structure but filtered time
-    GridData *dest = GridCopyParallel(source);
+    GridDataOpt *dest = GridCopyParallel(source);
     if (!dest) return NULL;
     
     // Update time boundaries
@@ -305,7 +305,7 @@ GridData* GridCopyTimeWindowParallel(const GridData *source,
 /**
  * Parallel grid statistics copying
  */
-int GridCopyStatsParallel(GridData *dest, const GridData *source) {
+int GridCopyStatsParallel(GridDataOpt *dest, const GridDataOpt *source) {
     if (!dest || !source) return -1;
     
     if (dest->vcnum != source->vcnum) return -2; // Size mismatch
@@ -332,7 +332,7 @@ int GridCopyStatsParallel(GridData *dest, const GridData *source) {
 /**
  * Memory-efficient grid copying with compression
  */
-GridData* GridCopyCompressedParallel(const GridData *source, float tolerance) {
+GridDataOpt* GridCopyCompressedParallel(const GridDataOpt *source, float tolerance) {
     if (!source || tolerance < 0.0f) return NULL;
     
     // Create filter for compression based on data significance
@@ -343,7 +343,7 @@ GridData* GridCopyCompressedParallel(const GridData *source, float tolerance) {
     CompressionFilter filter_data = {tolerance};
     
     // Compression filter - keep cells with significant data
-    int compression_filter(const GridGVec *cell, void *data) {
+    int compression_filter(const GridGVecOpt *cell, void *data) {
         CompressionFilter *comp = (CompressionFilter*)data;
         
         // Keep cells with velocity above tolerance or high power
@@ -358,7 +358,7 @@ GridData* GridCopyCompressedParallel(const GridData *source, float tolerance) {
 /**
  * Free grid data with parallel deallocation
  */
-void GridFreeParallel(GridData *grid) {
+void GridFreeParallel(GridDataOpt *grid) {
     if (!grid) return;
     
     // Free data arrays
@@ -398,7 +398,7 @@ void GridFreeParallel(GridData *grid) {
 /**
  * Validate grid data integrity
  */
-int GridValidateParallel(const GridData *grid) {
+int GridValidateParallel(const GridDataOpt *grid) {
     if (!grid) return -1;
     
     // Basic structure validation
@@ -414,7 +414,7 @@ int GridValidateParallel(const GridData *grid) {
 #ifdef OPENMP_ENABLED
     #pragma omp parallel for reduction(+:validation_errors)
     for (int i = 0; i < grid->vcnum; i++) {
-        const GridGVec *cell = &grid->data[i];
+        const GridGVecOpt *cell = &grid->data[i];
         
         // Check coordinate ranges
         if (cell->mlat < -90.0f || cell->mlat > 90.0f ||
@@ -435,7 +435,7 @@ int GridValidateParallel(const GridData *grid) {
     }
 #else
     for (int i = 0; i < grid->vcnum; i++) {
-        const GridGVec *cell = &grid->data[i];
+        const GridGVecOpt *cell = &grid->data[i];
         
         if (cell->mlat < -90.0f || cell->mlat > 90.0f ||
             cell->mlon < -180.0f || cell->mlon > 360.0f ||

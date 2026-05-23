@@ -52,7 +52,7 @@ struct IntegrationGroup {
 } ALIGNED(64);
 
 /* Vectorized error calculation and weight computation */
-static inline void compute_weights_vectorized(struct GridGVec *data, uint32_t count, 
+static inline void compute_weights_vectorized(struct GridGVecOpt *data, uint32_t count, 
                                             double *errors, double *weights) {
 #ifdef __AVX2__
     if (count >= 4) {
@@ -112,8 +112,8 @@ static inline void compute_weights_vectorized(struct GridGVec *data, uint32_t co
 }
 
 /* Parallel integration processing for a single group */
-static void process_integration_group(struct IntegrationGroup *group, struct GridGVec *input_data,
-                                    struct GridGVec *output_data, double *weights) {
+static void process_integration_group(struct IntegrationGroup *group, struct GridGVecOpt *input_data,
+                                    struct GridGVecOpt *output_data, double *weights) {
     /* Reset accumulators */
     group->accumulated_azm = 0.0;
     group->accumulated_vel = 0.0;
@@ -143,7 +143,7 @@ static void process_integration_group(struct IntegrationGroup *group, struct Gri
     }
     
     /* Finalize averaged values */
-    struct GridGVec *out = &output_data[0]; /* Single output element per group */
+    struct GridGVecOpt *out = &output_data[0]; /* Single output element per group */
     
     out->azm = group->accumulated_azm / (double)group->count;
     
@@ -180,7 +180,7 @@ static void process_integration_group(struct IntegrationGroup *group, struct Gri
 }
 
 /* Build integration groups for parallel processing */
-static int build_integration_groups(struct GridData *input, struct IntegrationGroup **groups, 
+static int build_integration_groups(struct GridDataOpt *input, struct IntegrationGroup **groups, 
                                    uint32_t *num_groups) {
     if (!input || input->vcnum == 0) {
         *num_groups = 0;
@@ -238,7 +238,7 @@ static int build_integration_groups(struct GridData *input, struct IntegrationGr
 }
 
 /* Parallel integration implementation */
-int GridIntegrateParallel(struct GridData *a, struct GridData *b, double *err, 
+int GridIntegrateParallel(struct GridDataOpt *a, struct GridDataOpt *b, double *err, 
                          struct GridProcessingConfig *config) {
     if (!a || !b || !err) return -1;
     
@@ -257,13 +257,13 @@ int GridIntegrateParallel(struct GridData *a, struct GridData *b, double *err,
     /* Copy station data */
     if (b->stnum > 0) {
         if (a->sdata == NULL) {
-            a->sdata = (struct GridSVec*)malloc(sizeof(struct GridSVec) * b->stnum);
+            a->sdata = (struct GridSVecOpt*)malloc(sizeof(struct GridSVecOpt) * b->stnum);
         } else {
-            a->sdata = (struct GridSVec*)realloc(a->sdata, sizeof(struct GridSVec) * b->stnum);
+            a->sdata = (struct GridSVecOpt*)realloc(a->sdata, sizeof(struct GridSVecOpt) * b->stnum);
         }
         
         if (!a->sdata) return -1;
-        memcpy(a->sdata, b->sdata, sizeof(struct GridSVec) * b->stnum);
+        memcpy(a->sdata, b->sdata, sizeof(struct GridSVecOpt) * b->stnum);
     } else if (a->sdata != NULL) {
         free(a->sdata);
         a->sdata = NULL;
@@ -272,13 +272,13 @@ int GridIntegrateParallel(struct GridData *a, struct GridData *b, double *err,
     /* Allocate output data array */
     if (b->vcnum > 0) {
         if (a->data == NULL) {
-            a->data = (struct GridGVec*)malloc(sizeof(struct GridGVec) * b->vcnum);
+            a->data = (struct GridGVecOpt*)malloc(sizeof(struct GridGVecOpt) * b->vcnum);
         } else {
-            a->data = (struct GridGVec*)realloc(a->data, sizeof(struct GridGVec) * b->vcnum);
+            a->data = (struct GridGVecOpt*)realloc(a->data, sizeof(struct GridGVecOpt) * b->vcnum);
         }
         
         if (!a->data) return -1;
-        memset(a->data, 0, sizeof(struct GridGVec) * b->vcnum);
+        memset(a->data, 0, sizeof(struct GridGVecOpt) * b->vcnum);
     } else if (a->data != NULL) {
         free(a->data);
         a->data = NULL;
@@ -331,7 +331,7 @@ int GridIntegrateParallel(struct GridData *a, struct GridData *b, double *err,
     /* Update final count and resize array */
     a->vcnum = output_count;
     if (output_count > 0 && output_count < b->vcnum) {
-        a->data = (struct GridGVec*)realloc(a->data, sizeof(struct GridGVec) * output_count);
+        a->data = (struct GridGVecOpt*)realloc(a->data, sizeof(struct GridGVecOpt) * output_count);
     }
     
     /* Cleanup */
@@ -348,7 +348,7 @@ int GridIntegrateParallel(struct GridData *a, struct GridData *b, double *err,
 }
 
 /* Legacy API compatibility wrapper */
-void GridIntegrate(struct GridData *a, struct GridData *b, double *err) {
+void GridIntegrateOpt(struct GridDataOpt *a, struct GridDataOpt *b, double *err) {
     struct GridProcessingConfig config = {0};
     config.num_threads = 1;
     config.chunk_size = GRID_CHUNK_SIZE;

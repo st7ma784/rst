@@ -88,7 +88,7 @@ static void hash_add_entry(int32_t index, uint32_t position) {
 }
 
 /* Fast cell location using hash table */
-CUDA_CALLABLE int GridLocateCellParallel(struct GridData *grid, int index) {
+CUDA_CALLABLE int GridLocateCellParallel(struct GridDataOpt *grid, int index) {
     if (!grid || !grid->data) return grid->vcnum;
     
     uint32_t hash_idx = hash_cell_index(index);
@@ -105,13 +105,13 @@ CUDA_CALLABLE int GridLocateCellParallel(struct GridData *grid, int index) {
 }
 
 /* Original function for compatibility */
-int GridLocateCell(int npnt, struct GridGVec *ptr, int index) {
-    for (int i = 0; i < npnt && (ptr[i].index != index); i++);
+int GridLocateCellOpt(int npnt, struct GridGVecOpt *ptr, int index) {
+    int i; for (i = 0; i < npnt && (ptr[i].index != index); i++);
     return i;
 }
 
 /* Vectorized averaging operations using SIMD */
-static void vectorized_average_step(struct GridGVec *dest, struct GridGVec *src, int flg) {
+static void vectorized_average_step(struct GridGVecOpt *dest, struct GridGVecOpt *src, int flg) {
 #ifdef __AVX2__
     if (flg == 0) {
         /* Use AVX2 for vectorized addition */
@@ -173,7 +173,7 @@ static void vectorized_average_step(struct GridGVec *dest, struct GridGVec *src,
 }
 
 /* Parallel averaging with optimized data structures */
-int GridAverageParallel(struct GridData *mptr, struct GridData *ptr, int flg, struct GridProcessingConfig *config) {
+int GridAverageParallel(struct GridDataOpt *mptr, struct GridDataOpt *ptr, int flg, struct GridProcessingConfig *config) {
     if (!mptr || !ptr) return -1;
     
     clock_t start_time = clock();
@@ -187,9 +187,9 @@ int GridAverageParallel(struct GridData *mptr, struct GridData *ptr, int flg, st
     
     /* Allocate and initialize station data */
     if (ptr->sdata != NULL) {
-        ptr->sdata = (struct GridSVec*)realloc(ptr->sdata, sizeof(struct GridSVec));
+        ptr->sdata = (struct GridSVecOpt*)realloc(ptr->sdata, sizeof(struct GridSVecOpt));
     } else {
-        ptr->sdata = (struct GridSVec*)malloc(sizeof(struct GridSVec));
+        ptr->sdata = (struct GridSVecOpt*)malloc(sizeof(struct GridSVecOpt));
     }
     
     if (!ptr->sdata) return -1;
@@ -222,7 +222,7 @@ int GridAverageParallel(struct GridData *mptr, struct GridData *ptr, int flg, st
     }
     
     /* Pre-allocate maximum possible data */
-    ptr->data = (struct GridGVec*)malloc(mptr->vcnum * sizeof(struct GridGVec));
+    ptr->data = (struct GridGVecOpt*)malloc(mptr->vcnum * sizeof(struct GridGVecOpt));
     if (!ptr->data) return -1;
     
     /* Process input data with parallel cell grouping */
@@ -321,7 +321,7 @@ int GridAverageParallel(struct GridData *mptr, struct GridData *ptr, int flg, st
     
     /* Resize output array to actual size */
     if (ptr->vcnum > 0) {
-        ptr->data = (struct GridGVec*)realloc(ptr->data, ptr->vcnum * sizeof(struct GridGVec));
+        ptr->data = (struct GridGVecOpt*)realloc(ptr->data, ptr->vcnum * sizeof(struct GridGVecOpt));
     } else {
         free(ptr->data);
         ptr->data = NULL;
@@ -344,7 +344,7 @@ int GridAverageParallel(struct GridData *mptr, struct GridData *ptr, int flg, st
 }
 
 /* Legacy API compatibility wrapper */
-void GridAverage(struct GridData *mptr, struct GridData *ptr, int flg) {
+void GridAverageOpt(struct GridDataOpt *mptr, struct GridDataOpt *ptr, int flg) {
     struct GridProcessingConfig config = {0};
     config.num_threads = 1;
     config.chunk_size = GRID_CHUNK_SIZE;

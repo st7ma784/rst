@@ -32,6 +32,8 @@ Modifications:
 #include <sys/types.h>
 #include <unistd.h>
 #include <zlib.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <omp.h>
 #include "rtypes.h"
 #include "rtime.h"
@@ -315,7 +317,7 @@ int grid_parallel_locate_cell(int npnt, struct GridGVecParallel *ptr,
         result = (found != -1) ? found : npnt;
     } else {
         // Sequential search for smaller datasets
-        for (int i = 0; i < npnt && (ptr[i].index != index); i++);
+        int i; for (i = 0; i < npnt && (ptr[i].index != index); i++);
         result = i;
     }
     

@@ -92,7 +92,7 @@ typedef struct {
 } SpatialFilterParams;
 
 /* Basic range filter for individual cell */
-static FilterAction apply_basic_filter(const GridGVec *cell, const GridFilterCriteria *criteria) {
+static FilterAction apply_basic_filter(const GridGVecOpt *cell, const GridFilterCriteria *criteria) {
     if (!cell || !criteria) return FILTER_KEEP;
     
     int velocity_ok = (cell->vel.median >= criteria->velocity_min && 
@@ -121,7 +121,7 @@ static FilterAction apply_basic_filter(const GridGVec *cell, const GridFilterCri
 }
 
 /* Parallel basic filtering with multiple criteria */
-int GridFilterBasicParallel(GridData *grid, const GridFilterCriteria *criteria,
+int GridFilterBasicParallel(GridDataOpt *grid, const GridFilterCriteria *criteria,
                            GridProcessingConfig *config) {
     if (!grid || !criteria || !grid->data || grid->vcnum <= 0) return -1;
     
@@ -136,7 +136,7 @@ int GridFilterBasicParallel(GridData *grid, const GridFilterCriteria *criteria,
 #endif
     
     /* Create temporary array for filtered results */
-    GridGVec *filtered_data = (GridGVec*)malloc(grid->vcnum * sizeof(GridGVec));
+    GridGVecOpt *filtered_data = (GridGVecOpt*)malloc(grid->vcnum * sizeof(GridGVecOpt));
     if (!filtered_data) return -1;
     
     int filtered_count = 0;
@@ -169,7 +169,7 @@ int GridFilterBasicParallel(GridData *grid, const GridFilterCriteria *criteria,
     
     /* Resize to actual filtered size */
     if (filtered_count > 0) {
-        grid->data = (GridGVec*)realloc(grid->data, filtered_count * sizeof(GridGVec));
+        grid->data = (GridGVecOpt*)realloc(grid->data, filtered_count * sizeof(GridGVecOpt));
     }
     
     free(keep_flags);
@@ -185,7 +185,7 @@ int GridFilterBasicParallel(GridData *grid, const GridFilterCriteria *criteria,
 }
 
 /* Calculate statistical parameters for outlier detection */
-static void calculate_statistics(const GridData *grid, const char *parameter,
+static void calculate_statistics(const GridDataOpt *grid, const char *parameter,
                                 double *mean, double *median, double *std_dev) {
     if (!grid || !grid->data || grid->vcnum <= 0) return;
     
@@ -240,7 +240,7 @@ static void calculate_statistics(const GridData *grid, const char *parameter,
 }
 
 /* Statistical outlier filtering */
-int GridFilterStatisticalParallel(GridData *grid, const char *parameter,
+int GridFilterStatisticalParallel(GridDataOpt *grid, const char *parameter,
                                  const StatisticalFilterParams *params,
                                  GridProcessingConfig *config) {
     if (!grid || !parameter || !params || !grid->data || grid->vcnum <= 0) return -1;
@@ -354,18 +354,18 @@ static double haversine_distance(double lat1, double lon1, double lat2, double l
 }
 
 /* Spatial smoothing filter */
-int GridFilterSpatialParallel(GridData *grid, const SpatialFilterParams *params,
+int GridFilterSpatialParallel(GridDataOpt *grid, const SpatialFilterParams *params,
                              GridProcessingConfig *config) {
     if (!grid || !params || !grid->data || grid->vcnum <= 0) return -1;
     
     clock_t start_time = clock();
     
     /* Create smoothed copy of the data */
-    GridGVec *smoothed_data = (GridGVec*)malloc(grid->vcnum * sizeof(GridGVec));
+    GridGVecOpt *smoothed_data = (GridGVecOpt*)malloc(grid->vcnum * sizeof(GridGVecOpt));
     if (!smoothed_data) return -1;
     
     /* Copy original data structure */
-    memcpy(smoothed_data, grid->data, grid->vcnum * sizeof(GridGVec));
+    memcpy(smoothed_data, grid->data, grid->vcnum * sizeof(GridGVecOpt));
     
     /* Configure threading */
     int num_threads = config ? config->num_threads : 1;
@@ -433,15 +433,15 @@ int GridFilterSpatialParallel(GridData *grid, const SpatialFilterParams *params,
 }
 
 /* Median filter for noise reduction */
-int GridFilterMedianParallel(GridData *grid, int window_size, const char *parameter,
+int GridFilterMedianParallel(GridDataOpt *grid, int window_size, const char *parameter,
                             GridProcessingConfig *config) {
     if (!grid || !parameter || !grid->data || grid->vcnum <= 0 || window_size <= 0) return -1;
     
     /* Simple median filter on sorted data */
-    GridGVec *filtered_data = (GridGVec*)malloc(grid->vcnum * sizeof(GridGVec));
+    GridGVecOpt *filtered_data = (GridGVecOpt*)malloc(grid->vcnum * sizeof(GridGVecOpt));
     if (!filtered_data) return -1;
     
-    memcpy(filtered_data, grid->data, grid->vcnum * sizeof(GridGVec));
+    memcpy(filtered_data, grid->data, grid->vcnum * sizeof(GridGVecOpt));
     
     int half_window = window_size / 2;
     
@@ -489,7 +489,7 @@ int GridFilterMedianParallel(GridData *grid, int window_size, const char *parame
 }
 
 /* Composite filter combining multiple filtering techniques */
-int GridFilterCompositeParallel(GridData *grid, const GridFilterCriteria *basic_criteria,
+int GridFilterCompositeParallel(GridDataOpt *grid, const GridFilterCriteria *basic_criteria,
                                const StatisticalFilterParams *stat_params,
                                const SpatialFilterParams *spatial_params,
                                GridProcessingConfig *config) {
@@ -517,7 +517,7 @@ int GridFilterCompositeParallel(GridData *grid, const GridFilterCriteria *basic_
 }
 
 /* Legacy compatibility functions */
-int GridFilterParallel(GridData *grid, double vel_min, double vel_max,
+int GridFilterParallel(GridDataOpt *grid, double vel_min, double vel_max,
                       double pwr_min, double pwr_max, GridProcessingConfig *config) {
     GridFilterCriteria criteria = {
         .velocity_min = vel_min,
@@ -539,7 +539,7 @@ int GridFilterParallel(GridData *grid, double vel_min, double vel_max,
 }
 
 /* Simple quality filter */
-int GridFilterQualityParallel(GridData *grid, double error_threshold,
+int GridFilterQualityParallel(GridDataOpt *grid, double error_threshold,
                              GridProcessingConfig *config) {
     GridFilterCriteria criteria = {
         .velocity_min = -1e6,
