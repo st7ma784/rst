@@ -20,6 +20,7 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <zlib.h>          /* gzFile, needed before dmap.h */
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -34,7 +35,9 @@
 #include "rprm.h"
 #include "rawdata.h"
 #include "fitdata.h"
+#include "fit_structures.h"          /* FITPRMS (struct fit_prms) */
 #include "fit_structures_array.h"
+#include "fitacftoplevel.h"
 
 // Performance optimization constants
 #define CACHE_LINE_SIZE 64
@@ -42,15 +45,7 @@
 #define MIN_PARALLEL_RANGES 8
 #define BATCH_SIZE_OPTIMAL 16
 
-// Processing modes for different optimization strategies
-typedef enum {
-    PROCESS_STANDARD = 0,     // Standard processing
-    PROCESS_PARALLEL = 1,     // OpenMP parallel processing
-    PROCESS_SIMD = 2,         // SIMD vectorized processing
-    PROCESS_HYBRID = 3,       // Combined parallel + SIMD
-    PROCESS_ROBUST = 4,       // Robust processing for noisy data
-    PROCESS_XCF = 5          // Cross-correlation processing
-} PROCESS_MODE;
+/* PROCESS_MODE is defined in fit_structures_array.h. */
 
 // Performance tracking structure
 typedef struct {
@@ -492,30 +487,32 @@ int Convert_FitData_from_Arrays(RANGE_DATA_ARRAYS *arrays, struct FitData *fit, 
         
         if (rng->valid && (rng->fit_results.power_valid || rng->fit_results.phase_valid)) {
             fit->rng[r].qflg = 1;
-            
+
             if (rng->fit_results.power_valid) {
-                fit->rng[r].p_l = rng->fit_results.power_0;
-                fit->rng[r].p_l_e = rng->fit_results.power_error;
-                fit->rng[r].w_l = sqrt(2.0 / rng->fit_results.lambda_power); // Spectral width
-                fit->rng[r].w_l_e = fit->rng[r].w_l * 0.1; // Estimated error
+                fit->rng[r].p_l   = rng->fit_results.power_0;
+                fit->rng[r].p_l_err = rng->fit_results.power_error;
+                if (rng->fit_results.lambda_power > 0.0) {
+                    fit->rng[r].w_l = sqrt(2.0 / rng->fit_results.lambda_power);
+                    fit->rng[r].w_l_err = fit->rng[r].w_l * 0.1;
+                }
             }
-            
+
             if (rng->fit_results.phase_valid) {
-                fit->rng[r].v = rng->fit_results.velocity;
-                fit->rng[r].v_e = rng->fit_results.velocity_error;
-                fit->rng[r].phi0 = rng->fit_results.phase_0;
-                fit->rng[r].phi0_e = 0.1; // Estimated phase error
+                fit->rng[r].v     = rng->fit_results.velocity;
+                fit->rng[r].v_err = rng->fit_results.velocity_error;
+                fit->rng[r].phi0     = rng->fit_results.phase_0;
+                fit->rng[r].phi0_err = 0.1;
             }
-            
-            if (rng->fit_results.elevation_valid) {
-                fit->rng[r].elv = rng->fit_results.elevation;
-                fit->rng[r].elv_e = rng->fit_results.elevation_error;
+
+            if (rng->fit_results.elevation_valid && fit->elv) {
+                fit->elv[r].normal = rng->fit_results.elevation;
+                fit->elv[r].error  = rng->fit_results.elevation_error;
             }
-            
-            fit->rng[r].gsct = 1; // Assume ground scatter for now
-            fit->rng[r].nump = rng->pwrs.count;
+
+            fit->rng[r].gsct = 1;
+            fit->rng[r].nump = (char)rng->pwrs.count;
         } else {
-            fit->rng[r].qflg = 0; // No valid data
+            fit->rng[r].qflg = 0;
         }
     }
     
@@ -609,4 +606,269 @@ int Fitacf_Array(struct RadarParm *prm, struct RawData *raw, struct FitData *fit
 cleanup:
     free_range_data_arrays(arrays);
     return result;
+}
+
+
+/*============================================================================
+ * Scaffolding helpers — fill-in for the previously dangling declarations in
+ * fit_structures_array.h. These are what unblocked the SoA path from "compiles
+ * but won't link" to "actually runs end-to-end". Math kept deliberately simple
+ * (single-pass weighted linear regression, not full LM) — the equivalence
+ * harness will catch any divergence vs Fitacf() and the AUDIT documents that
+ * the current numerics are approximate, not bitwise.
+ *==========================================================================*/
+
+RANGE_DATA_ARRAYS *create_range_data_arrays(int max_ranges, int max_lags) {
+    if (max_ranges <= 0 || max_lags <= 0) return NULL;
+    RANGE_DATA_ARRAYS *a = calloc(1, sizeof(*a));
+    if (!a) return NULL;
+
+    a->max_ranges = max_ranges;
+    a->num_ranges = 0;
+    a->ranges = calloc((size_t)max_ranges, sizeof(RANGENODE_ARRAY));
+    a->range_lag_counts = calloc((size_t)max_ranges, sizeof(int));
+    a->range_valid      = calloc((size_t)max_ranges, sizeof(int));
+    a->range_has_phase  = calloc((size_t)max_ranges, sizeof(int));
+    a->range_has_power  = calloc((size_t)max_ranges, sizeof(int));
+    if (!a->ranges || !a->range_lag_counts ||
+        !a->range_valid || !a->range_has_phase || !a->range_has_power)
+        goto fail;
+
+    /* 2D matrices: each [range][lag] of size max_lags. */
+    a->phase_matrix       = calloc((size_t)max_ranges, sizeof(double *));
+    a->power_matrix       = calloc((size_t)max_ranges, sizeof(double *));
+    a->alpha_matrix       = calloc((size_t)max_ranges, sizeof(double *));
+    a->sigma_phase_matrix = calloc((size_t)max_ranges, sizeof(double *));
+    a->sigma_power_matrix = calloc((size_t)max_ranges, sizeof(double *));
+    a->lag_idx_matrix     = calloc((size_t)max_ranges, sizeof(int *));
+    if (!a->phase_matrix || !a->power_matrix || !a->alpha_matrix ||
+        !a->sigma_phase_matrix || !a->sigma_power_matrix || !a->lag_idx_matrix)
+        goto fail;
+
+    for (int r = 0; r < max_ranges; r++) {
+        a->phase_matrix[r]       = calloc((size_t)max_lags, sizeof(double));
+        a->power_matrix[r]       = calloc((size_t)max_lags, sizeof(double));
+        a->alpha_matrix[r]       = calloc((size_t)max_lags, sizeof(double));
+        a->sigma_phase_matrix[r] = calloc((size_t)max_lags, sizeof(double));
+        a->sigma_power_matrix[r] = calloc((size_t)max_lags, sizeof(double));
+        a->lag_idx_matrix[r]     = calloc((size_t)max_lags, sizeof(int));
+        if (!a->phase_matrix[r] || !a->power_matrix[r] || !a->alpha_matrix[r] ||
+            !a->sigma_phase_matrix[r] || !a->sigma_power_matrix[r] ||
+            !a->lag_idx_matrix[r]) goto fail;
+
+        /* Per-range PHASE_DATA_ARRAY / POWER_DATA_ARRAY / ... — capacity
+           is max_lags; count starts at 0 and is bumped as preprocessing
+           pushes valid entries. */
+        RANGENODE_ARRAY *rn = &a->ranges[r];
+        rn->range = r;
+        rn->valid = 0;
+
+        rn->phases.capacity = max_lags;
+        rn->phases.phi      = calloc((size_t)max_lags, sizeof(double));
+        rn->phases.t        = calloc((size_t)max_lags, sizeof(double));
+        rn->phases.sigma    = calloc((size_t)max_lags, sizeof(double));
+        rn->phases.lag_idx  = calloc((size_t)max_lags, sizeof(int));
+        rn->phases.alpha_2  = calloc((size_t)max_lags, sizeof(double));
+
+        rn->pwrs.capacity   = max_lags;
+        rn->pwrs.ln_pwr     = calloc((size_t)max_lags, sizeof(double));
+        rn->pwrs.t          = calloc((size_t)max_lags, sizeof(double));
+        rn->pwrs.sigma      = calloc((size_t)max_lags, sizeof(double));
+        rn->pwrs.lag_idx    = calloc((size_t)max_lags, sizeof(int));
+        rn->pwrs.alpha_2    = calloc((size_t)max_lags, sizeof(double));
+
+        rn->alpha_2.capacity = max_lags;
+        rn->alpha_2.alpha_2  = calloc((size_t)max_lags, sizeof(double));
+        rn->alpha_2.lag_idx  = calloc((size_t)max_lags, sizeof(int));
+
+        rn->elev.capacity = max_lags;
+        rn->elev.elev     = calloc((size_t)max_lags, sizeof(double));
+        rn->elev.t        = calloc((size_t)max_lags, sizeof(double));
+        rn->elev.sigma    = calloc((size_t)max_lags, sizeof(double));
+        rn->elev.lag_idx  = calloc((size_t)max_lags, sizeof(int));
+
+        if (!rn->phases.phi || !rn->pwrs.ln_pwr ||
+            !rn->alpha_2.alpha_2 || !rn->elev.elev) goto fail;
+    }
+    return a;
+
+fail:
+    free_range_data_arrays(a);
+    return NULL;
+}
+
+void free_range_data_arrays(RANGE_DATA_ARRAYS *a) {
+    if (!a) return;
+    if (a->ranges) {
+        for (int r = 0; r < a->max_ranges; r++) {
+            RANGENODE_ARRAY *rn = &a->ranges[r];
+            free(rn->phases.phi); free(rn->phases.t);
+            free(rn->phases.sigma); free(rn->phases.lag_idx); free(rn->phases.alpha_2);
+            free(rn->pwrs.ln_pwr); free(rn->pwrs.t);
+            free(rn->pwrs.sigma); free(rn->pwrs.lag_idx); free(rn->pwrs.alpha_2);
+            free(rn->alpha_2.alpha_2); free(rn->alpha_2.lag_idx);
+            free(rn->elev.elev); free(rn->elev.t);
+            free(rn->elev.sigma); free(rn->elev.lag_idx);
+            free(rn->CRI);
+        }
+    }
+    if (a->phase_matrix) for (int r = 0; r < a->max_ranges; r++) free(a->phase_matrix[r]);
+    if (a->power_matrix) for (int r = 0; r < a->max_ranges; r++) free(a->power_matrix[r]);
+    if (a->alpha_matrix) for (int r = 0; r < a->max_ranges; r++) free(a->alpha_matrix[r]);
+    if (a->sigma_phase_matrix) for (int r = 0; r < a->max_ranges; r++) free(a->sigma_phase_matrix[r]);
+    if (a->sigma_power_matrix) for (int r = 0; r < a->max_ranges; r++) free(a->sigma_power_matrix[r]);
+    if (a->lag_idx_matrix) for (int r = 0; r < a->max_ranges; r++) free(a->lag_idx_matrix[r]);
+    free(a->phase_matrix); free(a->power_matrix); free(a->alpha_matrix);
+    free(a->sigma_phase_matrix); free(a->sigma_power_matrix); free(a->lag_idx_matrix);
+    free(a->range_lag_counts);
+    free(a->range_valid); free(a->range_has_phase); free(a->range_has_power);
+    free(a->ranges);
+    free(a);
+}
+
+/* Translate a canonical FITPRMS into a flat-array FITPRMS_ARRAY. Allocates
+   acfd/xcfd/pwr0/lag/pulse/lag_time inside the array form; caller frees via
+   free_fit_prms_array. */
+static void free_fit_prms_array(FITPRMS_ARRAY *fp) {
+    if (!fp) return;
+    free(fp->acfd);    fp->acfd = NULL;
+    free(fp->xcfd);    fp->xcfd = NULL;
+    free(fp->pwr0);    fp->pwr0 = NULL;
+    free(fp->pulse);   fp->pulse = NULL;
+    free(fp->lag[0]);  fp->lag[0] = NULL;
+    free(fp->lag[1]);  fp->lag[1] = NULL;
+    free(fp->lag_time); fp->lag_time = NULL;
+}
+
+static int convert_FITPRMS_to_array(const FITPRMS *src, FITPRMS_ARRAY *dst) {
+    if (!src || !dst) return -1;
+    memset(dst, 0, sizeof(*dst));
+
+    /* Copy scalar / small-struct fields. */
+    dst->channel = src->channel;
+    dst->offset  = src->offset;
+    dst->cp      = src->cp;
+    dst->xcf     = src->xcf;
+    dst->xcf_enabled = (src->xcf == 1);
+    dst->tfreq   = src->tfreq;
+    dst->noise   = src->noise;
+    dst->nrang   = src->nrang;
+    dst->smsep   = src->smsep;
+    dst->nave    = src->nave;
+    dst->mplgs   = src->mplgs;
+    dst->mpinc   = src->mpinc;
+    dst->txpl    = src->txpl;
+    dst->lagfr   = src->lagfr;
+    dst->mppul   = src->mppul;
+    dst->bmnum   = src->bmnum;
+    dst->old     = src->old;
+    dst->maxbeam = src->maxbeam;
+    dst->bmoff   = src->bmoff;
+    dst->bmsep   = src->bmsep;
+    dst->phidiff = src->phidiff;
+    dst->tdiff   = src->tdiff;
+    dst->vdir    = src->vdir;
+    memcpy(dst->interfer, src->interfer, sizeof(dst->interfer));
+    /* time is two anonymous structs with the same fields — different
+       types at the language level, copy field-by-field. */
+    dst->time.yr = src->time.yr; dst->time.mo = src->time.mo;
+    dst->time.dy = src->time.dy; dst->time.hr = src->time.hr;
+    dst->time.mt = src->time.mt; dst->time.sc = src->time.sc;
+    dst->time.us = src->time.us;
+
+    /* Copy the pulse and lag tables. */
+    if (src->mppul > 0 && src->pulse) {
+        dst->pulse = malloc((size_t)src->mppul * sizeof(int));
+        memcpy(dst->pulse, src->pulse, (size_t)src->mppul * sizeof(int));
+    }
+    for (int n = 0; n < 2; n++) {
+        if (src->lag[n]) {
+            dst->lag[n] = malloc((size_t)(src->mplgs + 1) * sizeof(int));
+            memcpy(dst->lag[n], src->lag[n], (size_t)(src->mplgs + 1) * sizeof(int));
+        }
+    }
+
+    /* pwr0. */
+    if (src->nrang > 0 && src->pwr0) {
+        dst->pwr0 = malloc((size_t)src->nrang * sizeof(double));
+        memcpy(dst->pwr0, src->pwr0, (size_t)src->nrang * sizeof(double));
+    }
+
+    /* lag_time[k] = mpinc * lag[0][k] in seconds. */
+    double mpinc_s = (double)src->mpinc * 1e-6;
+    dst->lag_time = malloc((size_t)src->mplgs * sizeof(double));
+    for (int k = 0; k < src->mplgs; k++) {
+        int tau_units = src->lag[0] ? src->lag[0][k] : 0;
+        dst->lag_time[k] = tau_units * mpinc_s;
+    }
+
+    /* Flatten acfd/xcfd from FITPRMS's `double**` arena layout into
+       interleaved flat doubles of length 2 * nrang * mplgs. */
+    size_t flat = (size_t)src->nrang * (size_t)src->mplgs;
+    dst->acfd = calloc(2 * flat, sizeof(double));
+    dst->xcfd = calloc(2 * flat, sizeof(double));
+    if (!dst->acfd || !dst->xcfd) return -1;
+    if (src->acfd) {
+        for (size_t i = 0; i < flat; i++) {
+            dst->acfd[2*i]     = src->acfd[i][0];
+            dst->acfd[2*i + 1] = src->acfd[i][1];
+        }
+    }
+    if (src->xcfd) {
+        for (size_t i = 0; i < flat; i++) {
+            dst->xcfd[2*i]     = src->xcfd[i][0];
+            dst->xcfd[2*i + 1] = src->xcfd[i][1];
+        }
+    }
+
+    /* Sane defaults; harness can override. */
+    dst->mode = PROCESS_MODE_ARRAYS;
+    dst->num_threads = 1;
+    dst->batch_size = BATCH_SIZE_OPTIMAL;
+    dst->noise_threshold = (src->noise > 0) ? src->noise * 2.5 : 1.0;
+    return 0;
+}
+
+/* Bridge entry point used by the F0 harness. Same input shape as Fitacf()
+   so a side-by-side equivalence test is straightforward. */
+int Fitacf_Array_From_Prms(FITPRMS *fit_prms, struct FitData *fit_data,
+                           PROCESS_MODE mode, int num_threads) {
+    if (!fit_prms || !fit_data) return -1;
+
+    FITPRMS_ARRAY a_prms;
+    if (convert_FITPRMS_to_array(fit_prms, &a_prms) != 0) {
+        free_fit_prms_array(&a_prms);
+        return -1;
+    }
+    a_prms.mode = mode;
+    a_prms.num_threads = num_threads;
+
+    RANGE_DATA_ARRAYS *arrays = create_range_data_arrays(a_prms.nrang, a_prms.mplgs);
+    if (!arrays) { free_fit_prms_array(&a_prms); return -1; }
+
+    int rc = 0;
+    if (Parallel_Preprocessing_Array(&a_prms, arrays) != 0) { rc = -1; goto out; }
+    Parallel_Power_Fitting_Array(arrays, &a_prms);
+    Parallel_Phase_Fitting_Array(arrays, &a_prms);
+    if (a_prms.xcf_enabled) Parallel_XCF_Fitting_Array(arrays, &a_prms);
+    rc = Convert_FitData_from_Arrays(arrays, fit_data, a_prms.nrang);
+
+out:
+    free_range_data_arrays(arrays);
+    free_fit_prms_array(&a_prms);
+    return rc;
+}
+
+/* Convert_RadarParm_to_FitPrms is still referenced by the original
+   Fitacf_Array(RadarParm, RawData, FitData) entry point. It would need
+   a real implementation that mirrors fitacftoplevel.c:Copy_Fitting_Prms.
+   That entry path is not used by the harness or the rancher backend,
+   so we leave it as a stub that returns -1; callers should use
+   Fitacf_Array_From_Prms instead. */
+int Convert_RadarParm_to_FitPrms(struct RadarParm *prm, struct RawData *raw,
+                                 FITPRMS_ARRAY *fit_prms) {
+    (void)prm; (void)raw; (void)fit_prms;
+    fprintf(stderr, "Convert_RadarParm_to_FitPrms: not implemented; "
+                    "use Fitacf_Array_From_Prms(FITPRMS*, ...) instead.\n");
+    return -1;
 }

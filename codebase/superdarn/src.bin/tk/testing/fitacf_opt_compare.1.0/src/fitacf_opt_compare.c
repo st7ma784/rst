@@ -38,6 +38,7 @@
 #include "fitblk.h"
 #include "fit_structures.h"
 #include "fitacftoplevel.h"
+#include "fit_structures_array.h"   /* Fitacf_Array_From_Prms (F2 SoA path) */
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -172,26 +173,35 @@ static double ms_since(struct timespec *t0) {
          + (t1.tv_nsec - t0->tv_nsec) * 1e-6;
 }
 
-/* Run Fitacf once, return wallclock ms and number of "good" ranges
-   (qflg=1 after the fit). Optionally writes summary stats to *out_v,
-   *out_w (means over the good ranges) if non-NULL. */
-static double run_fitacf(FITPRMS *prms, struct FitData *fit,
-                         int *out_ngood, double *out_v, double *out_w) {
-    /* preprocessing.c spews "changing dchi by -2pi" debug lines to
-       stderr for every phase-unwrap step. Mute them around the timed
-       call so they don't dominate the harness output. */
-    int saved_stderr = dup(2);
+enum fitacf_path { PATH_REF = 0, PATH_ARRAY = 1 };
+
+/* Run one of the two paths once, return wallclock ms + qflg=1 count
+   and the per-range mean v/w for that path. */
+static double run_fitacf_path(enum fitacf_path path,
+                              FITPRMS *prms, struct FitData *fit,
+                              int num_threads,
+                              int *out_ngood, double *out_v, double *out_w) {
+    /* Both code paths chatter to stderr (preprocessing.c phase unwrap
+       debug, and Fitacf_Array printf logs). Mute around the timed call. */
+    int saved_stderr = dup(2), saved_stdout = dup(1);
     int devnull = open("/dev/null", O_WRONLY);
-    if (devnull >= 0) { dup2(devnull, 2); close(devnull); }
+    if (devnull >= 0) {
+        dup2(devnull, 2); dup2(devnull, 1); close(devnull);
+    }
 
     struct timespec t0;
     clock_gettime(CLOCK_MONOTONIC, &t0);
 
-    Fitacf(prms, fit, 0);
+    if (path == PATH_REF) {
+        Fitacf(prms, fit, 0);
+    } else {
+        Fitacf_Array_From_Prms(prms, fit, PROCESS_MODE_ARRAYS, num_threads);
+    }
 
     double ms = ms_since(&t0);
 
     if (saved_stderr >= 0) { dup2(saved_stderr, 2); close(saved_stderr); }
+    if (saved_stdout >= 0) { dup2(saved_stdout, 1); close(saved_stdout); }
 
     int ngood = 0;
     double v_sum = 0.0, w_sum = 0.0;
@@ -211,77 +221,80 @@ static double run_fitacf(FITPRMS *prms, struct FitData *fit,
 }
 
 static int bench_fitacf(int nrang, int mplgs, int mppul,
-                        double v_true, double w_true, int iters) {
-    int total_good = 0;
-    double total_ms = 0.0;
-    double v_mean = 0.0, w_mean = 0.0;
+                        double v_true, double w_true, int iters,
+                        int num_threads) {
+    int    good_ref = 0,  good_arr = 0;
+    double ms_ref = 0,    ms_arr   = 0;
+    double v_ref = 0, w_ref = 0, v_arr = 0, w_arr = 0;
 
     for (int it = 0; it < iters; it++) {
+        /* Identical seed → identical synthetic input for both paths. */
         srand(0xACF0 + it);
-        FITPRMS *prms = make_synth_prms(nrang, mplgs, mppul);
-        if (!prms) { fprintf(stderr, "make_synth_prms failed\n"); return -1; }
-        populate_synth_acf(prms, v_true, w_true, 2000.0, 5.0);
+        FITPRMS *prms_ref = make_synth_prms(nrang, mplgs, mppul);
+        if (!prms_ref) { fprintf(stderr, "make_synth_prms failed\n"); return -1; }
+        populate_synth_acf(prms_ref, v_true, w_true, 2000.0, 5.0);
+        srand(0xACF0 + it);
+        FITPRMS *prms_arr = make_synth_prms(nrang, mplgs, mppul);
+        populate_synth_acf(prms_arr, v_true, w_true, 2000.0, 5.0);
 
-        struct FitData *fit = FitMake();
-        FitSetRng(fit,  prms->nrang);
-        FitSetXrng(fit, prms->nrang);
-        FitSetElv(fit,  prms->nrang);
+        struct FitData *fit_ref = FitMake();
+        FitSetRng(fit_ref, nrang); FitSetXrng(fit_ref, nrang); FitSetElv(fit_ref, nrang);
+        struct FitData *fit_arr = FitMake();
+        FitSetRng(fit_arr, nrang); FitSetXrng(fit_arr, nrang); FitSetElv(fit_arr, nrang);
 
-        int ngood = 0;
-        double v_iter = 0.0, w_iter = 0.0;
-        double ms = run_fitacf(prms, fit, &ngood, &v_iter, &w_iter);
-        total_ms += ms;
-        total_good += ngood;
-        v_mean += v_iter;
-        w_mean += w_iter;
+        int g; double v, w;
+        ms_ref += run_fitacf_path(PATH_REF,   prms_ref, fit_ref, num_threads, &g, &v, &w);
+        good_ref += g; v_ref += v; w_ref += w;
+        ms_arr += run_fitacf_path(PATH_ARRAY, prms_arr, fit_arr, num_threads, &g, &v, &w);
+        good_arr += g; v_arr += v; w_arr += w;
 
-        FitFree(fit);
-        free_synth_prms(prms);
+        FitFree(fit_ref); FitFree(fit_arr);
+        free_synth_prms(prms_ref); free_synth_prms(prms_arr);
     }
+    ms_ref /= iters; ms_arr /= iters;
+    v_ref  /= iters; w_ref  /= iters;
+    v_arr  /= iters; w_arr  /= iters;
+    int avg_good_ref = good_ref / iters;
+    int avg_good_arr = good_arr / iters;
 
-    v_mean /= iters;
-    w_mean /= iters;
-    double avg_ms = total_ms / iters;
-    int avg_good  = total_good / iters;
+    double speedup = (ms_arr > 0) ? ms_ref / ms_arr : 0.0;
 
-    printf("Fitacf nrang=%-3d mplgs=%-3d  v_true=%6.1f w_true=%5.1f  "
-           "ms=%7.2f  good=%2d/%d  v_rec=%7.2f w_rec=%6.2f\n",
-           nrang, mplgs, v_true, w_true, avg_ms, avg_good, nrang,
-           v_mean, w_mean);
+    printf("nrang=%-3d v_true=%6.1f w_true=%5.1f  "
+           "ref: ms=%6.2f good=%2d v=%7.1f w=%5.1f  "
+           "arr: ms=%6.2f good=%2d v=%7.1f w=%5.1f  "
+           "speedup=%5.2fx\n",
+           nrang, v_true, w_true,
+           ms_ref, avg_good_ref, v_ref, w_ref,
+           ms_arr, avg_good_arr, v_arr, w_arr,
+           speedup);
 
-    /* F0 acceptance: at least one valid range gate. The synthetic
-       phase model isn't tuned to fully match FITACF's badlag filter,
-       so v_rec/w_rec are reported as observability metrics rather
-       than correctness gates. The harness's purpose is to time the
-       path (for the future AVX comparison) and to confirm Fitacf
-       does *something* on our inputs. Once F2 lands and we have a
-       second path to compare to, equivalence becomes the real gate. */
-    if (avg_good < 1) {
-        printf("  FAIL: no valid range gates returned\n");
+    if (avg_good_ref < 1 && avg_good_arr < 1) {
+        printf("  FAIL: neither path returned any valid ranges\n");
         return -1;
     }
     return 0;
 }
 
 int main(int argc, char **argv) {
-    int iters = 5;
+    int iters = 5, threads = 4;
     for (int i = 1; i < argc; i++) {
-        if (strncmp(argv[i], "--iters=", 8) == 0)
-            iters = atoi(argv[i] + 8);
+        if      (strncmp(argv[i], "--iters=",   8) == 0) iters   = atoi(argv[i] + 8);
+        else if (strncmp(argv[i], "--threads=", 10) == 0) threads = atoi(argv[i] + 10);
     }
 
     setvbuf(stdout, NULL, _IOLBF, 0);
 
-    printf("=== FITACF v3 reference benchmark (F0) ===\n");
-    printf("iters=%d\n\n", iters);
+    printf("=== FITACF v3 reference vs array-SoA benchmark ===\n");
+    printf("iters=%d  threads=%d\n", iters, threads);
+    printf("                                            "
+           "reference path                  "
+           "array-SoA path (Fitacf_Array_From_Prms)\n\n");
 
     int failures = 0;
-    /* Three operating points: weak/medium/strong scatter, low/medium/high
-       velocity. Catch coverage on the LM solver's range of inputs. */
-    failures += (bench_fitacf( 75, 18, 8,  100.0,  50.0, iters) != 0);
-    failures += (bench_fitacf( 75, 18, 8,  500.0, 100.0, iters) != 0);
-    failures += (bench_fitacf( 75, 18, 8, -300.0,  80.0, iters) != 0);
-    failures += (bench_fitacf(150, 18, 8,  200.0,  60.0, iters) != 0);
+    failures += (bench_fitacf( 75, 18, 8,  100.0,  50.0, iters, threads) != 0);
+    failures += (bench_fitacf( 75, 18, 8,  500.0, 100.0, iters, threads) != 0);
+    failures += (bench_fitacf( 75, 18, 8, -300.0,  80.0, iters, threads) != 0);
+    failures += (bench_fitacf(150, 18, 8,  200.0,  60.0, iters, threads) != 0);
 
     printf("\n=== Summary: %d failures ===\n", failures);
     return failures == 0 ? 0 : 1;

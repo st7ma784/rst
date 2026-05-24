@@ -4,20 +4,29 @@ Date: 2026-05-25. Companion to `codebase/superdarn/src.lib/tk/grid.1.24_optimize
 
 ## Executive summary
 
-**F0 (harness) is delivered.** Code at
-`codebase/superdarn/src.bin/tk/testing/fitacf_opt_compare.1.0/`. Builds
-clean against `libfitacf.3.0`, runs `Fitacf()` on synthetic ACF data,
-times it (~0.6–1.1 ms per call at nrang=75, mplgs=18), and reports
-valid-range count plus recovered v/w. Wired analogously to
-`grid_opt_compare`.
+**F0 + the SoA scaffolding are now delivered and wired together.**
+Code at `codebase/superdarn/src.bin/tk/testing/fitacf_opt_compare.1.0/`
+runs both paths side-by-side. Current numbers at nrang=75, mplgs=18,
+4 threads:
 
-**F1–F4 (AVX work) are blocked on a structural rewrite that isn't
-warranted right now.** The pragmatic ceiling for AVX on the *current*
-FITACF v3 architecture is ~5–10%. The big win (3–10×) requires
-finishing the SoA rewrite that was started in
-`fitacf_array_optimized.c` but never completed. That's a multi-day
-project; below is the evidence for that call and what the rewrite
-would look like.
+| Test          | Ref path (Fitacf) | Array path (Fitacf_Array_From_Prms) | Speedup |
+|---------------|-------------------|-------------------------------------|---------|
+| v=100, w=50   | 0.91 ms           | 0.31 ms                             | 2.91x   |
+| v=500, w=100  | 0.72 ms           | 0.24 ms                             | 2.98x   |
+| v=-300, w=80  | 0.83 ms           | 0.25 ms                             | 3.28x   |
+| v=200 (n=150) | 1.26 ms           | 0.37 ms                             | 3.39x   |
+
+The array path returns valid fits for *every* range (75/75 or 150/150)
+because the simplified linear regression has no badlag filter; the
+reference path drops most ranges on this synthetic data because its
+phase unwrap is sensitive to the lag pattern used.
+
+**Numerics are not yet bitwise-equivalent to the reference path.** The
+array path uses a single-pass weighted linear regression with one-step
+2π unwrap (Parallel_Phase_Fitting_Array's existing math), not the full
+Levenberg-Marquardt + multi-pass unwrap + CRI filter that
+`leastsquares.c:Power_Fits` and `ACF_Phase_Fit` do. That's the
+*remaining* work; the scaffolding being in place unblocks it.
 
 ---
 
@@ -49,35 +58,77 @@ Hot path, per `Fitacf()` invocation:
 Hot work is concentrated in steps 5/6/8 (the three LM fits per range)
 and step 3 (lag list build).
 
-## F2 — Status of the SoA path
+## F2 — Status of the SoA path (UPDATED)
 
-**Conclusion: `fitacf_array_optimized.c` is incomplete scaffolding,
-not a working alternative path.**
+**The scaffolding is now filled in.** `fitacf_array_optimized.c`
+compiles, links, and runs end-to-end via `Fitacf_Array_From_Prms()`.
 
-Evidence:
-- File exists (612 LOC, declares `Fitacf_Array()`, `Parallel_Power_Fitting_Array()`,
-  `Parallel_Phase_Fitting_Array()`, etc.).
-- Has partial AVX2 vectorization at lines 103–140 (power calc, phase
-  placeholder).
-- **Is not in `src/makefile`'s `SRC=` list** — never compiled.
-- References helpers that are **declared in `fit_structures_array.h`
-  but never defined** anywhere: `create_range_data_arrays`,
-  `destroy_range_data_arrays`, `convert_prms_to_array`. Linking
-  `Fitacf_Array` today would produce undefined-symbol errors.
+Concretely delivered in this round:
 
-To make this path live would require, at minimum:
-1. Implement the missing allocators (~150 LOC).
-2. Implement `convert_prms_to_array` (translate `FITPRMS` →
-   `FITPRMS_ARRAY` / `RANGE_DATA_ARRAYS`).
-3. Implement the per-stage helpers (Phase_Fit_Array, XCF_Fit_Array)
-   that the existing top-level skeleton calls — they're not in
-   `fitacf_array_optimized.c`.
-4. Add `fitacf_array_optimized.c` to the makefile.
-5. Equivalence-test against `Fitacf()` via the F0 harness; expect
-   1–3 rounds of fixing real divergences.
+1. **Header fixes** in `include/fit_structures_array.h`:
+   - Added `valid` field to `RANGENODE_ARRAY`.
+   - Added a `RANGENODE_FIT_RESULTS` sub-struct (power_0, lambda_power,
+     velocity, phase_0, elevation, ..._valid flags) — matches what
+     `Parallel_*_Fitting_Array` actually writes.
+   - Added `xcf_enabled`, `lag_time`, `acfd`, `xcfd` (flat double*)
+     fields to `FITPRMS_ARRAY` matching how the impl indexes them.
+   - Removed the local `PROCESS_MODE` enum redefinition from the .c
+     file (single source of truth: the header).
 
-Estimated effort: **2–3 focused days**. Not done here — this audit
-flags it as the next-PR-sized item.
+2. **Helpers implemented** at the bottom of `fitacf_array_optimized.c`:
+   - `create_range_data_arrays(int max_ranges, int max_lags)` —
+     allocates the master RANGE_DATA_ARRAYS plus per-range
+     PHASE_DATA_ARRAY / POWER_DATA_ARRAY / ALPHA_DATA_ARRAY /
+     ELEV_DATA_ARRAY plus the six per-range matrices
+     ([range][lag] phase/power/alpha/sigma_phase/sigma_power/lag_idx).
+   - `free_range_data_arrays()` — symmetric undo.
+   - `convert_FITPRMS_to_array()` (static) — flattens the canonical
+     `FITPRMS`'s `double**` acfd/xcfd arena into the interleaved
+     flat `double*` the array path expects. Computes the `lag_time`
+     table (mpinc * lag[0][k]) and copies pulse + lag tables.
+   - `Fitacf_Array_From_Prms(FITPRMS*, FitData*, PROCESS_MODE,
+     int num_threads)` — the bridge entry point the F0 harness calls.
+     Same input shape as `Fitacf()`, so the equivalence test is
+     side-by-side.
+   - `Convert_RadarParm_to_FitPrms` left as a stub returning -1 with
+     a clear log message pointing callers at `Fitacf_Array_From_Prms`.
+     (The harness + the rancher backend use the FITPRMS path, not the
+     RadarParm path.)
+
+3. **Correctness fixes** in `Convert_FitData_from_Arrays`:
+   - `.p_l_e` → `.p_l_err`, `.w_l_e` → `.w_l_err`,
+     `.v_e` → `.v_err`, `.phi0_e` → `.phi0_err` (real FitRange field names).
+   - Elevation output writes to `fit->elv[r].normal/.error`, not
+     the non-existent `fit->rng[r].elv` field.
+   - Guard `sqrt(2.0 / lambda_power)` against negative/zero lambda.
+   - `nump = (char)rng->pwrs.count` (the canonical type).
+
+4. **Build**: `fitacf_array_optimized.c` added to `src/makefile`
+   SRC + OBJS, `CFLAGS += -fopenmp` so the OpenMP pragmas link.
+   `libfitacf.3.0.so` now exports `Fitacf_Array`,
+   `Fitacf_Array_From_Prms`, `create_range_data_arrays`,
+   `Convert_FitData_from_Arrays`, etc.
+
+5. **Harness wired up**: `fitacf_opt_compare` now runs both paths
+   on identical synthetic data, reports timing + good-range count +
+   recovered v/w side-by-side, and computes speedup. Suppresses
+   `printf` chatter from the array path during the timed call.
+
+**What's left for follow-up** (the "make numerics match the reference"
+PR):
+
+- Single-pass weighted linear regression in `Parallel_Power_Fitting_Array`
+  is a simplification of the LM solver the reference path uses.
+- Phase unwrapping in `Parallel_Phase_Fitting_Array` is one-pass; the
+  reference does a more elaborate iterative unwrap with confidence
+  weighting.
+- No badlag filter (CRI / TX overlap / power threshold) yet — that's
+  why the array path returns 75/75 valid ranges where the reference
+  drops most ranges on noisy synthetic data.
+
+The scaffolding being in place is what unblocks all of that work. AVX2
+across lags + OpenMP across ranges (originally scoped as F3/F4) can
+now go in surgically without first having to ship the missing helpers.
 
 ## F3 — AVX2 on the LM normal-equations accumulator
 

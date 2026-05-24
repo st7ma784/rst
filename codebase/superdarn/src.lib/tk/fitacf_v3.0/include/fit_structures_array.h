@@ -59,19 +59,46 @@ typedef struct elev_data_array {
     int capacity;       /* Allocated capacity */
 } ELEV_DATA_ARRAY;
 
+/* Per-range fit results in physical units, written by the
+   Parallel_*_Fitting_Array stages. */
+typedef struct rangenode_fit_results {
+    /* Power fit (linear: ln(P) = a + b*tau on the weighted points) */
+    double power_0;            /* exp(a) — lag-0 power */
+    double lambda_power;       /* -b — decay rate */
+    double power_error;
+    int    power_valid;
+
+    /* Phase fit (linear: phi = phi_0 + omega*tau) */
+    double velocity;           /* m/s */
+    double phase_0;
+    double velocity_error;
+    int    phase_valid;
+
+    /* XCF / elevation */
+    double elevation;          /* degrees */
+    double elevation_error;
+    int    elevation_valid;
+} RANGENODE_FIT_RESULTS;
+
 /* Array-based range node structure */
 typedef struct rangenode_array {
     int range;
+    int valid;          /* 1 if this range produced usable data */
     double *CRI;
     double refrc_idx;
-    
+
     /* Array-based data instead of linked lists */
     PHASE_DATA_ARRAY phases;
     POWER_DATA_ARRAY pwrs;
     ALPHA_DATA_ARRAY alpha_2;
     ELEV_DATA_ARRAY elev;
-    
-    /* Fit data (unchanged) */
+
+    /* Output of the per-range LM/linear fits. */
+    RANGENODE_FIT_RESULTS fit_results;
+
+    /* Reserved for the full Levenberg-Marquardt FITDATA pointers when
+       the SoA rewrite is fully completed (not used in the current
+       simplified linear-regression path). */
     FITDATA *l_pwr_fit;
     FITDATA *q_pwr_fit;
     FITDATA *l_pwr_fit_err;
@@ -169,13 +196,18 @@ typedef struct array_stats {
 ARRAY_STATS calculate_array_stats(RANGE_DATA_ARRAYS *arrays);
 int compare_llist_vs_arrays(llist range_list, RANGE_DATA_ARRAYS *arrays, double tolerance);
 
-/* Enhanced fit parameters structure for array mode */
+/* Enhanced fit parameters structure for array mode.
+   acfd/xcfd are flat row-major arrays of length 2*nrang*mplgs
+   (interleaved real,imag,real,imag,...) — different layout from
+   FITPRMS's double** with the magic arena. The Convert helper
+   handles the translation. */
 typedef struct fit_prms_array {
     /* Original parameters */
-    int channel; 
+    int channel;
     int offset;
     int cp;
     int xcf;
+    int xcf_enabled;              /* 1 if XCF processing requested */
     int tfreq;
     float noise;
     int nrang;
@@ -191,8 +223,9 @@ typedef struct fit_prms_array {
     int *lag[2];
     int *pulse;
     double *pwr0;
-    double **acfd;
-    double **xcfd;
+    double *acfd;                  /* flat: [range*mplgs + lag]*2 + {0,1} */
+    double *xcfd;                  /* flat: same layout as acfd */
+    double *lag_time;              /* seconds, length mplgs */
     int maxbeam;
     double bmoff;
     double bmsep;
@@ -209,14 +242,23 @@ typedef struct fit_prms_array {
         short sc;
         int us;
     } time;
-    
+
     /* Array mode extensions */
     PROCESS_MODE mode;
     int num_threads;              /* For OpenMP */
     int enable_cuda;              /* CUDA flag */
     double noise_threshold;       /* For range validation */
     int batch_size;               /* For parallel processing */
-    
+
 } FITPRMS_ARRAY;
+
+/* Bridge entry point: run the array path using the same FITPRMS input
+   that Fitacf() takes. Lets the equivalence harness call both code
+   paths with one synthetic-data generator. Returns 0 on success. */
+struct fit_prms;     /* canonical FITPRMS, defined in fit_structures.h */
+struct FitData;
+int Fitacf_Array_From_Prms(struct fit_prms *fit_prms,
+                           struct FitData *fit_data,
+                           PROCESS_MODE mode, int num_threads);
 
 #endif /* _FIT_STRUCTURES_ARRAY_H */
