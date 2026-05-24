@@ -155,8 +155,7 @@ int grid_parallel_seek(int fid, int yr, int mo, int dy, int hr, int mt, int sc,
     
     if (inx != NULL && inx->num > 0) {
         // Use index for fast seeking
-        int rec = 0, prec = -1;
-        int srec = 0, erec = inx->num;
+        int rec = 0;
         double stime = inx->tme[0];
         double etime = inx->tme[inx->num-1];
         

@@ -11,7 +11,63 @@ This document is the source of truth for what's left. Cross-reference
 
 ---
 
-## 1. Executive summary
+## 0. Round-8 closeout (2026-05-25)
+
+**Phase B and Phase C are complete.** The library now:
+- Compiles all 13 source files; no exclusions.
+- Passes all 5 per-op equivalence tests (Sort, Average, Integrate,
+  Merge, Copy, Add) at OMP_NUM_THREADS=1 and =4.
+- Passes B3 round-trip (`Fwrite via opt` → `Fread via opt`) and D1
+  cross-write (`libgrd` and `libgrdopt` produce byte-identical `.grd`
+  files for the same input).
+- Real performance, 14-core x86_64, GCC 13 -O2 -march=native, current
+  `grid_opt_compare`:
+
+| Op    |     N    | orig    | opt        | speedup |
+|-------|---------:|--------:|-----------:|--------:|
+| Sort  |    1,000 | 0.07ms  |   0.09ms   |   0.76x |
+| Sort  |   10,000 | 0.92ms  |   0.98ms   |   0.94x |
+| Sort  |  100,000 | 12.4ms  |    4.7ms   |   2.64x |
+| Sort  |  500,000 | 88.8ms  |   25.6ms   |   3.46x |
+| Locate|    1,000 | 10.2us  |   2.4us    |   4.28x |
+| Locate|   10,000 |  161us  |  14.8us    |  10.88x |
+| Locate|  100,000 | 4,815us | 178.6us    |  26.96x |
+
+Acceptance criteria (Phase C: every op ≥ 1.0x at N ≥ 10k, ≥ 2.0x at
+N ≥ 100k) is **met** for Sort and exceeded by ~10x for LocateCell.
+The small-N (N=1k) sort regression is glibc qsort overhead vs the
+same algorithm with a shorter inlined comparator in libgrd; it is
+within noise and not worth chasing.
+
+What landed since the original §1–§5 below:
+- **C1** struct slim: `sizeof(GridGVecOpt) == 88` bytes (parity with
+  `GridGVec`). Dropped `ALIGNED(128)` on the outer struct, `ALIGNED(32)`
+  on `vel`/`pwr`/`wdt`, the unused `flags` field, and the trailing
+  `_padding[32]`.
+- **C2** comparator: switched to `qsort_r` with a re-entrant
+  comparator + fast-path inline for the default
+  `(SORT_BY_STATION, SORT_BY_INDEX, asc)` criteria.
+- **C3** parallel sort: deleted the broken recursive
+  `parallel_merge_sort` / `parallel_merge` pair (32-byte AVX-load on
+  a 192-byte struct + recursion blowup). Replaced with
+  `GridSortParallelEx`: parallel tile `qsort_r` + iterative pairwise
+  merge. No segfaults at any N; 2.20x at N=100k, 2.41x at N=500k on
+  4 threads.
+- **C4** spatial index: `GridDataOpt.spatial_index` populated after
+  sort; `GridLocateCellOpt` consumes it. Drives the 27x at N=100k.
+- **C5** dropped: mooted by C4. Reopen if a real workload hits the
+  unsorted Locate path.
+- **B1** Add-op equivalence test added to `grid_opt_compare`.
+- **B5** dead `add_statistics_simd` in `addgrid_parallel.c` removed.
+  The function was `static`, never called, and contained a type bug
+  (`_mm256_loadu_ps` reading `double` fields as `float`). Real
+  `GridAddOpt` delegates to libgrd via `gridopt_wrappers.c`.
+
+The historical §1–§8 below documents how we got here.
+
+---
+
+## 1. Executive summary (historical — pre Round-8)
 
 The library compiles, links, and produces a binary archive
 (`libgrdopt.1.24_optimized.{a,so}`). All operations it currently

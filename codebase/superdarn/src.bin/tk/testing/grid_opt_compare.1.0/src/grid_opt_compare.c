@@ -206,9 +206,38 @@ static int equiv_merge(int n_records, int n_stations) {
     return rc;
 }
 
+/* B1: Add-op equivalence. GridAdd(a, b, recnum) accumulates b into a
+   with libgrd's running-average semantics. We seed identical a/b on
+   both sides and compare a afterwards. */
+static int equiv_add(int n_records, int n_stations) {
+    struct GridData    *a_g = make_synth(n_records, n_stations, 505);
+    struct GridData    *b_g = make_synth(n_records, n_stations, 606);
+    GridSort(a_g);
+    GridSort(b_g);
+    GridAdd(a_g, b_g, 1);
+
+    /* clone_to_opt takes one source; build the opt sides from the
+       *already-sorted* libgrd a/b so we compare the same Add input. */
+    struct GridDataOpt *a_p = clone_to_opt(a_g);   /* will be re-seeded */
+    struct GridDataOpt *b_p = clone_to_opt(b_g);
+    /* a_g is now the libgrd Add output; re-seed a_p from a fresh
+       synthetic copy that matches a_g's pre-Add state. */
+    struct GridData    *a_seed = make_synth(n_records, n_stations, 505);
+    GridSort(a_seed);
+    GridFreeOpt(a_p);
+    a_p = clone_to_opt(a_seed);
+    GridFree(a_seed);
+
+    GridAddOpt(a_p, b_p, 1);
+
+    int rc = eq_check("Add", a_g, a_p, 1e-6);
+    GridFree(a_g); GridFree(b_g);
+    GridFreeOpt(a_p); GridFreeOpt(b_p);
+    return rc;
+}
+
 /* GridCopyOpt / GridAddOpt now have real bodies (Phase D), but the test
-   path needs a Copy-roundtrip helper. Keep the SKIP banner for Add
-   until libgrd-side semantics are double-checked. */
+   path needs a Copy-roundtrip helper. */
 static int equiv_copy(int n_records, int n_stations) {
     struct GridData    *src_g = make_synth(n_records, n_stations, 404);
     struct GridDataOpt *src_p = clone_to_opt(src_g);
@@ -390,6 +419,7 @@ int main(int argc, char **argv) {
         failures += (equiv_integrate(5000, 10) != 0);
         failures += (equiv_merge    (5000, 10) != 0);
         failures += (equiv_copy     (5000, 10) != 0);
+        failures += (equiv_add      (5000, 10) != 0);
     } else {
         printf("\n--- Per-op equivalence skipped (pass --with-ops to enable) ---\n");
     }

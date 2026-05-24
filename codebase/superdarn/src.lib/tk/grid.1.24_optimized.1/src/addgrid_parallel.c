@@ -30,50 +30,12 @@
 
 #include "griddata_parallel.h"
 
-/**
- * SIMD-optimized vector addition for statistical data
- */
-#ifdef AVX2_ENABLED
-static void add_statistics_simd(GridStats *result, const GridStats *a, const GridStats *b, int count) {
-    int simd_count = (count / 8) * 8;
-    
-    // Process 8 statistics at a time using AVX2
-    for (int i = 0; i < simd_count; i += 8) {
-        // Load median values
-        __m256 a_median = _mm256_loadu_ps(&a[i].median);
-        __m256 b_median = _mm256_loadu_ps(&b[i].median);
-        __m256 a_sd = _mm256_loadu_ps(&a[i].sd);
-        __m256 b_sd = _mm256_loadu_ps(&b[i].sd);
-        
-        // Weighted average of medians (simple addition for now)
-        __m256 result_median = _mm256_add_ps(a_median, b_median);
-        result_median = _mm256_mul_ps(result_median, _mm256_set1_ps(0.5f));
-        
-        // Combined standard deviation: sqrt(sd_a^2 + sd_b^2)
-        __m256 a_variance = _mm256_mul_ps(a_sd, a_sd);
-        __m256 b_variance = _mm256_mul_ps(b_sd, b_sd);
-        __m256 combined_variance = _mm256_add_ps(a_variance, b_variance);
-        __m256 result_sd = _mm256_sqrt_ps(combined_variance);
-        
-        // Store results
-        _mm256_storeu_ps(&result[i].median, result_median);
-        _mm256_storeu_ps(&result[i].sd, result_sd);
-    }
-    
-    // Handle remaining elements
-    for (int i = simd_count; i < count; i++) {
-        result[i].median = (a[i].median + b[i].median) * 0.5f;
-        result[i].sd = sqrtf(a[i].sd * a[i].sd + b[i].sd * b[i].sd);
-    }
-}
-#else
-static void add_statistics_simd(GridStats *result, const GridStats *a, const GridStats *b, int count) {
-    for (int i = 0; i < count; i++) {
-        result[i].median = (a[i].median + b[i].median) * 0.5f;
-        result[i].sd = sqrtf(a[i].sd * a[i].sd + b[i].sd * b[i].sd);
-    }
-}
-#endif
+/* B5: removed dead add_statistics_simd (both AVX2 and scalar). Was
+   static, never called from anywhere, and contained a real bug:
+   _mm256_loadu_ps treats GridStats.median (double) as float, so the
+   AVX path would have corrupted data if it were ever wired up. The
+   real GridAddOpt path delegates to libgrd's GridAdd via
+   gridopt_wrappers.c, not through any SIMD helper here. */
 
 /**
  * Parallel spatial hash table for fast cell matching
