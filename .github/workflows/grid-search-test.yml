@@ -43,25 +43,37 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential libgomp1 zlib1g-dev
 
-      - name: Build RST dependencies (libgrd, libdmap, librtime, librcnv)
-        # libgrdopt's harness links against these; we have to build them
-        # before the grid.1.24_optimized.1 tree so the static libs exist.
+      - name: Build RST dependencies (headers + libgrd, libdmap, librtime, librcnv, librmath, librfile)
+        # libgrdopt's *.c sources include rtypes.h / dmap.h / rfile.h /
+        # rmath.h / rtime.h / griddata.h, so these libraries have to be
+        # built first to populate $IPATH/{base,general,superdarn} via the
+        # `hdr` target in makelib.linux. The grid_opt_compare harness then
+        # links against the produced static libs.
+        #
+        # Order matters: rtypes is a header-only dep of dmap; dmap is a
+        # header-only dep of grid; etc. Failures here are fatal -- earlier
+        # workflow rounds masked missing libs with `|| echo [warn]`, which
+        # is how addgrid_parallel.c reached the compiler with no rtypes.h.
         run: |
           set -euo pipefail
           export RSTPATH="${GITHUB_WORKSPACE}"
           source "${RSTPATH}/.profile.bash" 2>/dev/null || true
 
           for lib in \
-              codebase/base/src.lib/task/dmap.1.25 \
-              codebase/base/src.lib/task/rtime.1.5 \
-              codebase/base/src.lib/task/rcnv.1.7 \
+              codebase/base/src.lib/task/rtypes.1.5 \
+              codebase/base/src.lib/math/rmath.1.8 \
+              codebase/general/src.lib/time.1.7 \
+              codebase/base/src.lib/task/convert.1.11 \
+              codebase/general/src.lib/dmap.1.25 \
+              codebase/general/src.lib/rfile.1.9 \
               codebase/superdarn/src.lib/tk/grid.1.24 ; do
-            if [ -d "${lib}/src" ]; then
-              echo "::group::Building ${lib}"
-              (cd "${lib}/src" && make 2>&1) || \
-                echo "[warn] ${lib} did not build cleanly (continuing)"
-              echo "::endgroup::"
+            if [ ! -d "${lib}/src" ]; then
+              echo "::error::missing dependency tree: ${lib}/src"
+              exit 1
             fi
+            echo "::group::Building ${lib}"
+            (cd "${lib}/src" && make)
+            echo "::endgroup::"
           done
 
       - name: Build libgrdopt (optimized grid library)
