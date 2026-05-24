@@ -23,12 +23,11 @@ nameOverride: ""
 fullnameOverride: ""
 
 # ── Backend ───────────────────────────────────────────────────────────────────
+# Single C-backed processor (RST via libgrdopt + libfitacf.3.0).
+# The pythonv2 and CUDArst alternatives were retired.
 backend:
   image:
     repository: siw-backend
-
-  # Algorithm backend: pythonv2 | cuda | rst
-  backendType: pythonv2
 
   replicaCount: 1
 
@@ -39,13 +38,6 @@ backend:
     limits:
       cpu: "4"
       memory: "4Gi"
-
-  # GPU support — requires NVIDIA device plugin on the cluster
-  gpu:
-    enabled: false
-    count: 1
-    nodeSelector:
-      nvidia.com/gpu.present: "true"
 
   extraEnv: []
   # - name: LOG_LEVEL

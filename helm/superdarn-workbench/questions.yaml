@@ -1,34 +1,11 @@
 categories:
   - Science
-  - GPU
 questions:
 
   # ── Backend ─────────────────────────────────────────────────────────────────
-
-  - variable: backend.backendType
-    label: Processing Backend
-    description: >
-      pythonv2 — Python / CuPy (RST v3.0 Bendat-Piersol two-pass fitting).
-      cuda     — CUDArst C kernels with CPU fallback.
-      rst      — Original RST reference C library via subprocess.
-    type: enum
-    options:
-      - pythonv2
-      - cuda
-      - rst
-    default: pythonv2
-    required: true
-    group: Backend
-
-  - variable: backend.gpu.enabled
-    label: Enable GPU (NVIDIA)
-    description: >
-      Schedules the backend pod on a GPU node and passes NVIDIA device access.
-      Requires the NVIDIA device plugin to be installed on the cluster.
-    type: boolean
-    default: false
-    group: Backend
-    show_if: "backend.backendType=cuda"
+  # The pythonv2 and CUDArst backend choices were retired in v2.0. The only
+  # path is the C-backed processor that subprocesses to make_fit / make_grid /
+  # map_grd built against libgrdopt + libfitacf.3.0.
 
   - variable: backend.replicaCount
     label: Backend Replicas

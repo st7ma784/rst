@@ -1,16 +1,14 @@
 apiVersion: v2
 name: superdarn-workbench
-description: SuperDARN Interactive Workbench — GPU-accelerated SuperDARN radar data processing with three interchangeable backends (pythonv2, CUDArst, RST reference).
+description: SuperDARN Interactive Workbench — REST API over the optimized RST C library stack (libgrdopt + libfitacf.3.0).
 type: application
-version: 1.0.0
-appVersion: "1.0.0"
+version: 2.0.0
+appVersion: "2.0.0"
 keywords:
   - superdarn
   - radar
   - science
-  - gpu
-  - cuda
-home: https://github.com/your-org/rst
+home: https://github.com/st7ma784/rst
 maintainers:
   - name: Steve Mander
     email: st7ma784@gmail.com

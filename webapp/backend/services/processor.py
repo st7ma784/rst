@@ -1,12 +1,13 @@
 """
 Processing dispatcher.
 
-Reads BACKEND_TYPE env var (default: pythonv2) and routes every job to the
-corresponding BackendProcessor implementation.
-
-  BACKEND_TYPE=pythonv2  →  processor_pythonv2.Pythonv2Processor
-  BACKEND_TYPE=cuda      →  processor_cuda.CUDArstProcessor
-  BACKEND_TYPE=rst       →  processor_rst.RSTProcessor
+Since the pythonv2 + CUDArst backends were retired (the C library
+optimization track delivers via libgrdopt + libfitacf.3.0, used by
+make_fit / make_grid / map_grd), there is now exactly one path:
+processor_rst.RSTProcessor. The BACKEND_TYPE env var and
+backend_override request param are accepted but ignored — kept so
+the existing API surface (probe_backends, request schemas) is
+unchanged for callers.
 """
 
 import logging
@@ -23,60 +24,31 @@ from models.schemas import (
 
 logger = logging.getLogger(__name__)
 
-# ── Backend selection ──────────────────────────────────────────────────────────
 
 def _get_backend(override: str = None):
-    """
-    Return a BackendProcessor instance.
-
-    Priority: per-request `override` → BACKEND_TYPE env var → 'pythonv2'.
-    """
-    backend_type = (override or os.environ.get("BACKEND_TYPE", "pythonv2")).lower()
-    if backend_type == "cuda":
-        from services.processor_cuda import CUDArstProcessor
-        return CUDArstProcessor()
-    elif backend_type == "rst":
-        from services.processor_rst import RSTProcessor
-        return RSTProcessor()
-    else:
-        from services.processor_pythonv2 import Pythonv2Processor
-        return Pythonv2Processor()
+    """Return the single RST-backed processor. `override` is ignored."""
+    from services.processor_rst import RSTProcessor
+    return RSTProcessor()
 
 
 def probe_backends() -> list:
     """
-    Return availability info for all three backends.
-    Each entry: {id, name, available, gpu, active}.
+    Return availability info. Always exactly one entry now.
+    Shape preserved (id/name/available/gpu/active) so the frontend
+    doesn't need to change.
     """
-    active = os.environ.get("BACKEND_TYPE", "pythonv2").lower()
-    results = []
-    checks = [
-        ("pythonv2", "pythonv2 (Python / CuPy)",
-         "services.processor_pythonv2", "Pythonv2Processor"),
-        ("cuda",     "CUDArst (CUDA / C)",
-         "services.processor_cuda",     "CUDArstProcessor"),
-        ("rst",      "RST (Reference C)",
-         "services.processor_rst",      "RSTProcessor"),
-    ]
-    for bid, name, module, cls in checks:
-        try:
-            import importlib
-            m = importlib.import_module(module)
-            getattr(m, cls)
-            gpu = False
-            if bid in ("pythonv2", "cuda"):
-                try:
-                    import cupy  # noqa
-                    gpu = True
-                except Exception:
-                    pass
-            results.append({"id": bid, "name": name, "available": True,
-                             "gpu": gpu, "active": bid == active})
-        except Exception as exc:
-            results.append({"id": bid, "name": name, "available": False,
-                             "gpu": False, "active": bid == active,
-                             "error": str(exc)})
-    return results
+    try:
+        from services.processor_rst import RSTProcessor  # noqa
+        return [{
+            "id": "rst", "name": "RST (C / libgrdopt + libfitacf.3.0)",
+            "available": True, "gpu": False, "active": True,
+        }]
+    except Exception as exc:
+        return [{
+            "id": "rst", "name": "RST (C / libgrdopt + libfitacf.3.0)",
+            "available": False, "gpu": False, "active": True,
+            "error": str(exc),
+        }]
 
 
 # ── Public async entry point (called by the processing route) ─────────────────
@@ -113,18 +85,12 @@ async def process_data_async(
             raise FileNotFoundError(f"Uploaded file {file_id} not found")
         file_path = matches[0]
 
+        # ProcessingMode.CUDA is accepted by the schema for backward
+        # compat but the only path is CPU now.
         use_gpu = False
-        if mode == ProcessingMode.CUDA:
-            use_gpu = True
-        elif mode == ProcessingMode.AUTO:
-            try:
-                import cupy  # noqa
-                use_gpu = True
-            except (ImportError, Exception):
-                pass
 
         backend = _get_backend(backend_override)
-        logger.info(f"Job {job_id} — backend: {type(backend).__name__}, gpu: {use_gpu}")
+        logger.info(f"Job {job_id} — backend: {type(backend).__name__}")
 
         # Pass file path so downstream stages can access raw data if fitacf was skipped
         stage_results: Dict = {"_file_path": str(file_path)}
@@ -170,8 +136,7 @@ async def process_data_async(
         _db.upsert_result(
             job_id, total_time, clean_stages,
             {"total_time": total_time, "stage_timing": timing,
-             "mode": "GPU" if use_gpu else "CPU",
-             "backend": backend_override or os.environ.get("BACKEND_TYPE", "pythonv2")},
+             "mode": "CPU", "backend": "rst"},
         )
         await _update({"status": "completed", "progress": 100,
                         "completed_at": str(datetime.now()), "current_stage": "complete"})

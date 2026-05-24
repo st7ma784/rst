@@ -9,11 +9,6 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import logging
 import os
-import sys
-from pathlib import Path
-
-# Add pythonv2 to path for superdarn_gpu imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "pythonv2"))
 
 from api.routes import processing, upload, results, remote, settings
 from core.websocket_manager import manager   # singleton used by processor.py too
@@ -35,21 +30,13 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.info("SQLite database initialised")
     
-    # Initialize services
     try:
-        # Check for GPU availability
-        try:
-            import cupy as cp
-            gpu_count = cp.cuda.runtime.getDeviceCount()
-            logger.info(f"CUDA available - {gpu_count} GPU(s) detected")
-        except ImportError:
-            logger.warning("CuPy not available - running in CPU-only mode")
-        except Exception as e:
-            logger.warning(f"GPU detection failed: {e} - running in CPU-only mode")
-        
-        # Initialize CUDArst library connection
-        logger.info("CUDArst library interface initialized")
-        
+        # Only the RST C-backed processor remains (pythonv2 + CUDArst
+        # retired). RST_BINPATH must point at the dir holding the
+        # compiled make_fit / make_grid / map_grd binaries.
+        rst_bin = os.environ.get("RST_BINPATH", "/opt/rst/bin")
+        logger.info(f"RST C backend active — binaries: {rst_bin}")
+
         yield
         
     finally:
@@ -59,8 +46,8 @@ async def lifespan(app: FastAPI):
 # Create FastAPI application
 app = FastAPI(
     title="SuperDARN Interactive Workbench API",
-    description="REST API for CUDA-accelerated SuperDARN data processing",
-    version="1.0.0",
+    description="REST API for SuperDARN data processing via the optimized C library stack (libgrdopt + libfitacf.3.0).",
+    version="2.0.0",
     lifespan=lifespan
 )
 

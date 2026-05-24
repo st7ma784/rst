@@ -1,49 +1,104 @@
-# ── RST reference backend ─────────────────────────────────────────────────────
-# Compiles the RST C libraries (best-effort) then runs the FastAPI server
-# with BACKEND_TYPE=rst, which delegates to the compiled binaries via subprocess.
+# ── RST C-backed backend (multi-stage, libgrdopt-linked) ────────────────────
+#
+# Single image for the rancher-deployed rst-workbench. The FastAPI in
+# webapp/backend subprocesses to three native binaries:
+#   make_fit  — raw ACF → fitacf
+#   make_grid — fitacf  → grid
+#   map_grd   — grid    → map (linked against libgrdopt for the
+#                              sort/locate speedups from libgrdopt
+#                              Phase B/C round-8 closeout).
 #
 # Build context must be the repo root:
-#   docker build -f webapp/backend/Dockerfile.rst -t siw-backend-rst .
-# ─────────────────────────────────────────────────────────────────────────────
-FROM python:3.11-slim AS base
+#   docker build -f webapp/backend/Dockerfile.rst -t siw-backend .
+#
+# Multi-stage: builder compiles only the dep chain the three binaries
+# need (in correct order, no `|| true` masking), runtime is python:3.11-slim
+# + libgomp + the produced /opt/rst/{bin,lib}. Estimated final image
+# size: ~400 MB (vs ~1.5 GB for the previous build-tools-included image).
+
+# ── Stage 1: builder ────────────────────────────────────────────────────────
+FROM python:3.11-slim AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        build-essential gfortran curl \
-        libhdf5-dev libnetcdf-dev libpng-dev zlib1g-dev \
+        build-essential zlib1g-dev libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
+WORKDIR /opt/rst
+COPY codebase/      codebase/
+COPY build/         build/
+COPY .profile/      .profile/
+COPY .profile.bash  .
+
+ENV RSTPATH=/opt/rst SYSTEM=linux
+SHELL ["/bin/bash", "-c"]
+
+# Build the library dependency chain in dependency order. This mirrors
+# .github/workflows/grid-search-test.yml round-7 and
+# .github/workflows/fitacf-search-test.yml. No `|| true` — failures
+# are fatal so a broken image never ships.
+RUN source .profile.bash && set -e && \
+    for d in \
+        codebase/base/src.lib/task/rtypes.1.5 \
+        codebase/base/src.lib/math/rmath.1.8 \
+        codebase/general/src.lib/time.1.7 \
+        codebase/base/src.lib/task/convert.1.11 \
+        codebase/base/src.lib/task/option.1.7 \
+        codebase/general/src.lib/dmap.1.25 \
+        codebase/general/src.lib/rfile.1.9 \
+        codebase/superdarn/src.lib/tk/radar.1.22 \
+        codebase/superdarn/src.lib/tk/raw.1.22 \
+        codebase/superdarn/src.lib/tk/scan.1.7 \
+        codebase/superdarn/src.lib/tk/cfit.1.19 \
+        codebase/superdarn/src.lib/tk/elevation.1.0 \
+        codebase/superdarn/src.lib/tk/fit.1.35 \
+        codebase/analysis/src.lib/mpfit/mpfit.1.5 \
+        codebase/superdarn/src.lib/tk/fitacf.2.5 \
+        codebase/superdarn/src.lib/tk/fitacf_v3.0 \
+        codebase/superdarn/src.lib/tk/fitacfex.1.3 \
+        codebase/superdarn/src.lib/tk/fitacfex2.1.0 \
+        codebase/superdarn/src.lib/tk/lmfit.2.0 \
+        codebase/superdarn/src.lib/tk/grid.1.24 \
+        codebase/superdarn/src.lib/tk/grid.1.24_optimized.1 \
+        ; do \
+        if [ ! -d "${d}/src" ]; then echo "missing: ${d}/src"; exit 1; fi; \
+        (cd "${d}/src" && make); \
+    done
+
+# Build the three binaries the FastAPI subprocesses to. map_grd's
+# makefile is patched (in-tree, see map_grd.1.16/makefile) to link
+# -lgrdopt.1 ahead of -lgrd.1 so the sort/locate fast path lights up.
+RUN source .profile.bash && set -e && \
+    for b in \
+        codebase/superdarn/src.bin/tk/tool/make_fit \
+        codebase/superdarn/src.bin/tk/tool/make_grid.2.0 \
+        codebase/superdarn/src.bin/tk/tool/map_grd.1.16 \
+        ; do \
+        if [ ! -d "${b}/src" ]; then echo "missing: ${b}/src"; exit 1; fi; \
+        (cd "${b}/src" && make); \
+    done
+
+# ── Stage 2: runtime ────────────────────────────────────────────────────────
+FROM python:3.11-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libgomp1 zlib1g curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy only the compiled artifacts the runtime needs.
+COPY --from=builder /opt/rst/bin /opt/rst/bin
+COPY --from=builder /opt/rst/lib /opt/rst/lib
+
+ENV RST_BINPATH=/opt/rst/bin \
+    LD_LIBRARY_PATH=/opt/rst/lib
+
 WORKDIR /app
-
-# ── RST library build (best-effort; some targets may not compile) ─────────────
-COPY codebase/ /opt/rst/codebase/
-COPY build/    /opt/rst/build/
-
-ENV RST_ROOT=/opt/rst \
-    SYSTEM=linux
-
-RUN mkdir -p /opt/rst/codebase/lib/${SYSTEM} /opt/rst/codebase/bin/${SYSTEM} \
-    && find /opt/rst/codebase -maxdepth 6 -name makefile | sort | \
-       xargs -I{} sh -c 'make -C "$(dirname {})" -f makefile 2>/dev/null || true'
-
-ENV IPATH=/opt/rst/codebase/include \
-    LIBPATH=/opt/rst/codebase/lib/${SYSTEM} \
-    BINPATH=/opt/rst/codebase/bin/${SYSTEM} \
-    PATH=/opt/rst/codebase/bin/${SYSTEM}:${PATH} \
-    LD_LIBRARY_PATH=/opt/rst/codebase/lib/${SYSTEM}:${LD_LIBRARY_PATH}
-
-# ── Python layer ──────────────────────────────────────────────────────────────
 COPY webapp/backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-COPY pythonv2/ /pythonv2/
 COPY webapp/backend/ .
 
-ENV PYTHONPATH=/pythonv2 \
-    BACKEND_TYPE=rst \
-    RST_BINPATH=/opt/rst/codebase/bin/${SYSTEM} \
-    DATA_DIR=/data \
+ENV DATA_DIR=/data \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 

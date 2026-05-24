@@ -1,12 +1,13 @@
 # SuperDARN Interactive Workbench — production Docker Compose
 #
+# Single C-backed backend (RST via libgrdopt + libfitacf.3.0).
+# The pythonv2 and CUDArst alternatives were retired; the backend
+# image is built from webapp/backend/Dockerfile.rst.
+#
 # Usage:
 #   cp .env.example .env          # fill in your values
 #   docker compose up -d          # start
 #   docker compose logs -f        # tail logs
-#
-# For multi-backend testing see docker-compose.test.yml.
-# For hot-reload development see docker-compose.override.yml.
 name: superdarn-workbench
 
 services:
@@ -15,12 +16,11 @@ services:
     image: ${REGISTRY:-}siw-backend:${TAG:-latest}
     build:
       context: ..
-      dockerfile: webapp/backend/Dockerfile.${BACKEND_TYPE:-pythonv2}
+      dockerfile: webapp/backend/Dockerfile.rst
     environment:
-      BACKEND_TYPE:  ${BACKEND_TYPE:-pythonv2}
       DATA_DIR:      /data
       CORS_ORIGINS:  ${CORS_ORIGINS:-http://localhost}
-      PYTHONPATH:    /pythonv2
+      RST_BINPATH:   /opt/rst/codebase/bin/linux
     volumes:
       - data:/data
     ports:
@@ -32,14 +32,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    # GPU access — uncomment when running on a CUDA host:
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
 
   frontend:
     image: ${REGISTRY:-}siw-frontend:${TAG:-latest}

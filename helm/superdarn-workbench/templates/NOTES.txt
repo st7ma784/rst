@@ -2,8 +2,7 @@ SuperDARN Interactive Workbench is deployed!
 
   Release:   {{ .Release.Name }}
   Namespace: {{ .Release.Namespace }}
-  Backend:   {{ .Values.backend.backendType }}
-  GPU:       {{ .Values.backend.gpu.enabled }}
+  Backend:   RST (C / libgrdopt + libfitacf.3.0)
 
 {{- if .Values.ingress.enabled }}
 

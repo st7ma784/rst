@@ -1,8 +1,10 @@
 """
-Abstract base for all processing backends.
+Abstract base for processing backends.
 
-Every backend (pythonv2, cuda, rst) must implement this interface so the
-dispatcher and test harness can treat them identically.
+Historically there were three implementations (pythonv2, cuda, rst);
+only the RST C-backed implementation remains. The abstract base is
+kept to preserve the public surface that processor.py and the
+processor_rst test harness rely on.
 """
 
 from abc import ABC, abstractmethod
