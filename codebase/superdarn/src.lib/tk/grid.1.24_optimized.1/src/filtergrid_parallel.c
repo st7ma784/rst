@@ -147,6 +147,96 @@ int GridFilterBasicParallel(GridDataOpt *grid, const GridFilterCriteria *criteri
     }
     
     /* Parallel filtering pass */
+#ifdef __AVX2__
+    /* AVX2 batched: 4 cells per iteration. Each scalar field is
+       gathered across 4 cells via _mm256_set_pd, range checks run as
+       parallel _mm256_cmp_pd, combined per criteria->use_logical_and,
+       and extracted to a 4-bit mask via _mm256_movemask_pd. station_id
+       (int32) and the tail are handled scalar. apply_basic_filter
+       remains the source of truth for the tail. */
+    const __m256d vmin = _mm256_set1_pd(criteria->velocity_min);
+    const __m256d vmax = _mm256_set1_pd(criteria->velocity_max);
+    const __m256d pmin = _mm256_set1_pd(criteria->power_min);
+    const __m256d pmax = _mm256_set1_pd(criteria->power_max);
+    const __m256d wmin = _mm256_set1_pd(criteria->width_min);
+    const __m256d wmax = _mm256_set1_pd(criteria->width_max);
+    const __m256d latmin = _mm256_set1_pd(criteria->latitude_min);
+    const __m256d latmax = _mm256_set1_pd(criteria->latitude_max);
+    const __m256d lonmin = _mm256_set1_pd(criteria->longitude_min);
+    const __m256d lonmax = _mm256_set1_pd(criteria->longitude_max);
+    const __m256d errmax = _mm256_set1_pd(criteria->error_threshold);
+    const int use_and = criteria->use_logical_and;
+    const int st_id_filter = criteria->station_id;
+
+    const int simd_end = (grid->vcnum / 4) * 4;
+#ifdef _OPENMP
+    #pragma omp parallel for schedule(static)
+#endif
+    for (int i = 0; i < simd_end; i += 4) {
+        const GridGVecOpt *c0 = &grid->data[i];
+        const GridGVecOpt *c1 = &grid->data[i+1];
+        const GridGVecOpt *c2 = &grid->data[i+2];
+        const GridGVecOpt *c3 = &grid->data[i+3];
+
+        __m256d v_vel  = _mm256_set_pd(c3->vel.median, c2->vel.median, c1->vel.median, c0->vel.median);
+        __m256d v_pwr  = _mm256_set_pd(c3->pwr.median, c2->pwr.median, c1->pwr.median, c0->pwr.median);
+        __m256d v_wdt  = _mm256_set_pd(c3->wdt.median, c2->wdt.median, c1->wdt.median, c0->wdt.median);
+        __m256d v_mlat = _mm256_set_pd(c3->mlat,       c2->mlat,       c1->mlat,       c0->mlat);
+        __m256d v_mlon = _mm256_set_pd(c3->mlon,       c2->mlon,       c1->mlon,       c0->mlon);
+        __m256d v_sd   = _mm256_set_pd(c3->vel.sd,     c2->vel.sd,     c1->vel.sd,     c0->vel.sd);
+
+        __m256d vel_ok = _mm256_and_pd(_mm256_cmp_pd(v_vel,  vmin,   _CMP_GE_OQ),
+                                       _mm256_cmp_pd(v_vel,  vmax,   _CMP_LE_OQ));
+        __m256d pwr_ok = _mm256_and_pd(_mm256_cmp_pd(v_pwr,  pmin,   _CMP_GE_OQ),
+                                       _mm256_cmp_pd(v_pwr,  pmax,   _CMP_LE_OQ));
+        __m256d wdt_ok = _mm256_and_pd(_mm256_cmp_pd(v_wdt,  wmin,   _CMP_GE_OQ),
+                                       _mm256_cmp_pd(v_wdt,  wmax,   _CMP_LE_OQ));
+        __m256d lat_ok = _mm256_and_pd(_mm256_cmp_pd(v_mlat, latmin, _CMP_GE_OQ),
+                                       _mm256_cmp_pd(v_mlat, latmax, _CMP_LE_OQ));
+        __m256d lon_ok = _mm256_and_pd(_mm256_cmp_pd(v_mlon, lonmin, _CMP_GE_OQ),
+                                       _mm256_cmp_pd(v_mlon, lonmax, _CMP_LE_OQ));
+        __m256d err_ok = _mm256_cmp_pd(v_sd, errmax, _CMP_LE_OQ);
+
+        __m256d combined;
+        if (use_and) {
+            combined = _mm256_and_pd(vel_ok, pwr_ok);
+            combined = _mm256_and_pd(combined, wdt_ok);
+            combined = _mm256_and_pd(combined, lat_ok);
+            combined = _mm256_and_pd(combined, lon_ok);
+            combined = _mm256_and_pd(combined, err_ok);
+        } else {
+            combined = _mm256_or_pd(vel_ok, pwr_ok);
+            combined = _mm256_or_pd(combined, wdt_ok);
+            combined = _mm256_or_pd(combined, lat_ok);
+            combined = _mm256_or_pd(combined, lon_ok);
+            combined = _mm256_or_pd(combined, err_ok);
+        }
+
+        int mask = _mm256_movemask_pd(combined);
+
+        int st0_ok = (st_id_filter < 0 || c0->st_id == st_id_filter);
+        int st1_ok = (st_id_filter < 0 || c1->st_id == st_id_filter);
+        int st2_ok = (st_id_filter < 0 || c2->st_id == st_id_filter);
+        int st3_ok = (st_id_filter < 0 || c3->st_id == st_id_filter);
+
+        if (use_and) {
+            keep_flags[i]   = ((mask >> 0) & 1) & st0_ok;
+            keep_flags[i+1] = ((mask >> 1) & 1) & st1_ok;
+            keep_flags[i+2] = ((mask >> 2) & 1) & st2_ok;
+            keep_flags[i+3] = ((mask >> 3) & 1) & st3_ok;
+        } else {
+            keep_flags[i]   = ((mask >> 0) & 1) | st0_ok;
+            keep_flags[i+1] = ((mask >> 1) & 1) | st1_ok;
+            keep_flags[i+2] = ((mask >> 2) & 1) | st2_ok;
+            keep_flags[i+3] = ((mask >> 3) & 1) | st3_ok;
+        }
+    }
+
+    for (int i = simd_end; i < grid->vcnum; i++) {
+        FilterAction action = apply_basic_filter(&grid->data[i], criteria);
+        keep_flags[i] = (action == FILTER_KEEP) ? 1 : 0;
+    }
+#else
 #ifdef _OPENMP
     #pragma omp parallel for schedule(static)
 #endif
@@ -154,6 +244,7 @@ int GridFilterBasicParallel(GridDataOpt *grid, const GridFilterCriteria *criteri
         FilterAction action = apply_basic_filter(&grid->data[i], criteria);
         keep_flags[i] = (action == FILTER_KEEP) ? 1 : 0;
     }
+#endif
     
     /* Sequential copy of filtered cells */
     for (int i = 0; i < grid->vcnum; i++) {

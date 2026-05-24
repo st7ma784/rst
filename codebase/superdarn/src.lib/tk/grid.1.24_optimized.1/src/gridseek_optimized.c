@@ -14,12 +14,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <immintrin.h>  // AVX/AVX2/AVX-512
+#include <unistd.h>     /* lseek */
+#include <immintrin.h>  /* AVX/AVX2/AVX-512 */
 #include <omp.h>
-#include "rtypes.h"
+#include <zlib.h>       /* gzFile, needed before dmap.h */
+#include "rtypes.h"     /* int16/int32/uint16/... needed before dmap.h */
 #include "rtime.h"
-#include "dmap.h"
-#include "griddata_parallel.h"
+#include "griddata_parallel.h"  /* transitively pulls in dmap.h + gridindex.h */
 
 // AVX2/AVX-512 vector width in doubles
 #ifdef __AVX512F__
@@ -87,9 +88,9 @@ static int grid_vectorized_binary_search(const double *times, int num_times,
         vec_double v_best_diff = _mm512_set1_pd(INFINITY);
         __m512i v_best_idx = _mm512_set1_epi64(-1);
         
-        #pragma omp simd reduction(min:best_diff) aligned(times:64)
+        /* No alignment guarantee on the caller's times[]; use unaligned load. */
         for (int i = 0; i <= right - (VEC_WIDTH-1); i += VEC_WIDTH) {
-            vec_double v_curr = _mm512_load_pd(&times[i]);
+            vec_double v_curr = _mm512_loadu_pd(&times[i]);
             vec_double v_diff = _mm512_abs_pd(_mm512_sub_pd(v_curr, v_target));
             
             // Update best match in vector
@@ -98,16 +99,19 @@ static int grid_vectorized_binary_search(const double *times, int num_times,
             v_best_diff = _mm512_min_pd(v_diff, v_best_diff);
         }
         
-        // Find minimum in vector results
-        double min_vals[VEC_WIDTH];
-        int min_idxs[VEC_WIDTH];
-        _mm512_store_pd(min_vals, v_best_diff);
-        _mm512_store_epi64(min_idxs, v_best_idx);
-        
+        /* Find minimum in vector results.
+           min_idxs must be int64 (8 bytes each) because _mm512_storeu_epi64
+           writes 8 x int64 = 64 bytes. Use unaligned stores so we don't
+           need the stack to be 64-byte aligned. */
+        double   min_vals[VEC_WIDTH];
+        long long min_idxs[VEC_WIDTH];
+        _mm512_storeu_pd(min_vals, v_best_diff);
+        _mm512_storeu_si512((__m512i *)min_idxs, v_best_idx);
+
         for (int i = 0; i < VEC_WIDTH; i++) {
             if (min_vals[i] < best_diff) {
                 best_diff = min_vals[i];
-                best = min_idxs[i];
+                best = (int)min_idxs[i];
             }
         }
     }

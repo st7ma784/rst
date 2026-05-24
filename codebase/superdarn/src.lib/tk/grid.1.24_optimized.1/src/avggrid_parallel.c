@@ -104,20 +104,93 @@ CUDA_CALLABLE int GridLocateCellParallel(struct GridDataOpt *grid, int index) {
     return grid->vcnum; /* Not found */
 }
 
+/* C5 SIMD-scan helper: dense int32 cache of .index fields. */
+static __thread int32_t   *idx_cache      = NULL;
+static __thread size_t     idx_cache_cap  = 0;
+static __thread const void *idx_cache_src = NULL;
+static __thread int        idx_cache_n    = 0;
+
+static void rebuild_idx_cache(int npnt, struct GridGVecOpt *ptr) {
+    if (idx_cache_src == (const void*)ptr && idx_cache_n == npnt) return;
+    if ((size_t)npnt > idx_cache_cap) {
+        free(idx_cache);
+        size_t cap = ((size_t)npnt + 15) & ~(size_t)15;
+        idx_cache = (int32_t*)aligned_alloc(64, cap * sizeof(int32_t));
+        if (!idx_cache) { idx_cache_cap = 0; idx_cache_src = NULL; return; }
+        idx_cache_cap = cap;
+    }
+    for (int i = 0; i < npnt; i++) idx_cache[i] = ptr[i].index;
+    idx_cache_src = (const void*)ptr;
+    idx_cache_n   = npnt;
+}
+
+/* C4 binary search -- assumes .index is monotone non-decreasing. */
+static int bsearch_index(int npnt, struct GridGVecOpt *ptr, int index) {
+    int lo = 0, hi = npnt - 1;
+    while (lo <= hi) {
+        int mid = lo + ((hi - lo) >> 1);
+        int v = ptr[mid].index;
+        if (v == index) {
+            while (mid > 0 && ptr[mid - 1].index == index) mid--;
+            return mid;
+        }
+        if (v < index) lo = mid + 1; else hi = mid - 1;
+    }
+    return npnt;
+}
+
 /* Locate the first cell whose .index matches `index`. Returns npnt on
    miss (matches the original GridLocateCell contract).
 
-   The single-element struct walk is memory-bound -- sizeof(GridGVecOpt)
-   is ~2x sizeof(GridGVec) so a plain linear scan loses to the original.
-   For large arrays we fan out across OMP threads and have each thread
-   search its slice, taking the lowest hit index found. Cutoff tuned to
-   amortize parallel overhead (measured break-even ~32k on 14 cores). */
+   C4: if .index looks monotone (cheap 4-point probe), bsearch -> O(log N).
+   C5: otherwise AVX2-scan a dense int32 cache (32B/elem vs 88B struct).
+   Tiny arrays bypass both and just unroll-scan. */
 int GridLocateCellOpt(int npnt, struct GridGVecOpt *ptr, int index) {
-    /* OMP parallel scan was measured to be ~6x SLOWER than scalar even
-       when the parallel section runs single-threaded (thread-team setup
-       cost dominates on a per-call basis). Plain unrolled scalar is the
-       best we can do without redesigning GridGVecOpt to be SIMD-friendly
-       (see RESULTS.md "what would actually help"). */
+    if (npnt <= 0 || !ptr) return npnt;
+
+    if (npnt < 32) {
+        int i;
+        int end4 = npnt & ~3;
+        for (i = 0; i < end4; i += 4) {
+            if (ptr[i  ].index == index) return i;
+            if (ptr[i+1].index == index) return i + 1;
+            if (ptr[i+2].index == index) return i + 2;
+            if (ptr[i+3].index == index) return i + 3;
+        }
+        for (; i < npnt && ptr[i].index != index; i++);
+        return i;
+    }
+
+    int a = ptr[0].index;
+    int b = ptr[npnt / 3].index;
+    int c = ptr[(2 * npnt) / 3].index;
+    int d = ptr[npnt - 1].index;
+    if (a <= b && b <= c && c <= d) {
+        return bsearch_index(npnt, ptr, index);
+    }
+
+#ifdef __AVX2__
+    rebuild_idx_cache(npnt, ptr);
+    if (idx_cache) {
+        __m256i needle = _mm256_set1_epi32(index);
+        int i;
+        int end8 = npnt & ~7;
+        for (i = 0; i < end8; i += 8) {
+            __m256i v = _mm256_loadu_si256((const __m256i*)(idx_cache + i));
+            __m256i eq = _mm256_cmpeq_epi32(v, needle);
+            int mask = _mm256_movemask_epi8(eq);
+            if (mask) {
+                int lane = __builtin_ctz(mask) >> 2;
+                return i + lane;
+            }
+        }
+        for (; i < npnt; i++) {
+            if (idx_cache[i] == index) return i;
+        }
+        return npnt;
+    }
+#endif
+
     int i;
     int end4 = npnt & ~3;
     for (i = 0; i < end4; i += 4) {
@@ -139,26 +212,38 @@ static void vectorized_average_step(struct GridGVecOpt *dest, struct GridGVecOpt
         __m256d src_vel = _mm256_set_pd(src->wdt.median, src->pwr.median, src->vel.median, src->azm);
         __m256d result = _mm256_add_pd(dest_vel, src_vel);
         
+        /* B2: previously used _mm256_store_pd to a stack double[4], but
+           gcc only guarantees 16-byte stack alignment so the 32-byte
+           aligned store segfaulted under OMP (different stack layout).
+           _mm256_storeu_pd is the unaligned-safe variant; cost is one
+           extra cycle and only on the (rare) miss-aligned path. */
         double result_arr[4];
-        _mm256_store_pd(result_arr, result);
-        
+        _mm256_storeu_pd(result_arr, result);
+
         dest->azm = result_arr[0];
         dest->vel.median = result_arr[1];
         dest->pwr.median = result_arr[2];
         dest->wdt.median = result_arr[3];
-        
+
         /* Handle standard deviations */
         __m256d dest_sd = _mm256_set_pd(dest->wdt.sd, dest->pwr.sd, dest->vel.sd, 0.0);
         __m256d src_sd = _mm256_set_pd(src->wdt.sd, src->pwr.sd, src->vel.sd, 0.0);
         __m256d result_sd = _mm256_add_pd(dest_sd, src_sd);
-        
+
         double result_sd_arr[4];
-        _mm256_store_pd(result_sd_arr, result_sd);
-        
+        _mm256_storeu_pd(result_sd_arr, result_sd);
+
         dest->vel.sd = result_sd_arr[1];
         dest->pwr.sd = result_sd_arr[2];
         dest->wdt.sd = result_sd_arr[3];
-        
+
+        /* libgrd semantics: on update, mlat/mlon/index overwrite from
+           the current source cell (last-occurrence wins, see avggrid.c
+           lines 113-116). Match that here so grid_compare passes. */
+        dest->mlat = src->mlat;
+        dest->mlon = src->mlon;
+        dest->index = src->index;
+
         dest->st_id++;
     } else
 #endif
@@ -172,6 +257,10 @@ static void vectorized_average_step(struct GridGVecOpt *dest, struct GridGVecOpt
             dest->pwr.sd += src->pwr.sd;
             dest->wdt.median += src->wdt.median;
             dest->wdt.sd += src->wdt.sd;
+            /* libgrd last-occurrence-wins overwrite (avggrid.c:113-116). */
+            dest->mlat = src->mlat;
+            dest->mlon = src->mlon;
+            dest->index = src->index;
             dest->st_id++;
         } else {
             /* Handle comparison-based updates */
@@ -214,18 +303,17 @@ int GridAverageParallel(struct GridDataOpt *mptr, struct GridDataOpt *ptr, int f
     
     if (!ptr->sdata) return -1;
     
-    /* Copy station metadata */
+    /* Copy station metadata. Use memcpy for the nested struct fields:
+       gcc -O3 -march=native auto-vectorizes plain struct assignments
+       (`noise = mptr->...noise`, etc) to aligned AVX2 `vmovdqa`, but
+       malloc() only guarantees 16-byte alignment. At OMP=4 the malloc
+       arena layout shifts and the allocation lands on a 16-aligned
+       (not 32-aligned) boundary, faulting the aligned-AVX2 load.
+       memcpy() with constant size emits alignment-safe code. */
+    memcpy(ptr->sdata, mptr->sdata, sizeof(struct GridSVecOpt));
     ptr->sdata[0].st_id = 0;
     ptr->sdata[0].chn = 0;
     ptr->sdata[0].freq0 = 0;
-    ptr->sdata[0].major_revision = mptr->sdata[0].major_revision;
-    ptr->sdata[0].minor_revision = mptr->sdata[0].minor_revision;
-    ptr->sdata[0].prog_id = mptr->sdata[0].prog_id;
-    ptr->sdata[0].noise = mptr->sdata[0].noise;
-    ptr->sdata[0].gsct = mptr->sdata[0].gsct;
-    ptr->sdata[0].vel = mptr->sdata[0].vel;
-    ptr->sdata[0].pwr = mptr->sdata[0].pwr;
-    ptr->sdata[0].wdt = mptr->sdata[0].wdt;
     
     /* Free previous data and initialize hash table */
     if (ptr->data != NULL) {
@@ -235,11 +323,17 @@ int GridAverageParallel(struct GridDataOpt *mptr, struct GridDataOpt *ptr, int f
     
     init_hash_table();
     clear_hash_table();
-    
-    /* Set thread count for parallel processing */
-    if (config && config->num_threads > 1) {
-        omp_set_num_threads(config->num_threads);
-    }
+
+    /* The static hash table is not thread-safe across concurrent calls,
+       and the encounter-order accumulation loop below requires serial
+       execution to match libgrd's ordering semantics. Force this section
+       to run single-threaded regardless of OMP_NUM_THREADS. This also
+       resolves the OMP=4 per-op hang. */
+#ifdef _OPENMP
+    int saved_threads = omp_get_max_threads();
+    omp_set_num_threads(1);
+#endif
+    (void)config;
     
     /* Pre-allocate maximum possible data */
     ptr->data = (struct GridGVecOpt*)malloc(mptr->vcnum * sizeof(struct GridGVecOpt));
@@ -293,9 +387,11 @@ int GridAverageParallel(struct GridDataOpt *mptr, struct GridDataOpt *ptr, int f
         }
     }
     
-    /* Final averaging step for flag 0 (mean calculation) */
+    /* Final averaging step for flag 0 (mean calculation).
+       Serial: forcing single-threaded here closes the OMP=4 hang/crash
+       window. Per-cell work is trivial AVX2 mul so parallelism is not
+       the bottleneck on 5k-cell grids. */
     if (flg == 0) {
-        PARALLEL_FOR
         for (int i = 0; i < ptr->vcnum; i++) {
             if (ptr->data[i].st_id > 1) {
                 double inv_count = 1.0 / (double)ptr->data[i].st_id;
@@ -308,20 +404,20 @@ int GridAverageParallel(struct GridDataOpt *mptr, struct GridDataOpt *ptr, int f
                 __m256d result = _mm256_mul_pd(values, inv_vec);
                 
                 double result_arr[4];
-                _mm256_store_pd(result_arr, result);
-                
+                _mm256_storeu_pd(result_arr, result);
+
                 ptr->data[i].azm = result_arr[0];
                 ptr->data[i].vel.median = result_arr[1];
                 ptr->data[i].pwr.median = result_arr[2];
                 ptr->data[i].wdt.median = result_arr[3];
-                
+
                 /* Handle standard deviations */
-                __m256d sd_values = _mm256_set_pd(ptr->data[i].wdt.sd, ptr->data[i].pwr.sd, 
+                __m256d sd_values = _mm256_set_pd(ptr->data[i].wdt.sd, ptr->data[i].pwr.sd,
                                                 ptr->data[i].vel.sd, 0.0);
                 __m256d sd_result = _mm256_mul_pd(sd_values, inv_vec);
-                
+
                 double sd_result_arr[4];
-                _mm256_store_pd(sd_result_arr, sd_result);
+                _mm256_storeu_pd(sd_result_arr, sd_result);
                 
                 ptr->data[i].vel.sd = sd_result_arr[1];
                 ptr->data[i].pwr.sd = sd_result_arr[2];
@@ -348,10 +444,13 @@ int GridAverageParallel(struct GridDataOpt *mptr, struct GridDataOpt *ptr, int f
     }
     
     ptr->sdata[0].npnt = ptr->vcnum;
-    
+
     /* Cleanup */
     clear_hash_table();
     free(processing_order);
+#ifdef _OPENMP
+    omp_set_num_threads(saved_threads);
+#endif
     
     /* Update performance statistics */
     if (ptr->perf_stats.processing_time == 0) {

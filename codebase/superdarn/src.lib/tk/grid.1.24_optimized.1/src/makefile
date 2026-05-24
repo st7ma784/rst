@@ -9,18 +9,25 @@ include $(MAKECFG).$(SYSTEM)
 
 INCLUDE=-I$(IPATH)/base -I$(IPATH)/general -I$(IPATH)/superdarn
 
-# gridio_parallel.c, gridmerge_parallel.c, mergegrid_parallel.c, and
-# gridseek_optimized.c are excluded -- they depend on Intel SVML intrinsics
-# (_mm256_sin_pd/cos_pd) not available in GCC, undefined GridFilterParams,
-# and a DataMapFindScalar signature that doesn't match the real RST API.
-# They need real refactoring before they can compile.
+# All 12 grid_parallel/grid_optimized source files now compile.
+# Per AUDIT.md Phase A:
+#  A1: gridseek_optimized.c -- include order + AVX-512 store buffer width.
+#  A2: mergegrid_parallel.c -- SVML sin/cos -> scalar loop.
+#  A3: gridmerge_parallel.c -- GridFilterParams defined, anonymous-time
+#      compare via GP_TIME_KEY, missing helpers stubbed as static gp_*.
+#  A4: gridio_parallel.c    -- DataMapFindScalar/Array via local helpers,
+#      anonymous time-struct populated directly, verr.{min,max}, GridSVecOpt.
 SRC = addgrid_parallel.c avggrid_parallel.c copygrid_parallel.c \
-      filtergrid_parallel.c grid_parallel_utils.c gridseek_parallel.c \
-      integrategrid_parallel.c sortgrid_parallel.c
+      filtergrid_parallel.c grid_parallel_utils.c gridio_parallel.c \
+      gridmerge_parallel.c gridopt_wrappers.c gridseek_optimized.c \
+      gridseek_parallel.c integrategrid_parallel.c mergegrid_parallel.c \
+      sortgrid_parallel.c
 
 OBJS = addgrid_parallel.o avggrid_parallel.o copygrid_parallel.o \
-       filtergrid_parallel.o grid_parallel_utils.o gridseek_parallel.o \
-       integrategrid_parallel.o sortgrid_parallel.o
+       filtergrid_parallel.o grid_parallel_utils.o gridio_parallel.o \
+       gridmerge_parallel.o gridopt_wrappers.o gridseek_optimized.o \
+       gridseek_parallel.o integrategrid_parallel.o mergegrid_parallel.o \
+       sortgrid_parallel.o
 
 INC=$(IPATH)/superdarn
 LINK="1"

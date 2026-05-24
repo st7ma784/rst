@@ -35,6 +35,74 @@ Modifications:
 #include "rmath.h"
 #include "griddata_parallel.h"
 
+/* ----- Local helpers -----------------------------------------------------
+   gridmerge_parallel.c was written against a now-defunct internal API
+   (`grid_parallel_make` / `_free` / `_copy` / `_filter_outliers`). Those
+   four functions were never implemented anywhere in the library. Audit A3
+   calls for restoring this file to a buildable state without adding new
+   public API surface, so we provide minimal static versions here. */
+
+static void gp_free_internal(struct GridDataParallel *grd) {
+    if (!grd) return;
+    if (grd->sdata) { free(grd->sdata); grd->sdata = NULL; }
+    if (grd->data)  { free(grd->data);  grd->data  = NULL; }
+    grd->stnum = 0;
+    grd->vcnum = 0;
+    grd->xtd   = 0;
+}
+
+static void gp_make_internal(struct GridDataParallel *grd, int stnum) {
+    if (!grd) return;
+    memset(grd, 0, sizeof(*grd));
+    grd->stnum = stnum;
+    if (stnum > 0) {
+        grd->sdata = (struct GridSVecOpt *)calloc((size_t)stnum,
+                                                  sizeof(struct GridSVecOpt));
+    }
+}
+
+static int gp_copy_internal(struct GridDataParallel *dst,
+                            const struct GridDataParallel *src) {
+    if (!dst || !src) return -1;
+    gp_free_internal(dst);
+    *dst = *src;          /* shallow copy of scalars; pointer fields cleared next */
+    dst->sdata = NULL;
+    dst->data  = NULL;
+    if (src->stnum > 0 && src->sdata) {
+        dst->sdata = (struct GridSVecOpt *)malloc(
+            (size_t)src->stnum * sizeof(struct GridSVecOpt));
+        if (!dst->sdata) return -1;
+        memcpy(dst->sdata, src->sdata,
+               (size_t)src->stnum * sizeof(struct GridSVecOpt));
+    }
+    if (src->vcnum > 0 && src->data) {
+        dst->data = (struct GridGVecParallel *)malloc(
+            (size_t)src->vcnum * sizeof(struct GridGVecParallel));
+        if (!dst->data) { free(dst->sdata); dst->sdata = NULL; return -1; }
+        memcpy(dst->data, src->data,
+               (size_t)src->vcnum * sizeof(struct GridGVecParallel));
+    }
+    return 0;
+}
+
+/* Outlier filter is Phase-B work; stub for now so the archive resolves. */
+static int gp_filter_outliers(struct GridDataParallel *grd,
+                              const struct GridFilterParams *params,
+                              struct GridPerformanceStats *stats) {
+    (void)grd; (void)params; (void)stats;
+    return 0;
+}
+
+/* gp_time_key: time fields are anonymous structs of {yr,mo,dy,hr,mt,sc,us}.
+   Collapse to a single comparable int64 -- correct for ordering, not for
+   absolute math (ignores leap-day arithmetic). Caller supplies the seven
+   ints; macro avoids the anonymous-struct-as-parameter problem. */
+#define GP_TIME_KEY_(yr,mo,dy,hr,mt,sc,us) \
+    (((((((long long)(yr)) * 13LL + (mo)) * 32LL + (dy)) \
+       * 24LL + (hr)) * 60LL + (mt)) * 60LL + (sc)) * 1000000LL + (us)
+#define GP_TIME_KEY(t) \
+    GP_TIME_KEY_((t).yr, (t).mo, (t).dy, (t).hr, (t).mt, (t).sc, (t).us)
+
 /**
  * Parallel grid averaging with enhanced statistics
  */
@@ -49,8 +117,8 @@ int grid_parallel_average(struct GridDataParallel **src_grids, int num_grids,
     double start_time = omp_get_wtime();
     
     // Initialize destination grid
-    grid_parallel_free(dst_grid);
-    grid_parallel_make(dst_grid, src_grids[0]->stnum);
+    gp_free_internal(dst_grid);
+    gp_make_internal(dst_grid, src_grids[0]->stnum);
     
     // Copy time information from first grid
     dst_grid->st_time = src_grids[0]->st_time;
@@ -266,19 +334,20 @@ int grid_parallel_merge(struct GridDataParallel *grid1,
     double start_time = omp_get_wtime();
     
     // Initialize merged grid
-    grid_parallel_free(merged_grid);
+    gp_free_internal(merged_grid);
     
-    // Determine time range
-    merged_grid->st_time = (grid1->st_time < grid2->st_time) ? 
-                          grid1->st_time : grid2->st_time;
-    merged_grid->ed_time = (grid1->ed_time > grid2->ed_time) ? 
-                          grid1->ed_time : grid2->ed_time;
+    /* Determine time range. st_time/ed_time are anonymous structs, so we
+       can't use `<`/`>` directly; collapse to a comparable key first. */
+    merged_grid->st_time = (GP_TIME_KEY(grid1->st_time) < GP_TIME_KEY(grid2->st_time))
+                           ? grid1->st_time : grid2->st_time;
+    merged_grid->ed_time = (GP_TIME_KEY(grid1->ed_time) > GP_TIME_KEY(grid2->ed_time))
+                           ? grid1->ed_time : grid2->ed_time;
     merged_grid->xtd = grid1->xtd || grid2->xtd;
     merged_grid->stnum = grid1->stnum + grid2->stnum;
     
     // Allocate station data
     if (merged_grid->stnum > 0) {
-        merged_grid->sdata = malloc(sizeof(struct GridSVecParallel) * 
+        merged_grid->sdata = malloc(sizeof(struct GridSVecOpt) * 
                                    merged_grid->stnum);
         if (!merged_grid->sdata) {
             if (stats) stats->error_count++;
@@ -462,7 +531,7 @@ int grid_parallel_integrate(struct GridDataParallel **grids, int num_grids,
     double start_time = omp_get_wtime();
     
     // Start with first grid
-    if (grid_parallel_copy(integrated_grid, grids[0]) != 0) {
+    if (gp_copy_internal(integrated_grid, grids[0]) != 0) {
         if (stats) stats->error_count++;
         return -1;
     }
@@ -472,19 +541,19 @@ int grid_parallel_integrate(struct GridDataParallel **grids, int num_grids,
         if (!grids[i]) continue;
         
         struct GridDataParallel temp_grid;
-        grid_parallel_make(&temp_grid, 0);
+        gp_make_internal(&temp_grid, 0);
         
         int merge_mode = (params && params->prefer_quality) ? 
                         GRID_MERGE_PREFER_LOWER_ERROR : GRID_MERGE_AVERAGE;
         
         if (grid_parallel_merge(integrated_grid, grids[i], &temp_grid, 
                                merge_mode, stats) != 0) {
-            grid_parallel_free(&temp_grid);
+            gp_free_internal(&temp_grid);
             continue;
         }
         
         // Replace integrated grid with merged result
-        grid_parallel_free(integrated_grid);
+        gp_free_internal(integrated_grid);
         *integrated_grid = temp_grid;
     }
     
@@ -494,7 +563,7 @@ int grid_parallel_integrate(struct GridDataParallel **grids, int num_grids,
         filter_params.outlier_detection = 1;
         filter_params.outlier_threshold = 2.0;
         
-        grid_parallel_filter_outliers(integrated_grid, &filter_params, stats);
+        gp_filter_outliers(integrated_grid, &filter_params, stats);
     }
     
     if (stats) {

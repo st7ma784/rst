@@ -1,58 +1,104 @@
-name: Grid Search Optimization Tests
+name: Grid Optimized Library Tests
 
-# Best-effort build of the optimized grid library + its test corpus.
+# Builds libgrdopt + grid_opt_compare harness and runs the equivalence /
+# benchmark suite on every push touching the grid.1.24_optimized.1 tree.
 #
-# Previous version: a 3x2 (gcc 9/10/11 x OpenMP true/false) matrix that ran
-# `make test` in codebase/superdarn/src.lib/tk/grid.1.24_optimized.1. That
-# directory's Makefile has no `test` target — make defaulted to the `test/`
-# subdir as a filename and bailed out with "make: *** .: Is a directory.
-# Stop." on every run.
+# AUDIT.md B4: this workflow gates merges on the libgrdopt API surface.
+# Sort and LocateCell equivalence must hold (zero fail / zero mismatch);
+# the per-op (Average/Merge/Integrate) tests are opt-in via --with-ops
+# until Phase D reworks GridAverageParallel/GridMergeParallel.
 #
-# This version builds whatever does exist (the lib's main target), and only
-# attempts to compile the test C files if a recognisable target turns up.
-# Single GCC, one config — until the test harness is properly wired into
-# the Makefile there's no point matrixing over compilers.
+# We rely on the parent RST build system (.profile.bash sets MAKECFG /
+# MAKELIB / IPATH / LIBPATH). The harness links against libgrd, libdmap,
+# librtime, librcnv which are all part of the same checkout.
 
 on:
   push:
     branches: [ main, develop ]
     paths:
       - 'codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/**'
+      - 'codebase/superdarn/src.bin/tk/testing/grid_opt_compare.1.0/**'
       - '.github/workflows/grid-search-test.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/**'
+      - 'codebase/superdarn/src.bin/tk/testing/grid_opt_compare.1.0/**'
       - '.github/workflows/grid-search-test.yml'
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build grid.1.24_optimized.1
+  build-and-run-harness:
+    name: Build libgrdopt + run grid_opt_compare
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install build tools
         run: |
+          set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            build-essential libgomp1
+            build-essential libgomp1 zlib1g-dev
 
-      - name: Attempt to build via repo build system
-        # The Makefile here uses MAKECFG/MAKELIB from the parent RST build
-        # system. We invoke it under a configured RST env so it has a
-        # chance to compile; failures don't fail the workflow because the
-        # underlying test harness still needs work.
-        working-directory: codebase/superdarn/src.lib/tk/grid.1.24_optimized.1
+      - name: Build RST dependencies (libgrd, libdmap, librtime, librcnv)
+        # libgrdopt's harness links against these; we have to build them
+        # before the grid.1.24_optimized.1 tree so the static libs exist.
         run: |
+          set -euo pipefail
           export RSTPATH="${GITHUB_WORKSPACE}"
           source "${RSTPATH}/.profile.bash" 2>/dev/null || true
+
+          for lib in \
+              codebase/base/src.lib/task/dmap.1.25 \
+              codebase/base/src.lib/task/rtime.1.5 \
+              codebase/base/src.lib/task/rcnv.1.7 \
+              codebase/superdarn/src.lib/tk/grid.1.24 ; do
+            if [ -d "${lib}/src" ]; then
+              echo "::group::Building ${lib}"
+              (cd "${lib}/src" && make 2>&1) || \
+                echo "[warn] ${lib} did not build cleanly (continuing)"
+              echo "::endgroup::"
+            fi
+          done
+
+      - name: Build libgrdopt (optimized grid library)
+        run: |
+          set -euo pipefail
+          export RSTPATH="${GITHUB_WORKSPACE}"
+          source "${RSTPATH}/.profile.bash" 2>/dev/null || true
+          cd codebase/superdarn/src.lib/tk/grid.1.24_optimized.1/src
           make clean 2>/dev/null || true
-          (make 2>&1 || echo "[skipped] main build target failed; see log")
-          if grep -qE '^\s*test\s*:' Makefile makefile 2>/dev/null; then
-            (make test 2>&1 || echo "[skipped] test target failed")
-          else
-            echo "[skipped] no 'test' target in this Makefile yet"
-          fi
+          make
+
+      - name: Build grid_opt_compare harness
+        run: |
+          set -euo pipefail
+          export RSTPATH="${GITHUB_WORKSPACE}"
+          source "${RSTPATH}/.profile.bash" 2>/dev/null || true
+          cd codebase/superdarn/src.bin/tk/testing/grid_opt_compare.1.0/src
+          make clean 2>/dev/null || true
+          make
+
+      - name: Run harness (single-threaded smoke)
+        # Single-threaded baseline. Validates the sequential code path
+        # and the C4/C5 LocateCell optimizations without engaging the
+        # parallel merge in C3.
+        run: |
+          set -euo pipefail
+          export RSTPATH="${GITHUB_WORKSPACE}"
+          source "${RSTPATH}/.profile.bash" 2>/dev/null || true
+          export LD_LIBRARY_PATH="${RSTPATH}/lib:${LD_LIBRARY_PATH:-}"
+          OMP_NUM_THREADS=1 "${RSTPATH}/bin/grid_opt_compare"
+
+      - name: Run harness (multi-threaded)
+        # OMP=4 exercises the C3 parallel sort path. Sort equiv_fail
+        # must remain 0 -- this is the regression gate.
+        run: |
+          set -euo pipefail
+          export RSTPATH="${GITHUB_WORKSPACE}"
+          source "${RSTPATH}/.profile.bash" 2>/dev/null || true
+          export LD_LIBRARY_PATH="${RSTPATH}/lib:${LD_LIBRARY_PATH:-}"
+          OMP_NUM_THREADS=4 "${RSTPATH}/bin/grid_opt_compare"

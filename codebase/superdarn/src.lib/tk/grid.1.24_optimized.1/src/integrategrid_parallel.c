@@ -79,18 +79,30 @@ static inline void compute_weights_vectorized(struct GridGVecOpt *data, uint32_t
             __m256d pwr_weight = _mm256_div_pd(_mm256_set1_pd(1.0), _mm256_mul_pd(pwr_sd, pwr_sd));
             __m256d wdt_weight = _mm256_div_pd(_mm256_set1_pd(1.0), _mm256_mul_pd(wdt_sd, wdt_sd));
             
-            /* Store weights */
-            _mm256_store_pd(&weights[i * 3], vel_weight);
-            _mm256_store_pd(&weights[i * 3 + 4], pwr_weight);
-            _mm256_store_pd(&weights[i * 3 + 8], wdt_weight);
+            /* Bug fix: the consumer (process_integration_group) reads
+               weights as AoS [vel0,pwr0,wdt0, vel1,pwr1,wdt1, ...] with
+               stride 3, but the previous AVX path wrote SoA stride-12
+               [vel0..vel3, pwr0..pwr3, wdt0..wdt3] which only happened
+               to read correctly for lane 0. Spill each vector to a
+               scalar array, then write interleaved. Computation stays
+               vectorized; only the store pattern changes. */
+            double vel_arr[4], pwr_arr[4], wdt_arr[4];
+            _mm256_storeu_pd(vel_arr, vel_weight);
+            _mm256_storeu_pd(pwr_arr, pwr_weight);
+            _mm256_storeu_pd(wdt_arr, wdt_weight);
+            for (int j = 0; j < 4; j++) {
+                weights[(i + j) * 3    ] = vel_arr[j];
+                weights[(i + j) * 3 + 1] = pwr_arr[j];
+                weights[(i + j) * 3 + 2] = wdt_arr[j];
+            }
         }
-        
+
         /* Handle remaining elements */
         for (uint32_t i = (count / 4) * 4; i < count; i++) {
             double v_e = fmax(data[i].vel.sd, errors[0]);
             double p_e = fmax(data[i].pwr.sd, errors[1]);
             double w_e = fmax(data[i].wdt.sd, errors[2]);
-            
+
             weights[i * 3] = 1.0 / (v_e * v_e);
             weights[i * 3 + 1] = 1.0 / (p_e * p_e);
             weights[i * 3 + 2] = 1.0 / (w_e * w_e);

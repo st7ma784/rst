@@ -76,8 +76,21 @@ CUDA_CALLABLE void GridLinRegParallel(struct GridGVecOpt **data, uint32_t num, d
                 data[k]->vel.median
             );
             
-            __m256d sin_azm = _mm256_sin_pd(azm_rad);
-            __m256d cos_azm = _mm256_cos_pd(azm_rad);
+            /* GCC's <immintrin.h> does not provide SVML's _mm256_{sin,cos}_pd.
+               Spill to scalar, compute sin/cos per lane, then reload. With
+               -O3 -ffast-math and libmvec in scope, gcc auto-vectorises the
+               loop body to vsin/vcos. */
+            double azm_arr[4] __attribute__((aligned(32)));
+            double sin_arr[4] __attribute__((aligned(32)));
+            double cos_arr[4] __attribute__((aligned(32)));
+            _mm256_store_pd(azm_arr, azm_rad);
+            #pragma omp simd
+            for (int j = 0; j < 4; j++) {
+                sin_arr[j] = sin(azm_arr[j]);
+                cos_arr[j] = cos(azm_arr[j]);
+            }
+            __m256d sin_azm = _mm256_load_pd(sin_arr);
+            __m256d cos_azm = _mm256_load_pd(cos_arr);
             
             __m256d sin2_azm = _mm256_mul_pd(sin_azm, sin_azm);
             __m256d cos2_azm = _mm256_mul_pd(cos_azm, cos_azm);
@@ -90,13 +103,15 @@ CUDA_CALLABLE void GridLinRegParallel(struct GridGVecOpt **data, uint32_t num, d
             cxsx_vec = _mm256_add_pd(cxsx_vec, sincos_azm);
         }
         
-        /* Horizontal sum of vectors */
+        /* Horizontal sum of vectors. Bug fix: these stack arrays are
+           only 16-byte aligned (gcc default), so the 32-byte aligned
+           _mm256_store_pd segfaulted under OMP. Use unaligned stores. */
         double sx_arr[4], cx_arr[4], ysx_arr[4], ycx_arr[4], cxsx_arr[4];
-        _mm256_store_pd(sx_arr, sx_vec);
-        _mm256_store_pd(cx_arr, cx_vec);
-        _mm256_store_pd(ysx_arr, ysx_vec);
-        _mm256_store_pd(ycx_arr, ycx_vec);
-        _mm256_store_pd(cxsx_arr, cxsx_vec);
+        _mm256_storeu_pd(sx_arr, sx_vec);
+        _mm256_storeu_pd(cx_arr, cx_vec);
+        _mm256_storeu_pd(ysx_arr, ysx_vec);
+        _mm256_storeu_pd(ycx_arr, ycx_vec);
+        _mm256_storeu_pd(cxsx_arr, cxsx_vec);
         
         for (int i = 0; i < 4; i++) {
             sx += sx_arr[i];
@@ -151,68 +166,53 @@ CUDA_CALLABLE void GridLinRegParallel(struct GridGVecOpt **data, uint32_t num, d
     }
 }
 
-/* Optimized cell grouping using matrix operations */
-static int GridBuildCellMatrix(struct GridDataOpt *mptr, uint32_t **unique_indices, 
+/* Build unique-cell list in ENCOUNTER ORDER (first-occurrence ordering)
+   to match libgrd's GridMerge in mergegrid.c:115-135. The previous
+   ascending-numeric ordering caused grid_compare to fail because the
+   test compares index-per-position. Uses a position table keyed on
+   .index (O(1) dedup) so total cost is O(N). Serial -- ordering matters
+   and the per-iter work is tiny. */
+static int GridBuildCellMatrix(struct GridDataOpt *mptr, uint32_t **unique_indices,
                               uint32_t **cell_counts, uint32_t *num_unique) {
     if (mptr->vcnum == 0) {
         *num_unique = 0;
+        *unique_indices = NULL;
+        *cell_counts = NULL;
         return 0;
     }
-    
-    /* Use temporary matrix for cell counting */
-    uint32_t *temp_indices = (uint32_t*)calloc(MAX_GRID_CELLS, sizeof(uint32_t));
-    uint32_t *temp_counts = (uint32_t*)calloc(MAX_GRID_CELLS, sizeof(uint32_t));
-    
-    if (!temp_indices || !temp_counts) {
-        free(temp_indices);
-        free(temp_counts);
-        return -1;
-    }
-    
-    /* Parallel histogram computation */
-    PARALLEL_FOR
-    for (int i = 0; i < mptr->vcnum; i++) {
-        uint32_t idx = mptr->data[i].index;
-        if (idx < MAX_GRID_CELLS) {
-            #pragma omp atomic
-            temp_counts[idx]++;
-            temp_indices[idx] = idx;
-        }
-    }
-    
-    /* Count unique cells and allocate result arrays */
-    uint32_t unique_count = 0;
-    for (uint32_t i = 0; i < MAX_GRID_CELLS; i++) {
-        if (temp_counts[i] > 0) {
-            unique_count++;
-        }
-    }
-    
-    *unique_indices = (uint32_t*)malloc(unique_count * sizeof(uint32_t));
-    *cell_counts = (uint32_t*)malloc(unique_count * sizeof(uint32_t));
-    
+
+    /* pos_table[index] == 0 means unseen; otherwise position+1 in the
+       unique_indices array (so 0 stays valid as "unseen"). */
+    int32_t *pos_table = (int32_t*)calloc(MAX_GRID_CELLS, sizeof(int32_t));
+    if (!pos_table) return -1;
+
+    /* Worst case: every input cell is a unique index. */
+    *unique_indices = (uint32_t*)malloc(mptr->vcnum * sizeof(uint32_t));
+    *cell_counts    = (uint32_t*)malloc(mptr->vcnum * sizeof(uint32_t));
     if (!*unique_indices || !*cell_counts) {
-        free(*unique_indices);
-        free(*cell_counts);
-        free(temp_indices);
-        free(temp_counts);
+        free(*unique_indices); *unique_indices = NULL;
+        free(*cell_counts);    *cell_counts    = NULL;
+        free(pos_table);
         return -1;
     }
-    
-    /* Copy unique cells to result arrays */
-    uint32_t result_idx = 0;
-    for (uint32_t i = 0; i < MAX_GRID_CELLS; i++) {
-        if (temp_counts[i] > 0) {
-            (*unique_indices)[result_idx] = i;
-            (*cell_counts)[result_idx] = temp_counts[i];
-            result_idx++;
+
+    uint32_t unique_count = 0;
+    for (int i = 0; i < mptr->vcnum; i++) {
+        uint32_t idx = (uint32_t)mptr->data[i].index;
+        if (idx >= MAX_GRID_CELLS) continue;
+        int32_t pos = pos_table[idx];
+        if (pos == 0) {
+            (*unique_indices)[unique_count] = idx;
+            (*cell_counts)[unique_count]    = 1;
+            pos_table[idx] = (int32_t)(unique_count + 1);
+            unique_count++;
+        } else {
+            (*cell_counts)[pos - 1]++;
         }
     }
-    
+
     *num_unique = unique_count;
-    
-    free(temp_indices);
-    free(temp_counts);
+    free(pos_table);
     return 0;
 }
 
@@ -242,17 +242,15 @@ int GridMergeParallel(struct GridDataOpt *mptr, struct GridDataOpt *ptr, struct 
     
     if (!ptr->sdata) return -1;
     
-    /* Copy station metadata */
+    /* Copy station metadata. Use memcpy for nested struct fields: gcc
+       auto-vectorizes plain `noise = mptr->...noise` to aligned AVX2
+       vmovdqa, but malloc() only guarantees 16-byte alignment. Under
+       OMP=4 the arena layout returns 16-aligned (not 32-aligned)
+       pointers and the aligned-AVX2 load faults. memcpy() emits
+       alignment-safe code. */
+    memcpy(ptr->sdata, mptr->sdata, sizeof(struct GridSVecOpt));
     ptr->sdata[0].st_id = 255;
     ptr->sdata[0].freq0 = 0;
-    ptr->sdata[0].major_revision = mptr->sdata[0].major_revision;
-    ptr->sdata[0].minor_revision = mptr->sdata[0].minor_revision;
-    ptr->sdata[0].prog_id = mptr->sdata[0].prog_id;
-    ptr->sdata[0].noise = mptr->sdata[0].noise;
-    ptr->sdata[0].gsct = mptr->sdata[0].gsct;
-    ptr->sdata[0].vel = mptr->sdata[0].vel;
-    ptr->sdata[0].pwr = mptr->sdata[0].pwr;
-    ptr->sdata[0].wdt = mptr->sdata[0].wdt;
     ptr->sdata[0].npnt = 0;
     
     /* Free previous data */
@@ -270,81 +268,91 @@ int GridMergeParallel(struct GridDataOpt *mptr, struct GridDataOpt *ptr, struct 
         return -1;
     }
     
-    /* Process cells with multiple data points in parallel */
-    if (config && config->num_threads > 1) {
-        omp_set_num_threads(config->num_threads);
-    }
-    
+    /* Output order must match libgrd's GridMerge (encounter order, and
+       grid_compare checks index-per-position). Force this section to
+       run single-threaded regardless of OMP_NUM_THREADS -- the parallel
+       version produced non-deterministic ordering via atomic-capture
+       on output_count, which made the equiv_merge test fail. The hash
+       table in avggrid_parallel.c is also shared and not thread-safe,
+       so single-threaded is the only correct behaviour here. This also
+       resolves the OMP=4 per-op hang. */
+#ifdef _OPENMP
+    int saved_threads = omp_get_max_threads();
+    omp_set_num_threads(1);
+#endif
+    (void)config;
+
     /* Pre-allocate maximum possible output data */
     ptr->data = (struct GridGVecOpt*)malloc(num_unique * sizeof(struct GridGVecOpt));
     if (!ptr->data) {
         free(unique_indices);
         free(cell_counts);
+#ifdef _OPENMP
+        omp_set_num_threads(saved_threads);
+#endif
         return -1;
     }
-    
+
     uint32_t output_count = 0;
-    
-    PARALLEL_FOR
+
     for (uint32_t k = 0; k < num_unique; k++) {
         if (cell_counts[k] < 2) continue;
-        
+
         uint32_t current_index = unique_indices[k];
-        
+
         /* Collect all data points for this cell */
         struct GridGVecOpt **cell_data = (struct GridGVecOpt**)malloc(cell_counts[k] * sizeof(struct GridGVecOpt*));
+        if (!cell_data) continue;
         uint32_t data_count = 0;
-        
+
         for (int i = 0; i < mptr->vcnum; i++) {
-            if (mptr->data[i].index == current_index) {
+            if (mptr->data[i].index == (int)current_index) {
                 cell_data[data_count] = &mptr->data[i];
                 data_count++;
             }
         }
-        
+
         if (data_count > 1) {
-            /* Adjust azimuth for linear regression */
+            /* Adjust azimuth for linear regression (matches libgrd
+               mergegrid.c:163 -- destructive in-place rotation). */
             for (uint32_t i = 0; i < data_count; i++) {
                 cell_data[i]->azm = 90.0 - cell_data[i]->azm;
             }
-            
-            /* Perform parallel linear regression */
+
             double vpar, vper;
             GridLinRegParallel(cell_data, data_count, &vpar, &vper);
-            
-            /* Calculate output azimuth and velocity */
-            uint32_t local_idx;
-            #pragma omp atomic capture
-            local_idx = output_count++;
-            
-            if (local_idx < num_unique) {
-                if (fabs(vper) > 1e-10) {
-                    ptr->data[local_idx].azm = atan(vpar / vper) * 180.0 / PI;
-                    if (vper < 0) ptr->data[local_idx].azm += 180.0;
-                } else {
-                    ptr->data[local_idx].azm = 0.0;
-                }
-                
-                ptr->data[local_idx].mlon = cell_data[0]->mlon;
-                ptr->data[local_idx].mlat = cell_data[0]->mlat;
-                ptr->data[local_idx].vel.median = sqrt(vpar * vpar + vper * vper);
-                ptr->data[local_idx].vel.sd = 0.0;
-                ptr->data[local_idx].pwr.median = 0.0;
-                ptr->data[local_idx].pwr.sd = 0.0;
-                ptr->data[local_idx].wdt.median = 0.0;
-                ptr->data[local_idx].wdt.sd = 0.0;
-                ptr->data[local_idx].st_id = 255;
-                ptr->data[local_idx].chn = 0;
-                ptr->data[local_idx].index = current_index;
-                
-                #pragma omp atomic
-                ptr->sdata[0].npnt++;
+
+            uint32_t local_idx = output_count++;
+
+            if (fabs(vper) > 1e-10) {
+                ptr->data[local_idx].azm = atan(vpar / vper) * 180.0 / PI;
+                if (vper < 0) ptr->data[local_idx].azm += 180.0;
+            } else {
+                ptr->data[local_idx].azm = 0.0;
             }
+
+            ptr->data[local_idx].mlon = cell_data[0]->mlon;
+            ptr->data[local_idx].mlat = cell_data[0]->mlat;
+            ptr->data[local_idx].vel.median = sqrt(vpar * vpar + vper * vper);
+            ptr->data[local_idx].vel.sd = 0.0;
+            ptr->data[local_idx].pwr.median = 0.0;
+            ptr->data[local_idx].pwr.sd = 0.0;
+            ptr->data[local_idx].wdt.median = 0.0;
+            ptr->data[local_idx].wdt.sd = 0.0;
+            ptr->data[local_idx].st_id = 255;
+            ptr->data[local_idx].chn = 0;
+            ptr->data[local_idx].index = current_index;
+
+            ptr->sdata[0].npnt++;
         }
-        
+
         free(cell_data);
     }
-    
+
+#ifdef _OPENMP
+    omp_set_num_threads(saved_threads);
+#endif
+
     /* Update final count and resize array */
     ptr->vcnum = output_count;
     if (output_count > 0) {

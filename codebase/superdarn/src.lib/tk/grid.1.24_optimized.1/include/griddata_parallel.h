@@ -118,40 +118,35 @@ struct GridSVecOpt {
     char _padding[16];
 } ALIGNED(64);
 
-/* Optimized grid vector structure with enhanced layout */
+/* Optimized grid vector structure.
+   AUDIT C1: dropped ALIGNED(128) on outer struct, ALIGNED(32) on inner
+   vel/pwr/wdt, the unused .flags field, the unused inner .weight and
+   .samples fields, and the trailing _padding[32]. Result:
+       sizeof(GridGVecOpt) == 88 bytes  (target: <= 1.2 * sizeof(GridGVec))
+   Original libgrd GridGVec is ~88 bytes, so we are now layout-parity. */
 struct GridGVecOpt {
     double mlat, mlon;
     double azm;
-    
+
     struct {
         double median;
         double sd;
-        double weight;
-        uint32_t samples;
-    } vel ALIGNED(32);
-    
+    } vel;
+
     struct {
         double median;
         double sd;
-        double weight;
-        uint32_t samples;
-    } pwr ALIGNED(32);
-    
+    } pwr;
+
     struct {
         double median;
         double sd;
-        double weight;
-        uint32_t samples;
-    } wdt ALIGNED(32);
-    
+    } wdt;
+
     int32_t st_id;
     int32_t chn;
     int32_t index;
-    uint32_t flags;
-    
-    /* Padding for cache line alignment */
-    char _padding[32];
-} ALIGNED(128);
+};
 
 /* Matrix-based grid data structure for parallel processing */
 struct GridMatrix {
@@ -421,6 +416,36 @@ struct GridIntegrationParams {
     int max_grids;
     int temporal_weighting;
 } ALIGNED(32);
+
+/* Grid filter parameters.
+   Used by gridmerge_parallel.c (post-integration outlier filtering) and
+   by the test_filtergrid_parallel.c test harness. Fields cover all
+   filter modes that the test exercises: statistical outlier detection,
+   percentile clipping, spatial smoothing, and median filtering. */
+struct GridFilterParams {
+    /* Per-channel enables. 0 = disabled, 1 = enabled. */
+    int filter_velocity;
+    int filter_power;
+    int filter_width;
+
+    /* Statistical outlier detection. */
+    int outlier_detection;
+    double outlier_threshold;       /* z-score cut-off in standard deviations. */
+
+    /* Percentile-based clipping (0-100 inclusive). */
+    double velocity_percentile_low;
+    double velocity_percentile_high;
+    double power_percentile_low;
+    double power_percentile_high;
+    double width_percentile_low;
+    double width_percentile_high;
+
+    /* Spatial / median smoothing parameters. */
+    double spatial_radius;          /* degrees */
+    double gaussian_sigma;          /* in cells */
+    int    median_window_size;      /* must be odd */
+} ALIGNED(32);
+typedef struct GridFilterParams GridFilterParams;
 
 /* Parallel grid processing functions */
 

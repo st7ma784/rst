@@ -1,21 +1,25 @@
 /* sortgrid_parallel.c
    ===================
    Author: R.J.Barnes (Original), Enhanced for Parallelization
-   
+
    Copyright (c) 2012 The Johns Hopkins University/Applied Physics Laboratory
-   
+
    This file is part of the Radar Software Toolkit (RST).
-   
+
    Parallel implementation of grid sorting operations with advanced
    algorithms and SIMD optimization.
-   
-   Key Optimizations:
-   - Parallel merge sort with work-stealing
-   - Multi-key sorting (lat, lon, time, station)
-   - Vectorized comparison operations
-   - Cache-optimized memory access patterns
-   - Custom sorting criteria support
+
+   C2/C3 (AUDIT.md):
+     - qsort_r removes the global_sort_context race so the parallel
+       tile-sort phase is now thread-safe.
+     - Multi-threaded path replaced with parallel tile-sort + iterative
+       pairwise merge (the prior k-way and recursive merge paths both
+       segfaulted for N >= ~50k).
 */
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE   /* glibc qsort_r */
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,7 +63,9 @@ typedef struct {
     void *custom_data;
 } GridSortContext;
 
-/* Static sort context for qsort compatibility */
+/* Static sort context for qsort compatibility (legacy fallback only --
+   qsort_r path passes the context explicitly per call so the parallel
+   tile-sort no longer races on this global). */
 static GridSortContext *global_sort_context = NULL;
 
 /* Distance calculation for spatial sorting */
@@ -99,24 +105,23 @@ static double get_sort_key(const GridGVecOpt *cell, GridSortCriteria criteria,
     }
 }
 
-/* Enhanced comparison function with multiple criteria */
-static int compare_grid_cells(const void *a, const void *b) {
+/* Re-entrant comparator: takes the context as the qsort_r arg so
+   parallel sorts no longer race on the global. Returns -1/0/+1. */
+static int compare_grid_cells_r(const void *a, const void *b, void *arg) {
     const GridGVecOpt *cell_a = (const GridGVecOpt*)a;
     const GridGVecOpt *cell_b = (const GridGVecOpt*)b;
-    GridSortContext *ctx = global_sort_context;
+    GridSortContext *ctx = (GridSortContext*)arg;
 
     if (!ctx) {
-        // Default: sort by latitude then longitude
-        if (cell_a->mlat != cell_b->mlat) {
+        if (cell_a->mlat != cell_b->mlat)
             return (cell_a->mlat < cell_b->mlat) ? -1 : 1;
-        }
-        return (cell_a->mlon < cell_b->mlon) ? -1 : 1;
+        if (cell_a->mlon != cell_b->mlon)
+            return (cell_a->mlon < cell_b->mlon) ? -1 : 1;
+        return 0;
     }
 
-    /* Fast path for the common case GridSortOpt uses
-       (SORT_BY_STATION primary, SORT_BY_INDEX secondary, ascending).
-       Direct field compare matches the original GridSortVec exactly
-       and skips two get_sort_key + fabs calls per comparison. */
+    /* Fast path: (SORT_BY_STATION, SORT_BY_INDEX, asc) -- the GridSortOpt
+       default. Inlines the field compare and skips get_sort_key. */
     if (ctx->primary == SORT_BY_STATION &&
         ctx->secondary == SORT_BY_INDEX &&
         ctx->ascending) {
@@ -127,83 +132,39 @@ static int compare_grid_cells(const void *a, const void *b) {
         return 0;
     }
 
-    // Custom comparison function
     if (ctx->primary == SORT_BY_CUSTOM && ctx->custom_compare) {
         return ctx->custom_compare(cell_a, cell_b, ctx->custom_data);
     }
-    
-    // Primary sort key
+
     double key_a = get_sort_key(cell_a, ctx->primary, ctx);
     double key_b = get_sort_key(cell_b, ctx->primary, ctx);
-    
     if (fabs(key_a - key_b) > 1e-9) {
         int result = (key_a < key_b) ? -1 : 1;
         return ctx->ascending ? result : -result;
     }
-    
-    // Secondary sort key (if primary keys are equal)
+
     if (ctx->secondary != ctx->primary) {
         key_a = get_sort_key(cell_a, ctx->secondary, ctx);
         key_b = get_sort_key(cell_b, ctx->secondary, ctx);
-        
         if (fabs(key_a - key_b) > 1e-9) {
             int result = (key_a < key_b) ? -1 : 1;
             return ctx->ascending ? result : -result;
         }
     }
-    
     return 0;
 }
 
-/* Parallel merge operation for merge sort */
-static void parallel_merge(GridGVecOpt *arr, GridGVecOpt *temp, int left, int mid, int right) {
-    int i = left, j = mid + 1, k = left;
-    
-    // Merge the two sorted halves
-    while (i <= mid && j <= right) {
-        if (compare_grid_cells(&arr[i], &arr[j]) <= 0) {
-            temp[k++] = arr[i++];
-        } else {
-            temp[k++] = arr[j++];
-        }
-    }
-    
-    // Copy remaining elements
-    while (i <= mid) temp[k++] = arr[i++];
-    while (j <= right) temp[k++] = arr[j++];
-    
-    /* Copy back to original array. The previous AVX path here loaded
-       only 32 bytes per "element" (one __m256d) but the element is
-       sizeof(GridGVecOpt) ~= 192 bytes, so it silently truncated every
-       struct copy and left stale data behind -- caused recursive merges
-       to segfault for N > ~50k. memcpy is plenty fast for this workload
-       and gcc auto-vectorises it on -O2 anyway. */
-    memcpy(&arr[left], &temp[left], (right - left + 1) * sizeof(GridGVecOpt));
+/* Legacy single-arg comparator used by quickselect/partition and the
+   GridIsSorted check which still rely on global_sort_context. */
+static int compare_grid_cells(const void *a, const void *b) {
+    return compare_grid_cells_r(a, b, global_sort_context);
 }
 
-/* Recursive parallel merge sort */
-static void parallel_merge_sort(GridGVecOpt *arr, GridGVecOpt *temp, int left, int right, int depth) {
-    if (left >= right) return;
-    
-    int mid = left + (right - left) / 2;
-    
-    if (depth > 0) {
-        // Parallel execution for larger subarrays
-        #pragma omp task shared(arr, temp)
-        parallel_merge_sort(arr, temp, left, mid, depth - 1);
-        
-        #pragma omp task shared(arr, temp)
-        parallel_merge_sort(arr, temp, mid + 1, right, depth - 1);
-        
-        #pragma omp taskwait
-    } else {
-        // Sequential execution for smaller subarrays
-        parallel_merge_sort(arr, temp, left, mid, 0);
-        parallel_merge_sort(arr, temp, mid + 1, right, 0);
-    }
-    
-    parallel_merge(arr, temp, left, mid, right);
-}
+/* C3 deleted the recursive parallel_merge_sort / parallel_merge pair:
+   parallel_merge truncated 192-byte structs to 32B via __m256d in an
+   earlier version, and even after the memcpy fix the recursion stack
+   blew up for N > ~50k. The active multi-thread path lives in
+   GridSortParallelEx below (iterative pairwise merge). */
 
 /* Main parallel sorting function */
 int GridSortParallelEx(GridDataOpt *grid, GridSortCriteria primary, GridSortCriteria secondary,
@@ -243,54 +204,90 @@ int GridSortParallelEx(GridDataOpt *grid, GridSortCriteria primary, GridSortCrit
     }
 #endif
 
-    /* TODO(parallel-sort): both attempted multi-threaded sort paths --
-       the original recursive OMP-task merge sort and the tile+k-way
-       merge replacement -- segfault for N >= ~50k under thread counts
-       above 1. Disabling the parallel branch until the merge phase
-       is rewritten to avoid the OOB. Falling through to qsort retains
-       the correctness wins from the fast-path comparator. */
-    if (0 && grid->vcnum > 10000 && num_threads > 1) {
-        int k = num_threads;
-        int n = grid->vcnum;
-        int tile_size = (n + k - 1) / k;
-        GridGVecOpt *temp = (GridGVecOpt *)malloc(n * sizeof(GridGVecOpt));
-        if (!temp) return -1;
-        int *starts = (int *)malloc(sizeof(int) * (k + 1));
-        if (!starts) { free(temp); return -1; }
-        for (int t = 0; t <= k; t++) {
-            int s = t * tile_size;
-            starts[t] = (s > n) ? n : s;
+    /* C3: parallel tile-sort + iterative pairwise merge.
+       Earlier paths segfaulted: the recursive OMP-task merge sort
+       truncated 192B structs to 32B via __m256d, and the k-way merge
+       went OOB when all tiles emptied. This implementation:
+         1. partitions into num_threads tiles
+         2. qsort_r each tile in parallel (no global race)
+         3. iteratively merges pairs of runs into a scratch buffer,
+            ping-ponging between data and temp until one run covers n.
+       Memory: one extra n*sizeof(GridGVecOpt) scratch buffer.
+       Time:   O(n log n) sort phase + O(n log k) merge phase.
+
+       We only engage when vcnum is large enough that the OMP overhead
+       is amortised. */
+#ifdef _OPENMP
+    if (grid->vcnum > 10000 && num_threads > 1) {
+        long n = grid->vcnum;
+        int  k = num_threads;
+        long tile = (n + k - 1) / k;
+
+        GridGVecOpt *temp = (GridGVecOpt*)malloc((size_t)n * sizeof(GridGVecOpt));
+        if (!temp) {
+            qsort_r(grid->data, n, sizeof(GridGVecOpt),
+                    compare_grid_cells_r, &sort_ctx);
+            goto sort_done;
         }
-        /* Sort each tile in parallel. */
-        #pragma omp parallel for schedule(static)
+
+        /* Step 1: parallel tile sort using thread-safe qsort_r. */
+        #pragma omp parallel for schedule(static) num_threads(num_threads)
         for (int t = 0; t < k; t++) {
-            int a = starts[t], b = starts[t + 1];
+            long a = (long)t * tile;
+            long b = a + tile;
+            if (b > n) b = n;
             if (b > a) {
-                qsort(grid->data + a, b - a, sizeof(GridGVecOpt), compare_grid_cells);
+                qsort_r(grid->data + a, (size_t)(b - a),
+                        sizeof(GridGVecOpt),
+                        compare_grid_cells_r, &sort_ctx);
             }
         }
-        /* k-way merge into temp, then memcpy back. Simple priority pick:
-           track each tile's current read offset, choose the smallest
-           head each step. Good enough for k up to a few dozen. */
-        int *pos = (int *)malloc(sizeof(int) * k);
-        for (int t = 0; t < k; t++) pos[t] = starts[t];
-        for (int out = 0; out < n; out++) {
-            int best = -1;
-            for (int t = 0; t < k; t++) {
-                if (pos[t] >= starts[t + 1]) continue;
-                if (best < 0 ||
-                    compare_grid_cells(&grid->data[pos[t]],
-                                       &grid->data[pos[best]]) < 0) {
-                    best = t;
+
+        /* Step 2: iterative bottom-up pairwise merge.
+           src holds sorted runs of length `run`; dst receives runs of
+           length 2*run. Ping-pong src/dst until run >= n. */
+        GridGVecOpt *src = grid->data;
+        GridGVecOpt *dst = temp;
+        long run = tile;
+        while (run < n) {
+            long step = run * 2;
+            long num_pairs = (n + step - 1) / step;
+
+            #pragma omp parallel for schedule(static) num_threads(num_threads)
+            for (long p = 0; p < num_pairs; p++) {
+                long lo  = p * step;
+                long mid = lo + run;       if (mid > n) mid = n;
+                long hi  = lo + step;      if (hi  > n) hi  = n;
+
+                long i = lo, j = mid, w = lo;
+                while (i < mid && j < hi) {
+                    if (compare_grid_cells_r(&src[i], &src[j], &sort_ctx) <= 0)
+                        dst[w++] = src[i++];
+                    else
+                        dst[w++] = src[j++];
                 }
+                while (i < mid) dst[w++] = src[i++];
+                while (j < hi)  dst[w++] = src[j++];
             }
-            temp[out] = grid->data[pos[best]++];
+
+            /* swap roles */
+            GridGVecOpt *tmp = src; src = dst; dst = tmp;
+            run = step;
         }
-        memcpy(grid->data, temp, n * sizeof(GridGVecOpt));
-        free(pos); free(starts); free(temp);
-    } else {
-        qsort(grid->data, grid->vcnum, sizeof(GridGVecOpt), compare_grid_cells);
+
+        /* If the final sorted run lives in temp, copy it back. */
+        if (src != grid->data) {
+            memcpy(grid->data, src, (size_t)n * sizeof(GridGVecOpt));
+        }
+        free(temp);
+    } else
+#endif
+    {
+        qsort_r(grid->data, grid->vcnum, sizeof(GridGVecOpt),
+                compare_grid_cells_r, &sort_ctx);
     }
+sort_done:
+    ;
     
     /* Update performance statistics */
     if (grid->perf_stats.processing_time == 0) {

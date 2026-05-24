@@ -162,15 +162,20 @@ struct GridDataOpt *GridMakeParallel(uint32_t max_cells, struct GridProcessingCo
     return ptr;
 }
 
-/* Original grid creation function */
+/* Original grid creation function. The struct is declared ALIGNED(128)
+   so it must be allocated via aligned_alloc; plain malloc only
+   guarantees 16-byte alignment which UBSAN flags as a misaligned
+   member access. aligned_alloc requires size to be a multiple of
+   alignment, so round up. */
 struct GridDataOpt *GridMakeOpt() {
-    struct GridDataOpt *ptr = (struct GridDataOpt*)malloc(sizeof(struct GridDataOpt));
+    size_t aligned_size = (sizeof(struct GridDataOpt) + 127) & ~(size_t)127;
+    struct GridDataOpt *ptr = (struct GridDataOpt*)aligned_alloc(128, aligned_size);
     if (!ptr) return NULL;
-    
-    memset(ptr, 0, sizeof(struct GridDataOpt));
+
+    memset(ptr, 0, aligned_size);
     ptr->sdata = NULL;
     ptr->data = NULL;
-    
+
     return ptr;
 }
 
@@ -321,12 +326,14 @@ void GridVectorizedAdd(double *a, double *b, double *result, uint32_t size) {
     uint32_t simd_size = (size / 4) * 4;
     
     for (uint32_t i = 0; i < simd_size; i += 4) {
-        __m256d va = _mm256_load_pd(&a[i]);
-        __m256d vb = _mm256_load_pd(&b[i]);
+        /* a/b/result are caller-supplied pointers with unknown alignment;
+           use unaligned ops to avoid vmovdqa-style crashes. */
+        __m256d va = _mm256_loadu_pd(&a[i]);
+        __m256d vb = _mm256_loadu_pd(&b[i]);
         __m256d vr = _mm256_add_pd(va, vb);
-        _mm256_store_pd(&result[i], vr);
+        _mm256_storeu_pd(&result[i], vr);
     }
-    
+
     /* Handle remaining elements */
     for (uint32_t i = simd_size; i < size; i++) {
         result[i] = a[i] + b[i];
@@ -341,12 +348,12 @@ void GridVectorizedAdd(double *a, double *b, double *result, uint32_t size) {
 void GridVectorizedMultiply(double *a, double *b, double *result, uint32_t size) {
 #ifdef __AVX2__
     uint32_t simd_size = (size / 4) * 4;
-    
+
     for (uint32_t i = 0; i < simd_size; i += 4) {
-        __m256d va = _mm256_load_pd(&a[i]);
-        __m256d vb = _mm256_load_pd(&b[i]);
+        __m256d va = _mm256_loadu_pd(&a[i]);
+        __m256d vb = _mm256_loadu_pd(&b[i]);
         __m256d vr = _mm256_mul_pd(va, vb);
-        _mm256_store_pd(&result[i], vr);
+        _mm256_storeu_pd(&result[i], vr);
     }
     
     /* Handle remaining elements */

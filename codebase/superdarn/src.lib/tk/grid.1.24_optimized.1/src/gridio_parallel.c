@@ -31,10 +31,59 @@ Modifications:
 #include <string.h>
 #include <unistd.h>
 #include <omp.h>
+#include <zlib.h>       /* gzFile, needed before dmap.h */
 #include "rtypes.h"
 #include "rtime.h"
-#include "dmap.h"
-#include "griddata_parallel.h"
+#include "griddata_parallel.h"  /* transitively pulls in dmap.h + gridindex.h */
+
+/* ----- Local helpers -----------------------------------------------------
+   The RST DataMap API exposes `DataMapFindScalar` / `DataMapFindArray` that
+   return `void*` (the underlying typed data pointer). The original
+   gridio_parallel.c was written against a different (non-existent) API
+   that returned the descriptor struct so the code could inspect
+   `name`/`type`/`data` per field. Audit A4 reconstructs that descriptor-
+   returning lookup as a local helper, leaving the public DataMap API
+   untouched. */
+
+static struct DataMapScalar *find_scalar(struct DataMap *p, const char *name) {
+    if (!p || !name) return NULL;
+    for (int c = 0; c < p->snum; c++) {
+        if (p->scl[c] && p->scl[c]->name && strcmp(p->scl[c]->name, name) == 0) {
+            return p->scl[c];
+        }
+    }
+    return NULL;
+}
+
+static struct DataMapArray *find_array(struct DataMap *p, const char *name) {
+    if (!p || !name) return NULL;
+    for (int c = 0; c < p->anum; c++) {
+        if (p->arr[c] && p->arr[c]->name && strcmp(p->arr[c]->name, name) == 0) {
+            return p->arr[c];
+        }
+    }
+    return NULL;
+}
+
+/* Local cleanup helpers. Mirrors the gp_* helpers in gridmerge_parallel.c.
+   Both files want a "free GridDataParallel" + "free GridIndexParallel"
+   primitive; keeping them per-file avoids cross-TU coupling for an audit
+   pass. */
+static void gpio_free_grid(struct GridDataParallel *grd) {
+    if (!grd) return;
+    if (grd->sdata) { free(grd->sdata); grd->sdata = NULL; }
+    if (grd->data)  { free(grd->data);  grd->data  = NULL; }
+    grd->stnum = 0;
+    grd->vcnum = 0;
+    grd->xtd   = 0;
+}
+
+static void gpio_free_index(struct GridIndexParallel *inx) {
+    if (!inx) return;
+    if (inx->tme) { free(inx->tme); inx->tme = NULL; }
+    if (inx->inx) { free(inx->inx); inx->inx = NULL; }
+    free(inx);
+}
 
 /**
  * Read parallel grid data from file descriptor
@@ -51,35 +100,35 @@ int grid_parallel_read(int fid, struct GridDataParallel *grd,
     int size = 0;
     
     // Clear previous data
-    grid_parallel_free(grd);
-    
+    gpio_free_grid(grd);
+
     // Read DataMap structure
     ptr = DataMapRead(fid);
     if (ptr == NULL) {
         if (stats) stats->read_errors++;
         return -1;
     }
-    
+
     size = DataMapSize(ptr);
-    
+
     // Extract scalar data
     struct DataMapScalar *sdata[20];
     for (int i = 0; i < 20; i++) sdata[i] = NULL;
-    
-    // Get scalar fields
-    sdata[0] = DataMapFindScalar(ptr, "start.year");
-    sdata[1] = DataMapFindScalar(ptr, "start.month");
-    sdata[2] = DataMapFindScalar(ptr, "start.day");
-    sdata[3] = DataMapFindScalar(ptr, "start.hour");
-    sdata[4] = DataMapFindScalar(ptr, "start.minute");
-    sdata[5] = DataMapFindScalar(ptr, "start.second");
-    sdata[6] = DataMapFindScalar(ptr, "end.year");
-    sdata[7] = DataMapFindScalar(ptr, "end.month");
-    sdata[8] = DataMapFindScalar(ptr, "end.day");
-    sdata[9] = DataMapFindScalar(ptr, "end.hour");
-    sdata[10] = DataMapFindScalar(ptr, "end.minute");
-    sdata[11] = DataMapFindScalar(ptr, "end.second");
-    
+
+    // Get scalar fields (descriptor pointers; data accessed via ->data union).
+    sdata[0]  = find_scalar(ptr, "start.year");
+    sdata[1]  = find_scalar(ptr, "start.month");
+    sdata[2]  = find_scalar(ptr, "start.day");
+    sdata[3]  = find_scalar(ptr, "start.hour");
+    sdata[4]  = find_scalar(ptr, "start.minute");
+    sdata[5]  = find_scalar(ptr, "start.second");
+    sdata[6]  = find_scalar(ptr, "end.year");
+    sdata[7]  = find_scalar(ptr, "end.month");
+    sdata[8]  = find_scalar(ptr, "end.day");
+    sdata[9]  = find_scalar(ptr, "end.hour");
+    sdata[10] = find_scalar(ptr, "end.minute");
+    sdata[11] = find_scalar(ptr, "end.second");
+
     // Validate required fields
     for (int i = 0; i < 12; i++) {
         if (!sdata[i]) {
@@ -88,55 +137,54 @@ int grid_parallel_read(int fid, struct GridDataParallel *grd,
             return -1;
         }
     }
+
+    /* GridDataParallel.st_time and .ed_time are anonymous structs of
+       {yr,mo,dy,hr,mt,sc,us} (see griddata_parallel.h:381). Populate the
+       fields directly; no epoch conversion is needed at this layer. */
+    grd->st_time.yr = *(sdata[0]->data.sptr);
+    grd->st_time.mo = *(sdata[1]->data.sptr);
+    grd->st_time.dy = *(sdata[2]->data.sptr);
+    grd->st_time.hr = *(sdata[3]->data.sptr);
+    grd->st_time.mt = *(sdata[4]->data.sptr);
+    grd->st_time.sc = (int)(*(sdata[5]->data.dptr));
+    grd->st_time.us = (int)((*(sdata[5]->data.dptr) - grd->st_time.sc) * 1e6);
+
+    grd->ed_time.yr = *(sdata[6]->data.sptr);
+    grd->ed_time.mo = *(sdata[7]->data.sptr);
+    grd->ed_time.dy = *(sdata[8]->data.sptr);
+    grd->ed_time.hr = *(sdata[9]->data.sptr);
+    grd->ed_time.mt = *(sdata[10]->data.sptr);
+    grd->ed_time.sc = (int)(*(sdata[11]->data.dptr));
+    grd->ed_time.us = (int)((*(sdata[11]->data.dptr) - grd->ed_time.sc) * 1e6);
     
-    // Extract time information
-    int yr, mo, dy, hr, mt;
-    double sc;
-    
-    yr = *(sdata[0]->data.sptr);
-    mo = *(sdata[1]->data.sptr);
-    dy = *(sdata[2]->data.sptr);
-    hr = *(sdata[3]->data.sptr);
-    mt = *(sdata[4]->data.sptr);
-    sc = *(sdata[5]->data.dptr);
-    grd->st_time = TimeYMDHMSToEpoch(yr, mo, dy, hr, mt, sc);
-    
-    yr = *(sdata[6]->data.sptr);
-    mo = *(sdata[7]->data.sptr);
-    dy = *(sdata[8]->data.sptr);
-    hr = *(sdata[9]->data.sptr);
-    mt = *(sdata[10]->data.sptr);
-    sc = *(sdata[11]->data.dptr);
-    grd->ed_time = TimeYMDHMSToEpoch(yr, mo, dy, hr, mt, sc);
-    
-    // Extract array data
+    // Extract array data (descriptor pointers).
     struct DataMapArray *adata[30];
     for (int i = 0; i < 30; i++) adata[i] = NULL;
-    
-    adata[0] = DataMapFindArray(ptr, "stid");
-    adata[1] = DataMapFindArray(ptr, "channel");
-    adata[2] = DataMapFindArray(ptr, "nvec");
-    adata[3] = DataMapFindArray(ptr, "freq");
-    adata[4] = DataMapFindArray(ptr, "major.revision");
-    adata[5] = DataMapFindArray(ptr, "minor.revision");
-    adata[6] = DataMapFindArray(ptr, "program.id");
-    adata[7] = DataMapFindArray(ptr, "noise.mean");
-    adata[8] = DataMapFindArray(ptr, "noise.sd");
-    adata[9] = DataMapFindArray(ptr, "gsct");
-    adata[10] = DataMapFindArray(ptr, "v.min");
-    adata[11] = DataMapFindArray(ptr, "v.max");
-    adata[12] = DataMapFindArray(ptr, "p.min");
-    adata[13] = DataMapFindArray(ptr, "p.max");
-    adata[14] = DataMapFindArray(ptr, "w.min");
-    adata[15] = DataMapFindArray(ptr, "w.max");
-    adata[16] = DataMapFindArray(ptr, "ve.min");
-    adata[17] = DataMapFindArray(ptr, "ve.max");
-    
+
+    adata[0]  = find_array(ptr, "stid");
+    adata[1]  = find_array(ptr, "channel");
+    adata[2]  = find_array(ptr, "nvec");
+    adata[3]  = find_array(ptr, "freq");
+    adata[4]  = find_array(ptr, "major.revision");
+    adata[5]  = find_array(ptr, "minor.revision");
+    adata[6]  = find_array(ptr, "program.id");
+    adata[7]  = find_array(ptr, "noise.mean");
+    adata[8]  = find_array(ptr, "noise.sd");
+    adata[9]  = find_array(ptr, "gsct");
+    adata[10] = find_array(ptr, "v.min");
+    adata[11] = find_array(ptr, "v.max");
+    adata[12] = find_array(ptr, "p.min");
+    adata[13] = find_array(ptr, "p.max");
+    adata[14] = find_array(ptr, "w.min");
+    adata[15] = find_array(ptr, "w.max");
+    adata[16] = find_array(ptr, "ve.min");
+    adata[17] = find_array(ptr, "ve.max");
+
     // Station data
     if (adata[0] != NULL) {
         grd->stnum = adata[0]->rng[0];
         if (grd->stnum > 0) {
-            grd->sdata = malloc(sizeof(struct GridSVecParallel) * grd->stnum);
+            grd->sdata = malloc(sizeof(struct GridSVecOpt) * grd->stnum);
             if (!grd->sdata) {
                 DataMapFree(ptr);
                 if (stats) stats->error_count++;
@@ -157,31 +205,33 @@ int grid_parallel_read(int fid, struct GridDataParallel *grd,
                 grd->sdata[n].noise.sd = adata[8]->data.fptr[n];
                 grd->sdata[n].gsct = adata[9]->data.sptr[n];
                 
-                if (adata[10]) grd->sdata[n].vel.min = adata[10]->data.fptr[n];
-                if (adata[11]) grd->sdata[n].vel.max = adata[11]->data.fptr[n];
-                if (adata[12]) grd->sdata[n].pwr.min = adata[12]->data.fptr[n];
-                if (adata[13]) grd->sdata[n].pwr.max = adata[13]->data.fptr[n];
-                if (adata[14]) grd->sdata[n].wdt.min = adata[14]->data.fptr[n];
-                if (adata[15]) grd->sdata[n].wdt.max = adata[15]->data.fptr[n];
-                if (adata[16]) grd->sdata[n].vel.min_err = adata[16]->data.fptr[n];
-                if (adata[17]) grd->sdata[n].vel.max_err = adata[17]->data.fptr[n];
+                if (adata[10]) grd->sdata[n].vel.min  = adata[10]->data.fptr[n];
+                if (adata[11]) grd->sdata[n].vel.max  = adata[11]->data.fptr[n];
+                if (adata[12]) grd->sdata[n].pwr.min  = adata[12]->data.fptr[n];
+                if (adata[13]) grd->sdata[n].pwr.max  = adata[13]->data.fptr[n];
+                if (adata[14]) grd->sdata[n].wdt.min  = adata[14]->data.fptr[n];
+                if (adata[15]) grd->sdata[n].wdt.max  = adata[15]->data.fptr[n];
+                /* ve.{min,max} are velocity-error limits; in GridSVecOpt they
+                   live on the dedicated `verr` GridStats member. */
+                if (adata[16]) grd->sdata[n].verr.min = adata[16]->data.fptr[n];
+                if (adata[17]) grd->sdata[n].verr.max = adata[17]->data.fptr[n];
             }
         }
     }
     
     // Vector data
-    adata[18] = DataMapFindArray(ptr, "vector.mlat");
-    adata[19] = DataMapFindArray(ptr, "vector.mlon");
-    adata[20] = DataMapFindArray(ptr, "vector.azm");
-    adata[21] = DataMapFindArray(ptr, "vector.stid");
-    adata[22] = DataMapFindArray(ptr, "vector.channel");
-    adata[23] = DataMapFindArray(ptr, "vector.index");
-    adata[24] = DataMapFindArray(ptr, "vector.vel.median");
-    adata[25] = DataMapFindArray(ptr, "vector.vel.sd");
-    adata[26] = DataMapFindArray(ptr, "vector.pwr.median");
-    adata[27] = DataMapFindArray(ptr, "vector.pwr.sd");
-    adata[28] = DataMapFindArray(ptr, "vector.wdt.median");
-    adata[29] = DataMapFindArray(ptr, "vector.wdt.sd");
+    adata[18] = find_array(ptr, "vector.mlat");
+    adata[19] = find_array(ptr, "vector.mlon");
+    adata[20] = find_array(ptr, "vector.azm");
+    adata[21] = find_array(ptr, "vector.stid");
+    adata[22] = find_array(ptr, "vector.channel");
+    adata[23] = find_array(ptr, "vector.index");
+    adata[24] = find_array(ptr, "vector.vel.median");
+    adata[25] = find_array(ptr, "vector.vel.sd");
+    adata[26] = find_array(ptr, "vector.pwr.median");
+    adata[27] = find_array(ptr, "vector.pwr.sd");
+    adata[28] = find_array(ptr, "vector.wdt.median");
+    adata[29] = find_array(ptr, "vector.wdt.sd");
     
     if (adata[18] != NULL) {
         grd->vcnum = adata[18]->rng[0];
@@ -276,25 +326,39 @@ int grid_parallel_write(int fid, struct GridDataParallel *grd,
         return -1;
     }
     
-    // Add scalar time data
-    int yr, mo, dy, hr, mt;
-    double sc;
-    
-    TimeEpochToYMDHMS(grd->st_time, &yr, &mo, &dy, &hr, &mt, &sc);
-    DataMapAddScalar(ptr, "start.year", DATASHORT, &yr);
-    DataMapAddScalar(ptr, "start.month", DATASHORT, &mo);
-    DataMapAddScalar(ptr, "start.day", DATASHORT, &dy);
-    DataMapAddScalar(ptr, "start.hour", DATASHORT, &hr);
-    DataMapAddScalar(ptr, "start.minute", DATASHORT, &mt);
-    DataMapAddScalar(ptr, "start.second", DATADOUBLE, &sc);
-    
-    TimeEpochToYMDHMS(grd->ed_time, &yr, &mo, &dy, &hr, &mt, &sc);
-    DataMapAddScalar(ptr, "end.year", DATASHORT, &yr);
-    DataMapAddScalar(ptr, "end.month", DATASHORT, &mo);
-    DataMapAddScalar(ptr, "end.day", DATASHORT, &dy);
-    DataMapAddScalar(ptr, "end.hour", DATASHORT, &hr);
-    DataMapAddScalar(ptr, "end.minute", DATASHORT, &mt);
-    DataMapAddScalar(ptr, "end.second", DATADOUBLE, &sc);
+    /* Add scalar time data.
+       GridDataParallel.st_time/ed_time are anonymous {yr,mo,dy,hr,mt,sc,us}
+       structs, so the on-disk DATASHORT fields come straight off the struct
+       members. `sc` is reconstructed as double = sc + us / 1e6. We assign
+       to int16 temporaries (DATASHORT requires a 2-byte pointer). */
+    int16 i16_yr, i16_mo, i16_dy, i16_hr, i16_mt;
+    double d_sc;
+
+    i16_yr = (int16)grd->st_time.yr;
+    i16_mo = (int16)grd->st_time.mo;
+    i16_dy = (int16)grd->st_time.dy;
+    i16_hr = (int16)grd->st_time.hr;
+    i16_mt = (int16)grd->st_time.mt;
+    d_sc   = (double)grd->st_time.sc + (double)grd->st_time.us / 1e6;
+    DataMapAddScalar(ptr, "start.year",   DATASHORT,  &i16_yr);
+    DataMapAddScalar(ptr, "start.month",  DATASHORT,  &i16_mo);
+    DataMapAddScalar(ptr, "start.day",    DATASHORT,  &i16_dy);
+    DataMapAddScalar(ptr, "start.hour",   DATASHORT,  &i16_hr);
+    DataMapAddScalar(ptr, "start.minute", DATASHORT,  &i16_mt);
+    DataMapAddScalar(ptr, "start.second", DATADOUBLE, &d_sc);
+
+    i16_yr = (int16)grd->ed_time.yr;
+    i16_mo = (int16)grd->ed_time.mo;
+    i16_dy = (int16)grd->ed_time.dy;
+    i16_hr = (int16)grd->ed_time.hr;
+    i16_mt = (int16)grd->ed_time.mt;
+    d_sc   = (double)grd->ed_time.sc + (double)grd->ed_time.us / 1e6;
+    DataMapAddScalar(ptr, "end.year",   DATASHORT,  &i16_yr);
+    DataMapAddScalar(ptr, "end.month",  DATASHORT,  &i16_mo);
+    DataMapAddScalar(ptr, "end.day",    DATASHORT,  &i16_dy);
+    DataMapAddScalar(ptr, "end.hour",   DATASHORT,  &i16_hr);
+    DataMapAddScalar(ptr, "end.minute", DATASHORT,  &i16_mt);
+    DataMapAddScalar(ptr, "end.second", DATADOUBLE, &d_sc);
     
     // Add station data arrays
     if (grd->stnum > 0 && grd->sdata) {
@@ -467,7 +531,7 @@ struct GridIndexParallel *grid_parallel_load_index(int fid,
     inx->num = 0;
     
     if (!inx->tme || !inx->inx) {
-        grid_parallel_index_free(inx);
+        gpio_free_index(inx);
         if (stats) stats->error_count++;
         return NULL;
     }
@@ -489,7 +553,7 @@ struct GridIndexParallel *grid_parallel_load_index(int fid,
             if (!new_tme || !new_inx) {
                 free(new_tme);
                 free(new_inx);
-                grid_parallel_index_free(inx);
+                gpio_free_index(inx);
                 if (stats) stats->error_count++;
                 return NULL;
             }
@@ -510,7 +574,7 @@ struct GridIndexParallel *grid_parallel_load_index(int fid,
         inx->inx = realloc(inx->inx, sizeof(int) * inx->num);
         
         if (!inx->tme || !inx->inx) {
-            grid_parallel_index_free(inx);
+            gpio_free_index(inx);
             if (stats) stats->error_count++;
             return NULL;
         }
