@@ -1,0 +1,97 @@
+name: FITACF Optimized Library Tests
+
+# Builds the libfitacf.3.0 dep chain + the fitacf_opt_compare harness
+# (F0). Mirrors grid-search-test.yml round-7 pattern: build libs in
+# dependency order, fail hard, no `|| echo [warn]` masking.
+#
+# When F2-F4 land (the SoA rewrite + AVX2), the harness will compare
+# Fitacf_Array vs Fitacf for equivalence and report speedup. Until then
+# this workflow just gates that the reference harness builds and runs
+# clean against current libfitacf.3.0.
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'codebase/superdarn/src.lib/tk/fitacf_v3.0/**'
+      - 'codebase/superdarn/src.bin/tk/testing/fitacf_opt_compare.1.0/**'
+      - '.github/workflows/fitacf-search-test.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'codebase/superdarn/src.lib/tk/fitacf_v3.0/**'
+      - 'codebase/superdarn/src.bin/tk/testing/fitacf_opt_compare.1.0/**'
+      - '.github/workflows/fitacf-search-test.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-run-harness:
+    name: Build libfitacf.3.0 + run fitacf_opt_compare
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential libgomp1 zlib1g-dev
+
+      - name: Build RST dependency chain
+        run: |
+          set -euo pipefail
+          export RSTPATH="${GITHUB_WORKSPACE}"
+          source "${RSTPATH}/.profile.bash" 2>/dev/null || true
+
+          for lib in \
+              codebase/base/src.lib/task/rtypes.1.5 \
+              codebase/base/src.lib/math/rmath.1.8 \
+              codebase/general/src.lib/time.1.7 \
+              codebase/base/src.lib/task/convert.1.11 \
+              codebase/base/src.lib/task/option.1.7 \
+              codebase/general/src.lib/dmap.1.25 \
+              codebase/general/src.lib/rfile.1.9 \
+              codebase/superdarn/src.lib/tk/radar.1.22 \
+              codebase/superdarn/src.lib/tk/raw.1.22 \
+              codebase/superdarn/src.lib/tk/scan.1.7 \
+              codebase/superdarn/src.lib/tk/cfit.1.19 \
+              codebase/superdarn/src.lib/tk/elevation.1.0 \
+              codebase/superdarn/src.lib/tk/fit.1.35 \
+              codebase/analysis/src.lib/mpfit/mpfit.1.5 \
+              codebase/superdarn/src.lib/tk/fitacf_v3.0 ; do
+            if [ ! -d "${lib}/src" ]; then
+              echo "::error::missing dependency tree: ${lib}/src"
+              exit 1
+            fi
+            echo "::group::Building ${lib}"
+            (cd "${lib}/src" && make)
+            echo "::endgroup::"
+          done
+
+      - name: Build fitacf_opt_compare harness
+        run: |
+          set -euo pipefail
+          export RSTPATH="${GITHUB_WORKSPACE}"
+          source "${RSTPATH}/.profile.bash" 2>/dev/null || true
+          cd codebase/superdarn/src.bin/tk/testing/fitacf_opt_compare.1.0/src
+          make clean 2>/dev/null || true
+          make
+
+      - name: Run harness (single-threaded smoke)
+        run: |
+          set -euo pipefail
+          export RSTPATH="${GITHUB_WORKSPACE}"
+          source "${RSTPATH}/.profile.bash" 2>/dev/null || true
+          export LD_LIBRARY_PATH="${RSTPATH}/lib:${LD_LIBRARY_PATH:-}"
+          OMP_NUM_THREADS=1 "${RSTPATH}/bin/fitacf_opt_compare" --iters=5
+
+      - name: Run harness (multi-threaded)
+        run: |
+          set -euo pipefail
+          export RSTPATH="${GITHUB_WORKSPACE}"
+          source "${RSTPATH}/.profile.bash" 2>/dev/null || true
+          export LD_LIBRARY_PATH="${RSTPATH}/lib:${LD_LIBRARY_PATH:-}"
+          OMP_NUM_THREADS=4 "${RSTPATH}/bin/fitacf_opt_compare" --iters=5
