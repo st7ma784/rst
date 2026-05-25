@@ -407,10 +407,117 @@ int Parallel_Preprocessing_Array(FITPRMS_ARRAY *fit_prms, RANGE_DATA_ARRAYS *arr
             rng->phases.sigma[i] = (phase_var_arg > 0.0) ? sqrt(phase_var_arg) : 0.0;
         }
     }
-    
-    // Update array metadata
+
+    /* Phase 4: per-lag TX-overlap filtering. Ports
+       preprocessing.c:mark_bad_samples + filter_tx_overlapped_lags.
+       For each pulse, the sample window
+           t1 = pulse*mpinc - txpl/2
+           t2 = t1 + 3*txpl/2 + 100   (microseconds)
+       contains samples ts = lagfr + n*smsep that are TX-overlapped.
+       Mark those sample indices as bad, then for each (range, lag),
+       if either of the lag's two sample-base indices
+           smp1 = lag[0][k] * tau + range
+           smp2 = lag[1][k] * tau + range
+       is bad, drop that lag from the fit by setting its pwrs/phases
+       sigma to 0 (the LM loops already skip sigma<=0 entries via the
+       guard added earlier). */
+    {
+        /* Build the bad-sample bitmap. Max sample index ≈ max lag time
+           tag * tau + nrang. 1024 is conservative for SuperDARN. */
+        const int BAD_CAP = 1024;
+        char bad_sample[1024];
+        memset(bad_sample, 0, sizeof(bad_sample));
+
+        if (fit_prms->smsep > 0 && fit_prms->mppul > 0 && fit_prms->pulse) {
+            int txpl = fit_prms->txpl;
+            int smsep = fit_prms->smsep;
+            long lagfr = fit_prms->lagfr;
+            int offset = fit_prms->offset;
+            int channel = fit_prms->channel;
+
+            /* Collect TX-pulse start times in microseconds. In stereo
+               mode (channel ∈ {1,2}, offset != 0) the second antenna's
+               pulses shift by ±offset and we need to mark their
+               overlap windows too. */
+            long pulse_us[64];  /* mppul ≤ 32 in practice */
+            int n_pulses = 0;
+            int mppul_cap = (fit_prms->mppul <= 32) ? fit_prms->mppul : 32;
+            for (int j = 0; j < mppul_cap; j++) {
+                pulse_us[n_pulses++] = (long)fit_prms->pulse[j] * fit_prms->mpinc;
+            }
+            if (offset != 0 && (channel == 1 || channel == 2)) {
+                for (int j = 0; j < mppul_cap && n_pulses < 64; j++) {
+                    long shift = (channel == 1) ? -offset : offset;
+                    pulse_us[n_pulses++] = (long)fit_prms->pulse[j] * fit_prms->mpinc + shift;
+                }
+                /* Sort ascending so the walking-sample loop below
+                   advances monotonically (matches mark_bad_samples
+                   which sorts via llist_sort SORT_LIST_ASCENDING). */
+                for (int i = 1; i < n_pulses; i++) {
+                    long v = pulse_us[i];
+                    int k = i;
+                    while (k > 0 && pulse_us[k-1] > v) {
+                        pulse_us[k] = pulse_us[k-1];
+                        k--;
+                    }
+                    pulse_us[k] = v;
+                }
+            }
+
+            /* Walk samples ts = lagfr + sample*smsep, marking those
+               that fall inside any pulse's [t1, t2] window. */
+            long ts = lagfr;
+            int sample = 0;
+            for (int p = 0; p < n_pulses; p++) {
+                long t1 = pulse_us[p] - txpl / 2;
+                long t2 = t1 + (long)(3.0 * txpl / 2) + 100;
+                while (ts < t1) {
+                    sample++;
+                    ts += smsep;
+                }
+                while (ts >= t1 && ts <= t2) {
+                    if (sample >= 0 && sample < BAD_CAP) bad_sample[sample] = 1;
+                    sample++;
+                    ts += smsep;
+                }
+            }
+        }
+
+        /* tau in sample units, used to convert lag-time-tag → sample
+           index via lag[n][k] * tau + range. Matches Determine_Lags's
+           sample_base computation. */
+        int tau_sample = (fit_prms->smsep != 0)
+                         ? (fit_prms->mpinc / fit_prms->smsep)
+                         : (fit_prms->mpinc / (fit_prms->txpl > 0 ? fit_prms->txpl : 1));
+
+#pragma omp parallel for if(use_parallel) schedule(static)
+        for (int r = 0; r < nrang; r++) {
+            RANGENODE_ARRAY *rng = &arrays->ranges[r];
+            if (!rng->valid) continue;
+            for (int i = 0; i < rng->pwrs.count; i++) {
+                int l = rng->pwrs.lag_idx[i];
+                int smp1 = (fit_prms->lag[0] ? fit_prms->lag[0][l] : 0) * tau_sample + r;
+                int smp2 = (fit_prms->lag[1] ? fit_prms->lag[1][l] : 0) * tau_sample + r;
+                int bad = ((smp1 >= 0 && smp1 < BAD_CAP && bad_sample[smp1]) ||
+                           (smp2 >= 0 && smp2 < BAD_CAP && bad_sample[smp2]));
+                if (bad) {
+                    rng->pwrs.sigma[i]   = 0.0;
+                    rng->phases.sigma[i] = 0.0;
+                }
+            }
+            /* Recount valid (sigma>0) lag points; range-level rejection
+               again if too few survive (matches Filter_Bad_ACFs's
+               post-TX-filter min-lag check). */
+            int n_valid = 0;
+            for (int i = 0; i < rng->pwrs.count; i++)
+                if (rng->pwrs.sigma[i] > 0.0) n_valid++;
+            if (n_valid < 3) rng->valid = 0;
+        }
+    }
+
+    /* Update array metadata */
     arrays->num_ranges = count_valid_ranges(arrays);
-    
+
     clock_t end_time = clock();
     stats.preprocessing_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
     
