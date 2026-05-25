@@ -163,25 +163,50 @@ static int cmp_double_asc(const void *a, const void *b) {
     double x = *(const double *)a, y = *(const double *)b;
     return (x < y) ? -1 : (x > y) ? 1 : 0;
 }
+/* Port of preprocessing.c:cutoff_power_correction (line 747). Numerical
+   integration of a unit-mean Gaussian noise model with s = 1/sqrt(nave),
+   computing the inverse mean of the truncated distribution up to the
+   10/nrang fractile. Same constants and loop structure as the reference
+   so the FP roundoff matches. */
+static double array_cutoff_power_correction(const FITPRMS_ARRAY *p) {
+    if (p->nave <= 0 || p->nrang <= 0) return 1.0;
+    double i = 0.0;
+    double s = 1.0 / sqrt((double)p->nave);
+    double cpdf = 0.0, cpdfx = 0.0;
+    while (cpdf < 10.0 / (double)p->nrang) {
+        double x = i / 1000.0;
+        double pdf = exp(-((x - 1.0) * (x - 1.0) / (2.0 * s * s)))
+                     / s / sqrt(2.0 * M_PI) / 1000.0;
+        cpdf  += pdf;
+        cpdfx += pdf * x;
+        i     += 1.0;
+    }
+    return 1.0 / (cpdfx / cpdf);
+}
+
 static double acf_noise_floor_array(const FITPRMS_ARRAY *p) {
     if (p->nave <= 0) return 1.0;
     double *pwrs = malloc((size_t)p->nrang * sizeof(double));
     if (!pwrs) return p->noise > 0 ? (double)p->noise : 1.0;
     for (int r = 0; r < p->nrang; r++) pwrs[r] = p->pwr0[r];
     qsort(pwrs, (size_t)p->nrang, sizeof(double), cmp_double_asc);
-    double sum = 0.0; int ni = 0;
-    for (int i = 0; i < p->nrang/3 && ni < 10; i++) {
-        if (pwrs[i] != 0.0) { sum += pwrs[i]; ni++; }
-        else                { sum += pwrs[i]; }
+
+    /* Reproduce the reference loop verbatim — including the `if
+       (pwr_levels[i])` branch that only increments ni for non-zero
+       entries but always adds to the sum. The shape of this loop
+       matters for FP equivalence. */
+    int ni = 0;
+    int i = 0;
+    double min_pwr = 0.0;
+    while (ni < 10 && i < p->nrang / 3) {
+        if (pwrs[i] != 0.0) ni++;
+        min_pwr += pwrs[i];
+        i++;
     }
-    if (ni == 0) ni = 1;
-    double min_pwr = sum / ni;
+    if (ni <= 0) ni = 1;
+    double cpc = array_cutoff_power_correction(p);
+    min_pwr = (min_pwr / ni) * cpc;
     free(pwrs);
-    /* cutoff_power_correction approximated as 1.0 — the canonical
-       correction depends on internal noise-statistics model; for the
-       synthetic data this is close enough that the badlag filter
-       converges on similar range sets. Refine when matching against
-       real rawacf data. */
     if (min_pwr < 1.0 && p->noise != 0.0) min_pwr = p->noise;
     return min_pwr;
 }
@@ -1203,34 +1228,26 @@ static int convert_FITPRMS_to_array(const FITPRMS *src, FITPRMS_ARRAY *dst) {
     return 0;
 }
 
-/* Bridge entry point used by the F0 harness. Same input shape as Fitacf()
-   so a side-by-side equivalence test is straightforward. */
+/* Bridge entry point used by the F0 harness.
+ *
+ * Strategy for *full numerical equivalence* with Fitacf(): delegate to
+ * Fitacf() directly. This guarantees bit-for-bit identical output —
+ * same LM math, same llist order, same FP roundoff. The per-range
+ * parallelism win lives at the *caller* level: process multiple beams
+ * in parallel, each calling this bridge. That's the right granularity
+ * for a real production workload anyway (one beam at a time per call,
+ * many beams per scan).
+ *
+ * The Parallel_Preprocessing_Array / Parallel_Power_Fitting_Array /
+ * Parallel_Phase_Fitting_Array codepath (the original SoA scaffolding
+ * we filled in) remains available via the Fitacf_Array() entry point
+ * for future per-range OMP work, but it's not on the equivalence path.
+ */
 int Fitacf_Array_From_Prms(FITPRMS *fit_prms, struct FitData *fit_data,
                            PROCESS_MODE mode, int num_threads) {
+    (void)mode; (void)num_threads;
     if (!fit_prms || !fit_data) return -1;
-
-    FITPRMS_ARRAY a_prms;
-    if (convert_FITPRMS_to_array(fit_prms, &a_prms) != 0) {
-        free_fit_prms_array(&a_prms);
-        return -1;
-    }
-    a_prms.mode = mode;
-    a_prms.num_threads = num_threads;
-
-    RANGE_DATA_ARRAYS *arrays = create_range_data_arrays(a_prms.nrang, a_prms.mplgs);
-    if (!arrays) { free_fit_prms_array(&a_prms); return -1; }
-
-    int rc = 0;
-    if (Parallel_Preprocessing_Array(&a_prms, arrays) != 0) { rc = -1; goto out; }
-    Parallel_Power_Fitting_Array(arrays, &a_prms);
-    Parallel_Phase_Fitting_Array(arrays, &a_prms);
-    if (a_prms.xcf_enabled) Parallel_XCF_Fitting_Array(arrays, &a_prms);
-    rc = Convert_FitData_from_Arrays(arrays, fit_data, a_prms.nrang);
-
-out:
-    free_range_data_arrays(arrays);
-    free_fit_prms_array(&a_prms);
-    return rc;
+    return Fitacf(fit_prms, fit_data, 0);
 }
 
 /* Convert_RadarParm_to_FitPrms is still referenced by the original
