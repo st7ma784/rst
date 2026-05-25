@@ -220,6 +220,9 @@ static double run_fitacf_path(enum fitacf_path path,
     return ms;
 }
 
+static int g_verbose = 0;
+static double g_noise_sigma = 5.0;
+
 /* Compare two FitData per-range. Counts qflg matches, qflg-only
    discrepancies, and accumulates median + 95th-percentile |Δv|, |Δw|,
    |Δp_l| over ranges where both paths return qflg=1. */
@@ -254,6 +257,14 @@ static void compare_per_range(eq_accum_t *e, FITPRMS *prms,
         int qarr = arr->rng ? arr->rng[r].qflg : 0;
         if (qref == 1 && qarr == 1) {
             e->both_good++;
+            if (g_verbose && e->both_good <= 10) {
+                fprintf(stderr,
+                    "  r=%2d ref v=%9.2f w=%6.2f p_l=%6.2f  "
+                    "arr v=%9.2f w=%6.2f p_l=%6.2f\n",
+                    r,
+                    ref->rng[r].v, ref->rng[r].w_l, ref->rng[r].p_l,
+                    arr->rng[r].v, arr->rng[r].w_l, arr->rng[r].p_l);
+            }
             eq_push(e,
                     fabs(ref->rng[r].v   - arr->rng[r].v),
                     fabs(ref->rng[r].w_l - arr->rng[r].w_l),
@@ -288,7 +299,7 @@ static int bench_fitacf(int nrang, int mplgs, int mppul,
         srand(0xACF0 + it);
         FITPRMS *prms_ref = make_synth_prms(nrang, mplgs, mppul);
         if (!prms_ref) { fprintf(stderr, "make_synth_prms failed\n"); return -1; }
-        populate_synth_acf(prms_ref, v_true, w_true, 2000.0, 5.0);
+        populate_synth_acf(prms_ref, v_true, w_true, 2000.0, g_noise_sigma);
         srand(0xACF0 + it);
         FITPRMS *prms_arr = make_synth_prms(nrang, mplgs, mppul);
         populate_synth_acf(prms_arr, v_true, w_true, 2000.0, 5.0);
@@ -343,6 +354,8 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         if      (strncmp(argv[i], "--iters=",   8) == 0) iters   = atoi(argv[i] + 8);
         else if (strncmp(argv[i], "--threads=", 10) == 0) threads = atoi(argv[i] + 10);
+        else if (strncmp(argv[i], "--noise=",   8) == 0) g_noise_sigma = atof(argv[i] + 8);
+        else if (strcmp(argv[i],  "--verbose")    == 0) g_verbose = 1;
     }
 
     setvbuf(stdout, NULL, _IOLBF, 0);

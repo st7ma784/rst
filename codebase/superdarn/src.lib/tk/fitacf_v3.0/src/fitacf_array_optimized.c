@@ -444,21 +444,34 @@ int Parallel_Power_Fitting_Array(RANGE_DATA_ARRAYS *arrays, FITPRMS_ARRAY *fit_p
         double *sigma = rng->pwrs.sigma;
         int n = rng->pwrs.count;
         
-        // Weighted least squares fit: ln(P) = a + b*tau
+        /* Weighted least squares fit: ln(R) = a + b*tau.
+           Guard against sigma=0 entries (lag-0 phase has it; canonical
+           Fitacf does the same `if (sigma > 0)` skip). Without this
+           guard, w=1/sigma² blows up and corrupts all five sums. */
         double sum_w = 0.0, sum_wx = 0.0, sum_wy = 0.0;
         double sum_wxx = 0.0, sum_wxy = 0.0;
-        
+        int n_used = 0;
+
         for (int i = 0; i < n; i++) {
+            if (sigma[i] <= 0.0) continue;
             double w = 1.0 / (sigma[i] * sigma[i]);
             sum_w += w;
             sum_wx += w * x[i];
             sum_wy += w * y[i];
             sum_wxx += w * x[i] * x[i];
             sum_wxy += w * x[i] * y[i];
+            n_used++;
         }
-        
+
+        /* det must be nonzero AND well-conditioned relative to its
+           parts. Absolute threshold was wrong: high-pwr0 ranges have
+           tiny weights (huge sigma → 1/σ² ~ 1e-8) and a perfectly
+           valid det ends up ~1e-18 in absolute terms. Use Cauchy-
+           Schwarz: det = Σw·Σwxx - (Σwx)² ≥ 0, and is "near singular"
+           only when (Σwx)² ≈ Σw·Σwxx. */
         double det = sum_w * sum_wxx - sum_wx * sum_wx;
-        if (fabs(det) > 1e-12) {
+        double scale = sum_w * sum_wxx;
+        if (n_used >= 2 && scale > 0.0 && fabs(det) > 1e-9 * scale) {
             double a = (sum_wxx * sum_wy - sum_wx * sum_wxy) / det;
             double b = (sum_w * sum_wxy - sum_wx * sum_wy) / det;
 
@@ -602,21 +615,28 @@ int Parallel_Phase_Fitting_Array(RANGE_DATA_ARRAYS *arrays, FITPRMS_ARRAY *fit_p
            test was designed for. */
         array_phase_unwrap(y, x, sigma, n);
         
-        // Weighted least squares fit: phi = phi_0 + omega*tau
+        /* Weighted least squares fit: phi = phi_0 + omega*tau.
+           Skip sigma=0 points (canonical Fitacf's phase_fit_for_range
+           applies the same `if (sigma > 0)` guard). */
         double sum_w = 0.0, sum_wx = 0.0, sum_wy = 0.0;
         double sum_wxx = 0.0, sum_wxy = 0.0;
-        
+        int n_used = 0;
+
         for (int i = 0; i < n; i++) {
+            if (sigma[i] <= 0.0) continue;
             double w = 1.0 / (sigma[i] * sigma[i]);
             sum_w += w;
             sum_wx += w * x[i];
             sum_wy += w * y[i];
             sum_wxx += w * x[i] * x[i];
             sum_wxy += w * x[i] * y[i];
+            n_used++;
         }
-        
+
+        /* Relative singularity check (see Power_Fitting comment). */
         double det = sum_w * sum_wxx - sum_wx * sum_wx;
-        if (fabs(det) > 1e-12) {
+        double scale = sum_w * sum_wxx;
+        if (n_used >= 2 && scale > 0.0 && fabs(det) > 1e-9 * scale) {
             double phi_0 = (sum_wxx * sum_wy - sum_wx * sum_wxy) / det;
             double omega = (sum_w * sum_wxy - sum_wx * sum_wy) / det;
 

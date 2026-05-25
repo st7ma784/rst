@@ -23,7 +23,6 @@ spec:
         {{- include "superdarn-workbench.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: frontend
       annotations:
-        checksum/nginx-config: {{ include (print $.Template.BasePath "/frontend-configmap.yaml") . | sha256sum }}
         {{- with .Values.frontend.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -46,13 +45,14 @@ spec:
               containerPort: {{ include "superdarn-workbench.frontendPort" . }}
               protocol: TCP
           env:
-            # The nginx-unprivileged image runs envsubst on
-            # /etc/nginx/templates/default.conf.template at container start
-            # and writes /etc/nginx/conf.d/default.conf. Without this var
-            # set, envsubst uses the Dockerfile default
-            # BACKEND_URL=http://backend:8000, which doesn't resolve in K8s
-            # ("backend" is not a Service name in any namespace). Point it
-            # at the chart's own backend Service so DNS resolves.
+            # nginx-unprivileged's entrypoint runs envsubst on
+            # /etc/nginx/templates/default.conf.template at container
+            # start (script 20-envsubst-on-templates.sh) and writes
+            # /etc/nginx/conf.d/default.conf. We point BACKEND_URL at
+            # the chart's own backend Service — without it, the
+            # Dockerfile default `http://backend:8000` lands in the
+            # rendered config and nginx emerg-aborts with
+            # `host not found in upstream "backend"`.
             - name: BACKEND_URL
               value: {{ include "superdarn-workbench.backendServiceURL" . | quote }}
           livenessProbe:
@@ -74,10 +74,13 @@ spec:
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}
           volumeMounts:
-            - name: nginx-config
+            # nginx-unprivileged needs writable tmp dirs and a writable
+            # /etc/nginx/conf.d so its envsubst entrypoint can render
+            # the template with the BACKEND_URL env var above. We do NOT
+            # mount a ConfigMap here — the previous configmap+envsubst
+            # double-management caused the upstream "backend" emerg.
+            - name: nginx-conf
               mountPath: /etc/nginx/conf.d
-              readOnly: true
-            # nginx-unprivileged needs writable tmp dirs
             - name: nginx-tmp
               mountPath: /tmp
             - name: nginx-cache
@@ -85,9 +88,8 @@ spec:
             - name: nginx-run
               mountPath: /var/run
       volumes:
-        - name: nginx-config
-          configMap:
-            name: {{ include "superdarn-workbench.fullname" . }}-nginx
+        - name: nginx-conf
+          emptyDir: {}
         - name: nginx-tmp
           emptyDir: {}
         - name: nginx-cache
