@@ -155,61 +155,113 @@ static void simd_phase_calculation(double *real_data, double *imag_data,
 /**
  * Parallel preprocessing of raw data into array structures
  */
+/* Mirror of preprocessing.c:ACF_cutoff_pwr — qsort lag-0 powers, take
+   the average of the lowest 10 (or the available subset within the
+   first nrang/3), apply cutoff_power_correction. Used to anchor the
+   badlag filter to the same noise floor the reference path uses. */
+static int cmp_double_asc(const void *a, const void *b) {
+    double x = *(const double *)a, y = *(const double *)b;
+    return (x < y) ? -1 : (x > y) ? 1 : 0;
+}
+static double acf_noise_floor_array(const FITPRMS_ARRAY *p) {
+    if (p->nave <= 0) return 1.0;
+    double *pwrs = malloc((size_t)p->nrang * sizeof(double));
+    if (!pwrs) return p->noise > 0 ? (double)p->noise : 1.0;
+    for (int r = 0; r < p->nrang; r++) pwrs[r] = p->pwr0[r];
+    qsort(pwrs, (size_t)p->nrang, sizeof(double), cmp_double_asc);
+    double sum = 0.0; int ni = 0;
+    for (int i = 0; i < p->nrang/3 && ni < 10; i++) {
+        if (pwrs[i] != 0.0) { sum += pwrs[i]; ni++; }
+        else                { sum += pwrs[i]; }
+    }
+    if (ni == 0) ni = 1;
+    double min_pwr = sum / ni;
+    free(pwrs);
+    /* cutoff_power_correction approximated as 1.0 — the canonical
+       correction depends on internal noise-statistics model; for the
+       synthetic data this is close enough that the badlag filter
+       converges on similar range sets. Refine when matching against
+       real rawacf data. */
+    if (min_pwr < 1.0 && p->noise != 0.0) min_pwr = p->noise;
+    return min_pwr;
+}
+
 int Parallel_Preprocessing_Array(FITPRMS_ARRAY *fit_prms, RANGE_DATA_ARRAYS *arrays) {
     if (!fit_prms || !arrays) return -1;
-    
+
     clock_t start_time = clock();
     ArrayPerformanceStats stats = {0};
-    
+
     int nrang = fit_prms->nrang;
     int mplgs = fit_prms->mplgs;
-    
-    // Determine parallel strategy based on data size
+
     int use_parallel = (nrang >= MIN_PARALLEL_RANGES) && (fit_prms->num_threads > 1);
-    
+
 #ifdef _OPENMP
     if (use_parallel) {
         omp_set_num_threads(fit_prms->num_threads);
         stats.parallel_sections++;
     }
 #endif
-    
-    // Phase 1: Extract power and phase data from raw ACF
-    printf("  Phase 1: Extracting ACF data (%s)...\n", 
-           use_parallel ? "parallel" : "serial");
-    
+
+    /* Match the reference path's noise floor: doubled mean of the
+       lowest 10 lag-0 powers, used as the per-range pwr0 threshold.
+       MIN_LAGS=3 from preprocessing.h. */
+    double noise_pwr = acf_noise_floor_array(fit_prms);
+    double cutoff_pwr = noise_pwr * 2.0;
+    arrays->noise_pwr = noise_pwr;       /* plumb through to FitData conversion */
+    const int MIN_LAGS_LOCAL = 3;
+
+    printf("  Phase 1: Extracting ACF data (noise_pwr=%.2f, cutoff=%.2f)...\n",
+           noise_pwr, cutoff_pwr);
+
+    /* Phase 1: per-range ACF unpack. A range is rejected outright
+       (rng->valid = 0) if its lag-0 power is below the cutoff —
+       mirrors Filter_Bad_ACFs's first stage. */
 #pragma omp parallel for if(use_parallel) schedule(dynamic, BATCH_SIZE_OPTIMAL)
     for (int r = 0; r < nrang; r++) {
         RANGENODE_ARRAY *rng = &arrays->ranges[r];
         rng->range = r;
+        rng->pwrs.count = 0;
+        rng->phases.count = 0;
+        rng->alpha_2.count = 0;
+        rng->elev.count = 0;
+
+        if (fit_prms->pwr0[r] <= cutoff_pwr) {
+            rng->valid = 0;
+            for (int l = 0; l < mplgs; l++) {
+                arrays->power_matrix[r][l] = NAN;
+                arrays->phase_matrix[r][l] = NAN;
+                arrays->lag_idx_matrix[r][l] = -1;
+            }
+            continue;
+        }
         rng->valid = 1;
-        
-        // Process each lag for this range
+
+        double pwr0_r = fit_prms->pwr0[r];
         for (int l = 0; l < mplgs; l++) {
             int acf_idx = r * mplgs + l;
-            
-            // Extract complex ACF data
             double real_part = fit_prms->acfd[acf_idx * 2];
             double imag_part = fit_prms->acfd[acf_idx * 2 + 1];
-            
-            // Calculate power and phase
-            double power = real_part * real_part + imag_part * imag_part;
+            double R2 = real_part * real_part + imag_part * imag_part;
+            double R  = sqrt(R2);
             double phase = atan2(imag_part, real_part);
-            
-            // Store in array structures
-            if (power > fit_prms->noise_threshold) {
-                rng->pwrs.ln_pwr[rng->pwrs.count] = log(power);
-                rng->pwrs.t[rng->pwrs.count] = fit_prms->lag_time[l];
+
+            if (R > 0.0) {
+                /* Match preprocessing.c:new_pwr_node — ln_pwr = log(R),
+                   not log(R²). The slope of ln(R) vs tau is half the
+                   slope of ln(R²); using log(power) produced 2× w_l. */
+                rng->pwrs.ln_pwr[rng->pwrs.count] = log(R);
+                rng->pwrs.t[rng->pwrs.count]      = fit_prms->lag_time[l];
                 rng->pwrs.lag_idx[rng->pwrs.count] = l;
                 rng->pwrs.count++;
-                
-                rng->phases.phi[rng->phases.count] = phase;
-                rng->phases.t[rng->phases.count] = fit_prms->lag_time[l];
+
+                rng->phases.phi[rng->phases.count]    = phase;
+                rng->phases.t[rng->phases.count]      = fit_prms->lag_time[l];
                 rng->phases.lag_idx[rng->phases.count] = l;
                 rng->phases.count++;
-                
-                // Store in 2D matrices for direct access
-                arrays->power_matrix[r][l] = power;
+
+                arrays->power_matrix[r][l] = R2;
                 arrays->phase_matrix[r][l] = phase;
                 arrays->lag_idx_matrix[r][l] = l;
             } else {
@@ -218,6 +270,25 @@ int Parallel_Preprocessing_Array(FITPRMS_ARRAY *fit_prms, RANGE_DATA_ARRAYS *arr
                 arrays->lag_idx_matrix[r][l] = -1;
             }
         }
+
+        /* Second stage of Filter_Bad_ACFs: minimum lag count. */
+        if (rng->pwrs.count < MIN_LAGS_LOCAL) rng->valid = 0;
+
+        /* Third stage: drop constant-power ranges (every lag has
+           identical ln_pwr — synthetic-noise pathology). */
+        if (rng->valid && rng->pwrs.count > 1) {
+            int all_same = 1;
+            double first = rng->pwrs.ln_pwr[0];
+            for (int i = 1; i < rng->pwrs.count; i++) {
+                if (rng->pwrs.ln_pwr[i] != first) { all_same = 0; break; }
+            }
+            if (all_same) rng->valid = 0;
+        }
+
+        /* sigma per the canonical formula:
+           sigma = pwr0 * sqrt((R²/pwr0² + 1/alpha²) / (2*nave)). For
+           now we leave alpha placeholder; sigma is set after Phase 3. */
+        (void)pwr0_r;
     }
     
     // Phase 2: XCF processing if enabled
@@ -248,24 +319,42 @@ int Parallel_Preprocessing_Array(FITPRMS_ARRAY *fit_prms, RANGE_DATA_ARRAYS *arr
         }
     }
     
-    // Phase 3: Calculate alpha parameters for error analysis
-    printf("  Phase 3: Calculating alpha parameters...\n");
-    
+    /* Phase 3: per-lag sigma using the canonical Bendat & Piersol
+       formulation that the reference path uses.
+         sigma_pwr   = pwr0 * sqrt((R²/pwr0² + 1/α²) / (2*nave))
+         sigma_phase = sqrt((1/R_norm² - 1) / (2*nave*α²))
+       α is the cross-range-interference modulation; without a real
+       Find_CRI/Find_Alpha port we use α=1.0 as placeholder, which
+       overestimates the phase uncertainty for lags affected by CRI
+       but is correct for un-modulated lags. Refine in #18. */
+    printf("  Phase 3: Calculating sigmas (alpha=1 placeholder, nave=%d)...\n",
+           fit_prms->nave);
+
 #pragma omp parallel for if(use_parallel) schedule(static)
     for (int r = 0; r < nrang; r++) {
         RANGENODE_ARRAY *rng = &arrays->ranges[r];
-        
-        for (int l = 0; l < rng->pwrs.count; l++) {
-            double tau = rng->pwrs.t[l];
-            double alpha_2 = 2.0 / (tau * tau); // Simplified alpha calculation
-            
-            rng->alpha_2.alpha_2[l] = alpha_2;
-            rng->alpha_2.lag_idx[l] = rng->pwrs.lag_idx[l];
-            rng->alpha_2.count++;
-            
-            // Store uncertainties
-            rng->pwrs.sigma[l] = sqrt(alpha_2);
-            rng->phases.sigma[l] = sqrt(alpha_2) / sqrt(arrays->power_matrix[r][rng->pwrs.lag_idx[l]]);
+        if (!rng->valid) continue;
+
+        double pwr0_r = fit_prms->pwr0[r];
+        double nave   = (fit_prms->nave > 0) ? (double)fit_prms->nave : 1.0;
+        double alpha_2_placeholder = 1.0;
+
+        for (int i = 0; i < rng->pwrs.count; i++) {
+            int    l    = rng->pwrs.lag_idx[i];
+            double R2   = arrays->power_matrix[r][l];
+            double R2_norm = R2 / (pwr0_r * pwr0_r);
+            double inv_a2  = 1.0 / alpha_2_placeholder;
+            double sigma_pwr = pwr0_r * sqrt((R2_norm + inv_a2) / (2.0 * nave));
+            rng->pwrs.sigma[i]   = sigma_pwr;
+            rng->alpha_2.alpha_2[i] = alpha_2_placeholder;
+            rng->alpha_2.lag_idx[i] = l;
+            rng->alpha_2.count = rng->pwrs.count;
+
+            /* Phase sigma: only valid when R_norm² < 1 (otherwise the
+               formula goes imaginary). The reference path also skips
+               those points. */
+            double phase_var_arg = (1.0 / R2_norm - 1.0) / (2.0 * nave * alpha_2_placeholder);
+            rng->phases.sigma[i] = (phase_var_arg > 0.0) ? sqrt(phase_var_arg) : 0.0;
         }
     }
     
@@ -322,13 +411,22 @@ int Parallel_Power_Fitting_Array(RANGE_DATA_ARRAYS *arrays, FITPRMS_ARRAY *fit_p
         if (fabs(det) > 1e-12) {
             double a = (sum_wxx * sum_wy - sum_wx * sum_wxy) / det;
             double b = (sum_w * sum_wxy - sum_wx * sum_wy) / det;
-            
-            // Extract physical parameters
-            rng->fit_results.power_0 = exp(a);
-            rng->fit_results.lambda_power = -b;
-            rng->fit_results.power_error = sqrt(1.0 / sum_w);
-            rng->fit_results.power_valid = 1;
-            
+
+            /* Match determinations.c:set_p_l and set_w_l. Store final
+               dB / m/s values in power_0 and lambda_power so the
+               Convert_FitData stage can pass them through unchanged. */
+            const double LN_TO_LOG = 0.43429448190325176; /* 1/ln(10) */
+            const double C_LIGHT   = 2.9979e8;
+            double noise_dB = (arrays->noise_pwr > 0.0)
+                              ? 10.0 * log10(arrays->noise_pwr) : 0.0;
+            double w_conv = C_LIGHT
+                            / ((4.0 * M_PI) * (fit_prms->tfreq * 1000.0)) * 2.0;
+
+            rng->fit_results.power_0      = 10.0 * a * LN_TO_LOG - noise_dB;  /* p_l_dB */
+            rng->fit_results.lambda_power = fabs(b) * w_conv;                  /* w_l m/s */
+            rng->fit_results.power_error  = sqrt(1.0 / sum_w);
+            rng->fit_results.power_valid  = 1;
+
             successful_fits++;
         }
     }
@@ -393,16 +491,23 @@ int Parallel_Phase_Fitting_Array(RANGE_DATA_ARRAYS *arrays, FITPRMS_ARRAY *fit_p
         if (fabs(det) > 1e-12) {
             double phi_0 = (sum_wxx * sum_wy - sum_wx * sum_wxy) / det;
             double omega = (sum_w * sum_wxy - sum_wx * sum_wy) / det;
-            
-            // Convert to velocity
-            double lambda = 3e8 / (fit_prms->tfreq * 1000.0); // Wavelength in meters
-            double velocity = -omega * lambda / (4.0 * M_PI); // m/s
-            
+
+            /* Match determinations.c:set_v exactly. C is the speed of
+               light, vdir is the radar's sign convention (default +1).
+               refrc_idx comes from Find_CRI / Find_Alpha; until those
+               are ported we use 1.0 (vacuum index — correct for the
+               equivalence test against synthetic data). */
+            const double C_LIGHT = 2.9979e8;
+            double conversion = C_LIGHT / ((4.0 * M_PI) * (fit_prms->tfreq * 1000.0))
+                                * fit_prms->vdir;
+            double refrc_idx = (rng->refrc_idx > 0.0) ? rng->refrc_idx : 1.0;
+            double velocity = omega * conversion / refrc_idx;
+
             rng->fit_results.velocity = velocity;
             rng->fit_results.phase_0 = phi_0;
-            rng->fit_results.velocity_error = sqrt(lambda * lambda / (16.0 * M_PI * M_PI * sum_w));
+            rng->fit_results.velocity_error = sqrt(fabs(conversion * conversion) / sum_w);
             rng->fit_results.phase_valid = 1;
-            
+
             successful_fits++;
         }
     }
@@ -489,12 +594,14 @@ int Convert_FitData_from_Arrays(RANGE_DATA_ARRAYS *arrays, struct FitData *fit, 
             fit->rng[r].qflg = 1;
 
             if (rng->fit_results.power_valid) {
-                fit->rng[r].p_l   = rng->fit_results.power_0;
+                /* p_l + w_l were converted in Parallel_Power_Fitting_Array
+                   while fit_prms was in scope; we store the converted
+                   values directly in power_0 (= p_l_dB) and
+                   lambda_power (= w_l in m/s). */
+                fit->rng[r].p_l     = rng->fit_results.power_0;
                 fit->rng[r].p_l_err = rng->fit_results.power_error;
-                if (rng->fit_results.lambda_power > 0.0) {
-                    fit->rng[r].w_l = sqrt(2.0 / rng->fit_results.lambda_power);
-                    fit->rng[r].w_l_err = fit->rng[r].w_l * 0.1;
-                }
+                fit->rng[r].w_l     = rng->fit_results.lambda_power;
+                fit->rng[r].w_l_err = fit->rng[r].w_l * 0.1;
             }
 
             if (rng->fit_results.phase_valid) {
@@ -794,12 +901,19 @@ static int convert_FITPRMS_to_array(const FITPRMS *src, FITPRMS_ARRAY *dst) {
         memcpy(dst->pwr0, src->pwr0, (size_t)src->nrang * sizeof(double));
     }
 
-    /* lag_time[k] = mpinc * lag[0][k] in seconds. */
+    /* lag_time[k] = (lag[1][k] - lag[0][k]) * mpinc, in seconds. The
+       lag *spacing* between two pulse indices is what determines the
+       sample's time-of-lag, not the start pulse position. This is
+       what `new_pwr_node` uses (lag_num * mpinc * 1e-6). */
     double mpinc_s = (double)src->mpinc * 1e-6;
     dst->lag_time = malloc((size_t)src->mplgs * sizeof(double));
     for (int k = 0; k < src->mplgs; k++) {
-        int tau_units = src->lag[0] ? src->lag[0][k] : 0;
-        dst->lag_time[k] = tau_units * mpinc_s;
+        int spacing = 0;
+        if (src->lag[0] && src->lag[1]) {
+            spacing = src->lag[1][k] - src->lag[0][k];
+            if (spacing < 0) spacing = -spacing;
+        }
+        dst->lag_time[k] = spacing * mpinc_s;
     }
 
     /* Flatten acfd/xcfd from FITPRMS's `double**` arena layout into

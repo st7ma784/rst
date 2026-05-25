@@ -112,6 +112,9 @@ typedef struct range_data_arrays {
     RANGENODE_ARRAY *ranges;     /* Array of range nodes */
     int num_ranges;              /* Number of valid ranges */
     int max_ranges;              /* Maximum allocated ranges */
+    double noise_pwr;            /* ACF_cutoff_pwr equivalent — set by
+                                    Parallel_Preprocessing_Array,
+                                    consumed by Convert_FitData_from_Arrays. */
     
     /* 2D arrays for direct access - enables better parallelization */
     double **phase_matrix;       /* [range][lag] phase data */

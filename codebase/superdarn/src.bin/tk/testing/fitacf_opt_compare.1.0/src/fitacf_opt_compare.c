@@ -220,12 +220,68 @@ static double run_fitacf_path(enum fitacf_path path,
     return ms;
 }
 
+/* Compare two FitData per-range. Counts qflg matches, qflg-only
+   discrepancies, and accumulates median + 95th-percentile |Δv|, |Δw|,
+   |Δp_l| over ranges where both paths return qflg=1. */
+typedef struct {
+    int both_good, both_bad, ref_only_good, arr_only_good;
+    double *dv;  /* allocated, length = both_good across iters */
+    double *dw;
+    double *dp;
+    int    dlen, dcap;
+} eq_accum_t;
+
+static int cmp_dbl_asc(const void *a, const void *b) {
+    double x = *(const double *)a, y = *(const double *)b;
+    return (x < y) ? -1 : (x > y) ? 1 : 0;
+}
+
+static void eq_push(eq_accum_t *e, double dv, double dw, double dp) {
+    if (e->dlen >= e->dcap) {
+        e->dcap = e->dcap ? e->dcap * 2 : 256;
+        e->dv = realloc(e->dv, sizeof(double) * e->dcap);
+        e->dw = realloc(e->dw, sizeof(double) * e->dcap);
+        e->dp = realloc(e->dp, sizeof(double) * e->dcap);
+    }
+    e->dv[e->dlen] = dv; e->dw[e->dlen] = dw; e->dp[e->dlen] = dp;
+    e->dlen++;
+}
+
+static void compare_per_range(eq_accum_t *e, FITPRMS *prms,
+                              struct FitData *ref, struct FitData *arr) {
+    for (int r = 0; r < prms->nrang; r++) {
+        int qref = ref->rng ? ref->rng[r].qflg : 0;
+        int qarr = arr->rng ? arr->rng[r].qflg : 0;
+        if (qref == 1 && qarr == 1) {
+            e->both_good++;
+            eq_push(e,
+                    fabs(ref->rng[r].v   - arr->rng[r].v),
+                    fabs(ref->rng[r].w_l - arr->rng[r].w_l),
+                    fabs(ref->rng[r].p_l - arr->rng[r].p_l));
+        } else if (qref == 0 && qarr == 0) {
+            e->both_bad++;
+        } else if (qref == 1) {
+            e->ref_only_good++;
+        } else {
+            e->arr_only_good++;
+        }
+    }
+}
+
+static double percentile(double *a, int n, double p) {
+    if (n == 0) return 0.0;
+    qsort(a, n, sizeof(double), cmp_dbl_asc);
+    int idx = (int)(p * (n - 1));
+    if (idx < 0) idx = 0; if (idx >= n) idx = n - 1;
+    return a[idx];
+}
+
 static int bench_fitacf(int nrang, int mplgs, int mppul,
                         double v_true, double w_true, int iters,
                         int num_threads) {
     int    good_ref = 0,  good_arr = 0;
     double ms_ref = 0,    ms_arr   = 0;
-    double v_ref = 0, w_ref = 0, v_arr = 0, w_arr = 0;
+    eq_accum_t eq = {0};
 
     for (int it = 0; it < iters; it++) {
         /* Identical seed → identical synthetic input for both paths. */
@@ -244,29 +300,36 @@ static int bench_fitacf(int nrang, int mplgs, int mppul,
 
         int g; double v, w;
         ms_ref += run_fitacf_path(PATH_REF,   prms_ref, fit_ref, num_threads, &g, &v, &w);
-        good_ref += g; v_ref += v; w_ref += w;
+        good_ref += g;
         ms_arr += run_fitacf_path(PATH_ARRAY, prms_arr, fit_arr, num_threads, &g, &v, &w);
-        good_arr += g; v_arr += v; w_arr += w;
+        good_arr += g;
+
+        compare_per_range(&eq, prms_ref, fit_ref, fit_arr);
 
         FitFree(fit_ref); FitFree(fit_arr);
         free_synth_prms(prms_ref); free_synth_prms(prms_arr);
     }
     ms_ref /= iters; ms_arr /= iters;
-    v_ref  /= iters; w_ref  /= iters;
-    v_arr  /= iters; w_arr  /= iters;
     int avg_good_ref = good_ref / iters;
     int avg_good_arr = good_arr / iters;
 
     double speedup = (ms_arr > 0) ? ms_ref / ms_arr : 0.0;
+    double dv50 = percentile(eq.dv, eq.dlen, 0.50);
+    double dv95 = percentile(eq.dv, eq.dlen, 0.95);
+    double dw50 = percentile(eq.dw, eq.dlen, 0.50);
+    double dp50 = percentile(eq.dp, eq.dlen, 0.50);
 
-    printf("nrang=%-3d v_true=%6.1f w_true=%5.1f  "
-           "ref: ms=%6.2f good=%2d v=%7.1f w=%5.1f  "
-           "arr: ms=%6.2f good=%2d v=%7.1f w=%5.1f  "
-           "speedup=%5.2fx\n",
+    printf("nrang=%-3d v_t=%6.1f w_t=%5.1f | "
+           "ref ms=%5.2f good=%2d  arr ms=%5.2f good=%3d "
+           "speed=%4.2fx | "
+           "both_good=%d ref_only=%d arr_only=%d both_bad=%d | "
+           "med|Δv|=%6.1f p95|Δv|=%7.1f med|Δw|=%5.1f med|Δp_l|=%5.2f\n",
            nrang, v_true, w_true,
-           ms_ref, avg_good_ref, v_ref, w_ref,
-           ms_arr, avg_good_arr, v_arr, w_arr,
-           speedup);
+           ms_ref, avg_good_ref, ms_arr, avg_good_arr, speedup,
+           eq.both_good, eq.ref_only_good, eq.arr_only_good, eq.both_bad,
+           dv50, dv95, dw50, dp50);
+
+    free(eq.dv); free(eq.dw); free(eq.dp);
 
     if (avg_good_ref < 1 && avg_good_arr < 1) {
         printf("  FAIL: neither path returned any valid ranges\n");
