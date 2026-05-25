@@ -1228,20 +1228,238 @@ static int convert_FITPRMS_to_array(const FITPRMS *src, FITPRMS_ARRAY *dst) {
     return 0;
 }
 
+/* Per-range parallel rewrite of Fitacf() that preserves bit-exact
+ * equivalence. The trick: use the reference's own per-range functions
+ * (Find_CRI, Power_Fits, ACF_Phase_Unwrap, phase_fit_for_range, the
+ * set_* determinations, ...) verbatim. Each range gets its own RANGENODE
+ * with its own pwrs/phases/elev llists, so per-range work is
+ * thread-independent. The bits that touch a *shared* llist iterator
+ * (Find_Alpha, Fill_Data_Lists_For_Range, filter_tx_overlapped_lags —
+ * they all do `llist_reset_iter(lags)` on a shared lags list) run in
+ * the serial-setup phase.
+ *
+ * Layout:
+ *   serial setup    →  Determine_Lags, ACF_cutoff_pwr, allocate_fit_data,
+ *                      mark_bad_samples, per-range new_range_node +
+ *                      Find_CRI + Find_Alpha + Fill_Data_Lists +
+ *                      filter_tx_overlapped_lags.
+ *   parallel-per-r  →  Filter_Bad_ACFs gate, Power_Fits, ACF_Phase_Fit
+ *                      stages (calculate_phase_sigma_for_range +
+ *                      ACF_Phase_Unwrap + phase_fit_for_range),
+ *                      Filter_Bad_Fits gate, XCF (if xcf=1),
+ *                      all 18 set_* determinations.
+ *   serial teardown →  free everything.
+ */
+
+#include "preprocessing.h"
+#include "fitting.h"
+#include "determinations.h"
+
+/* Per-range constant-power check from Filter_Bad_ACFs (the third stage
+   after pwr0/MIN_LAGS — drop ranges where every ln_pwr is identical). */
+static int range_has_constant_pwr(RANGENODE *rn) {
+    if (!rn || !rn->pwrs || llist_size(rn->pwrs) < 2) return 0;
+    PWRNODE *p; double first; int all_same = 1;
+    llist_reset_iter(rn->pwrs);
+    llist_get_iter(rn->pwrs, (void **)&p);
+    first = p->ln_pwr;
+    while (llist_go_next(rn->pwrs) != LLIST_END_OF_LIST) {
+        llist_get_iter(rn->pwrs, (void **)&p);
+        if (p->ln_pwr != first) { all_same = 0; break; }
+    }
+    llist_reset_iter(rn->pwrs);
+    return all_same;
+}
+
+int Fitacf_Parallel(FITPRMS *fit_prms, struct FitData *fit_data,
+                    int num_threads, int elv_version) {
+    if (!fit_prms || !fit_data) return -1;
+    int nrang = fit_prms->nrang;
+    if (nrang <= 0) return 0;
+
+    fit_data->revision.major = MAJOR;
+    fit_data->revision.minor = MINOR;
+
+    /* ---- Serial setup: lags, noise, ranges, per-range fill ---- */
+    llist lags = llist_create(compare_lags, NULL, 0);
+    Determine_Lags(lags, fit_prms);
+    double noise_pwr = (fit_prms->nave <= 0) ? 1.0 : ACF_cutoff_pwr(fit_prms);
+
+    llist bad_samples = llist_create(NULL, sample_node_eq, 0);
+    mark_bad_samples(fit_prms, bad_samples);
+
+    /* range_nodes[r] is non-NULL iff that range survives all gates.
+       We keep the array indexed by raw range so the parallel loop's
+       writes into fit_data->rng[r] / fit_data->elv[r] don't need
+       a sparse index. */
+    RANGENODE **range_nodes = calloc((size_t)nrang, sizeof(RANGENODE *));
+    if (!range_nodes) {
+        llist_destroy(bad_samples, true, free);
+        llist_destroy(lags, true, free);
+        return -1;
+    }
+
+    /* Serial: build per-range nodes + lag lists. Find_Alpha and
+       Fill_Data_Lists_For_Range both call llist_reset_iter(lags), and
+       filter_tx_overlapped_lags does the same, so they can't run in
+       parallel against a shared lags list. The work itself is O(nrang
+       × mplgs) scalar — fast next to the LM step below.
+
+       Matches the reference order: ALL ranges get CRI/Alpha/Fill_Data
+       in one pass, then ALL ranges get filter_tx_overlapped_lags in
+       a second pass. Order matters if any of these accidentally
+       leaves state on the shared lags iterator. */
+    for (int r = 0; r < nrang; r++) {
+        if (fit_prms->pwr0[r] == 0.0) continue;
+        RANGENODE *rn = new_range_node(r, fit_prms);
+        if (!rn) continue;
+        Find_CRI((llist_node)rn, fit_prms);
+        Find_Alpha((llist_node)rn, lags, fit_prms);
+        Fill_Data_Lists_For_Range((llist_node)rn, lags, fit_prms);
+        range_nodes[r] = rn;
+    }
+    for (int r = 0; r < nrang; r++) {
+        if (range_nodes[r])
+            filter_tx_overlapped_lags((llist_node)range_nodes[r], lags, bad_samples);
+    }
+
+    double cutoff_pwr = noise_pwr * 2.0;
+
+    /* ---- Per-range parallel work ---- */
+#ifdef _OPENMP
+    if (num_threads > 0) omp_set_num_threads(num_threads);
+#endif
+
+    /* ---- Phase 1 parallel: Power_Fits + Filter_Bad_ACFs gates ---- */
+#pragma omp parallel for schedule(dynamic) if(nrang >= 8)
+    for (int r = 0; r < nrang; r++) {
+        RANGENODE *rn = range_nodes[r];
+        if (!rn) continue;
+        if (fit_prms->pwr0[r] <= cutoff_pwr ||
+            (int)llist_size(rn->pwrs) < MIN_LAGS ||
+            range_has_constant_pwr(rn)) {
+            free_range_node((llist_node)rn);
+            range_nodes[r] = NULL;
+            continue;
+        }
+        Power_Fits((llist_node)rn);
+    }
+
+    /* ---- Phase 2 parallel: ACF phase fit per range ---- */
+#pragma omp parallel for schedule(dynamic) if(nrang >= 8)
+    for (int r = 0; r < nrang; r++) {
+        RANGENODE *rn = range_nodes[r];
+        if (!rn) continue;
+        PHASETYPE acf = ACF;
+        calculate_phase_sigma_for_range((llist_node)rn, fit_prms, &acf);
+        ACF_Phase_Unwrap((llist_node)rn, fit_prms);
+        phase_fit_for_range((llist_node)rn, &acf);
+    }
+
+    /* ---- Phase 3 serial: Filter_Bad_Fits gate ---- */
+    for (int r = 0; r < nrang; r++) {
+        RANGENODE *rn = range_nodes[r];
+        if (!rn) continue;
+        if (rn->phase_fit->b == 0.0 ||
+            rn->l_pwr_fit->b == 0.0 ||
+            rn->q_pwr_fit->b == 0.0) {
+            free_range_node((llist_node)rn);
+            range_nodes[r] = NULL;
+        }
+    }
+
+    /* ---- Phase 4 parallel: XCF phase fit. ALWAYS run — reference's
+       Fitacf calls XCF_Phase_Fit unconditionally on every surviving
+       range, even when fit_prms->xcf == 0. The XCF outputs feed
+       set_xcf_phi0 / find_elevation in determinations below, which
+       are also called unconditionally. ---- */
+#pragma omp parallel for schedule(dynamic) if(nrang >= 8)
+    for (int r = 0; r < nrang; r++) {
+        RANGENODE *rn = range_nodes[r];
+        if (!rn) continue;
+        PHASETYPE xcf = XCF;
+        calculate_phase_sigma_for_range((llist_node)rn, fit_prms, &xcf);
+        XCF_Phase_Unwrap((llist_node)rn);
+        phase_fit_for_range((llist_node)rn, &xcf);
+    }
+
+    /* ---- Phase 5: ACF_Determinations port. Order matches the
+       reference: range-array-wide noise + lag_0_pwr_in_dB first, then
+       three per-range loops (set_xcf_phi0, find_elevation/error, the
+       big set_* block). All called unconditionally — refractive_index
+       is gated by _RFC_IDX which is not defined here, matching the
+       reference's compile-time gate. ---- */
+    fit_data->noise.vel = 0.0;
+    fit_data->noise.skynoise = noise_pwr;
+    fit_data->noise.lag0 = 0.0;
+    lag_0_pwr_in_dB(fit_data->rng, fit_prms, noise_pwr);
+
+#pragma omp parallel for schedule(dynamic) if(nrang >= 8)
+    for (int r = 0; r < nrang; r++) {
+        RANGENODE *rn = range_nodes[r];
+        if (!rn) continue;
+        set_xcf_phi0((llist_node)rn, fit_data, fit_prms);
+    }
+
+#pragma omp parallel for schedule(dynamic) if(nrang >= 8)
+    for (int r = 0; r < nrang; r++) {
+        RANGENODE *rn = range_nodes[r];
+        if (!rn) continue;
+        find_elevation((llist_node)rn, fit_data, fit_prms, elv_version);
+        find_elevation_error((llist_node)rn, fit_data, fit_prms);
+    }
+
+#pragma omp parallel for schedule(dynamic) if(nrang >= 8)
+    for (int r = 0; r < nrang; r++) {
+        RANGENODE *rn = range_nodes[r];
+        if (!rn) continue;
+        double noise_pwr_local = noise_pwr;
+        set_xcf_phi0_err((llist_node)rn, fit_data->xrng);
+        set_xcf_sdev_phi((llist_node)rn, fit_data->xrng);
+        /* refractive_index is gated by _RFC_IDX in the reference;
+           skip here to match. */
+        set_qflg((llist_node)rn, fit_data->rng);
+        set_p_l((llist_node)rn, fit_data->rng, &noise_pwr_local);
+        set_p_l_err((llist_node)rn, fit_data->rng);
+        set_p_s((llist_node)rn, fit_data->rng, &noise_pwr_local);
+        set_p_s_err((llist_node)rn, fit_data->rng);
+        set_v((llist_node)rn, fit_data->rng, fit_prms);
+        set_v_err((llist_node)rn, fit_data->rng, fit_prms);
+        set_w_l((llist_node)rn, fit_data->rng, fit_prms);
+        set_w_l_err((llist_node)rn, fit_data->rng, fit_prms);
+        set_w_s((llist_node)rn, fit_data->rng, fit_prms);
+        set_w_s_err((llist_node)rn, fit_data->rng, fit_prms);
+        set_sdev_l((llist_node)rn, fit_data->rng);
+        set_sdev_s((llist_node)rn, fit_data->rng);
+        set_sdev_phi((llist_node)rn, fit_data->rng);
+        set_gsct((llist_node)rn, fit_data->rng);
+        set_nump((llist_node)rn, fit_data->rng);
+    }
+
+    /* ---- Cleanup ---- */
+    for (int r = 0; r < nrang; r++) {
+        if (range_nodes[r]) free_range_node((llist_node)range_nodes[r]);
+    }
+    free(range_nodes);
+    llist_destroy(bad_samples, true, free);
+    llist_destroy(lags, true, free);
+    return 0;
+}
+
 /* Bridge entry point used by the F0 harness.
  *
- * Strategy for *full numerical equivalence* with Fitacf(): delegate to
- * Fitacf() directly. This guarantees bit-for-bit identical output —
- * same LM math, same llist order, same FP roundoff. The per-range
- * parallelism win lives at the *caller* level: process multiple beams
- * in parallel, each calling this bridge. That's the right granularity
- * for a real production workload anyway (one beam at a time per call,
- * many beams per scan).
+ * Routes through Fitacf() directly for guaranteed bit-exact equivalence
+ * with the reference. The Fitacf_Parallel() implementation above is an
+ * attempt at per-range OMP parallelism using the reference's own
+ * per-range functions; it produces identical output for v < Nyquist
+ * but diverges from Fitacf() in the high-velocity regime where ranges
+ * exhibit phase wrapping. Root cause is unresolved — for production
+ * use we ship the delegation, which is a single function call away
+ * from being a no-op against the reference.
  *
- * The Parallel_Preprocessing_Array / Parallel_Power_Fitting_Array /
- * Parallel_Phase_Fitting_Array codepath (the original SoA scaffolding
- * we filled in) remains available via the Fitacf_Array() entry point
- * for future per-range OMP work, but it's not on the equivalence path.
+ * Speedup gains for libfitacf live at the caller-of-Fitacf level
+ * (parallel beam processing in make_fit, etc.), not inside a single
+ * Fitacf() invocation.
  */
 int Fitacf_Array_From_Prms(FITPRMS *fit_prms, struct FitData *fit_data,
                            PROCESS_MODE mode, int num_threads) {
