@@ -319,15 +319,61 @@ int Parallel_Preprocessing_Array(FITPRMS_ARRAY *fit_prms, RANGE_DATA_ARRAYS *arr
         }
     }
     
-    /* Phase 3: per-lag sigma using the canonical Bendat & Piersol
-       formulation that the reference path uses.
+    /* Phase 2.5: port of Find_CRI + Find_Alpha. CRI per (range, pulse)
+       is the sum of pwr0 over other-pulse ranges that overlap the
+       target range. alpha_2 per (range, lag) is then
+         (pwr0² ) / ((pwr0 + CRI_i) * (pwr0 + CRI_j))
+       where i, j are the two pulses that form the lag. */
+    int tau_units = (fit_prms->smsep != 0)
+                    ? (fit_prms->mpinc / fit_prms->smsep)
+                    : (fit_prms->mpinc / fit_prms->txpl);
+
+    /* Per-lag, look up which two pulse indices form that lag.
+       lag_pulses[k][0/1] = j such that pulse[j] == lag[n][k]. */
+    int lag_pulses[64][2];      /* SuperDARN never uses > 64 lags. */
+    if (mplgs > 64) {
+        fprintf(stderr, "fitacf_array: mplgs=%d > 64 lookup cap\n", mplgs);
+    }
+    int mplgs_cap = (mplgs <= 64) ? mplgs : 64;
+    for (int k = 0; k < mplgs_cap; k++) {
+        int target_0 = fit_prms->lag[0] ? fit_prms->lag[0][k] : 0;
+        int target_1 = fit_prms->lag[1] ? fit_prms->lag[1][k] : 0;
+        lag_pulses[k][0] = 0;
+        lag_pulses[k][1] = 0;
+        for (int j = 0; j < fit_prms->mppul; j++) {
+            if (fit_prms->pulse[j] == target_0) lag_pulses[k][0] = j;
+            if (fit_prms->pulse[j] == target_1) lag_pulses[k][1] = j;
+        }
+    }
+
+    /* CRI per (range, pulse) — cheap, mppul*mppul per range. Could
+       parallelise over ranges; for now leave serial since nrang*mppul²
+       is small relative to the per-lag fit work. */
+#pragma omp parallel for if(use_parallel) schedule(static)
+    for (int r = 0; r < nrang; r++) {
+        RANGENODE_ARRAY *rng = &arrays->ranges[r];
+        if (!rng->CRI) rng->CRI = calloc((size_t)fit_prms->mppul, sizeof(double));
+        if (!rng->CRI) continue;
+
+        for (int pulse_to_check = 0; pulse_to_check < fit_prms->mppul; pulse_to_check++) {
+            double total_cri = 0.0;
+            for (int pulse = 0; pulse < fit_prms->mppul; pulse++) {
+                if (pulse == pulse_to_check) continue;
+                int diff = fit_prms->pulse[pulse_to_check] - fit_prms->pulse[pulse];
+                int rng_to_check = diff * tau_units + r;
+                if (rng_to_check >= 0 && rng_to_check < nrang) {
+                    total_cri += fit_prms->pwr0[rng_to_check];
+                }
+            }
+            rng->CRI[pulse_to_check] = total_cri;
+        }
+    }
+
+    /* Phase 3: per-lag sigma using the real alpha_2 from CRI. Matches
+       the canonical Bendat & Piersol formulation:
          sigma_pwr   = pwr0 * sqrt((R²/pwr0² + 1/α²) / (2*nave))
-         sigma_phase = sqrt((1/R_norm² - 1) / (2*nave*α²))
-       α is the cross-range-interference modulation; without a real
-       Find_CRI/Find_Alpha port we use α=1.0 as placeholder, which
-       overestimates the phase uncertainty for lags affected by CRI
-       but is correct for un-modulated lags. Refine in #18. */
-    printf("  Phase 3: Calculating sigmas (alpha=1 placeholder, nave=%d)...\n",
+         sigma_phase = sqrt((1/R_norm² - 1) / (2*nave*α²))   */
+    printf("  Phase 3: Calculating sigmas (real alpha_2, nave=%d)...\n",
            fit_prms->nave);
 
 #pragma omp parallel for if(use_parallel) schedule(static)
@@ -337,23 +383,27 @@ int Parallel_Preprocessing_Array(FITPRMS_ARRAY *fit_prms, RANGE_DATA_ARRAYS *arr
 
         double pwr0_r = fit_prms->pwr0[r];
         double nave   = (fit_prms->nave > 0) ? (double)fit_prms->nave : 1.0;
-        double alpha_2_placeholder = 1.0;
 
         for (int i = 0; i < rng->pwrs.count; i++) {
             int    l    = rng->pwrs.lag_idx[i];
+
+            /* Real alpha_2 from CRI (Find_Alpha:calculate_alpha_at_lags). */
+            double cri_i = rng->CRI ? rng->CRI[lag_pulses[l][0]] : 0.0;
+            double cri_j = rng->CRI ? rng->CRI[lag_pulses[l][1]] : 0.0;
+            double alpha_2 = (pwr0_r * pwr0_r)
+                             / ((pwr0_r + cri_i) * (pwr0_r + cri_j));
+            if (alpha_2 <= 0.0) alpha_2 = 1.0;
+
             double R2   = arrays->power_matrix[r][l];
             double R2_norm = R2 / (pwr0_r * pwr0_r);
-            double inv_a2  = 1.0 / alpha_2_placeholder;
+            double inv_a2  = 1.0 / alpha_2;
             double sigma_pwr = pwr0_r * sqrt((R2_norm + inv_a2) / (2.0 * nave));
             rng->pwrs.sigma[i]   = sigma_pwr;
-            rng->alpha_2.alpha_2[i] = alpha_2_placeholder;
+            rng->alpha_2.alpha_2[i] = alpha_2;
             rng->alpha_2.lag_idx[i] = l;
             rng->alpha_2.count = rng->pwrs.count;
 
-            /* Phase sigma: only valid when R_norm² < 1 (otherwise the
-               formula goes imaginary). The reference path also skips
-               those points. */
-            double phase_var_arg = (1.0 / R2_norm - 1.0) / (2.0 * nave * alpha_2_placeholder);
+            double phase_var_arg = (1.0 / R2_norm - 1.0) / (2.0 * nave * alpha_2);
             rng->phases.sigma[i] = (phase_var_arg > 0.0) ? sqrt(phase_var_arg) : 0.0;
         }
     }
@@ -443,36 +493,114 @@ int Parallel_Power_Fitting_Array(RANGE_DATA_ARRAYS *arrays, FITPRMS_ARRAY *fit_p
 /**
  * Parallel phase fitting with velocity determination
  */
+/* Port of preprocessing.c:phase_correction — apply integer-2pi
+   correction to a single phase based on a slope estimate. */
+static void array_phase_correction(double *phi, double t,
+                                   double slope_est, int *total_2pi) {
+    double phi_pred = slope_est * t;
+    double phi_diff = phi_pred - *phi;
+    /* The reference rounds to 5 decimal places before round-to-int —
+       avoids ties bouncing the correction integer. */
+    phi_diff = round(100000.0 * phi_diff / (2.0 * M_PI)) / 100000.0;
+    double phi_corr = round(phi_diff);
+    *phi += phi_corr * 2.0 * M_PI;
+    *total_2pi += (int)fabs(phi_corr);
+}
+
+/* Port of preprocessing.c:ACF_Phase_Unwrap. Two-stage:
+   (1) compute piecewise slope estimate from adjacent-pair Δφ/Δτ where
+       |Δφ| < π, weighted by combined sigma².
+   (2) apply integer-2pi correction to every phase using that slope.
+   Then compare fit error of corrected vs original — keep whichever
+   produces lower weighted squared residual. Returns the chosen
+   unwrapped phases in-place via `phi`. */
+static void array_phase_unwrap(double *phi, const double *t,
+                               const double *sigma, int n) {
+    if (n < 2) return;
+
+    /* Stage 1: piecewise slope estimate. */
+    double slope_num = 0.0, slope_denom = 0.0;
+    for (int i = 0; i < n - 1; i++) {
+        double d_phi = phi[i+1] - phi[i];
+        if (fabs(d_phi) < M_PI) {
+            double sigma_bar = (sigma[i+1] + sigma[i]) * 0.5;
+            if (sigma_bar <= 0.0) continue;
+            double d_tau = t[i+1] - t[i];
+            if (d_tau == 0.0) continue;
+            slope_num   += d_phi / (sigma_bar * sigma_bar) / d_tau;
+            slope_denom += 1.0    / (sigma_bar * sigma_bar);
+        }
+    }
+    if (slope_denom == 0.0) return;
+    double slope_est = slope_num / slope_denom;
+
+    /* Save original for comparison; apply correction. */
+    double *orig = malloc((size_t)n * sizeof(double));
+    if (!orig) return;
+    memcpy(orig, phi, (size_t)n * sizeof(double));
+
+    int total_2pi = 0;
+    for (int i = 0; i < n; i++) {
+        array_phase_correction(&phi[i], t[i], slope_est, &total_2pi);
+    }
+    if (total_2pi == 0) { free(orig); return; }
+
+    /* Compare unwrapped vs original by weighted residual. */
+    double S_xx = 0.0, S_xy_u = 0.0, S_xy_o = 0.0;
+    for (int i = 0; i < n; i++) {
+        if (sigma[i] <= 0.0) continue;
+        double inv_s2 = 1.0 / (sigma[i] * sigma[i]);
+        S_xx   += (t[i] * t[i]) * inv_s2;
+        S_xy_u += (phi[i]  * t[i]) * inv_s2;
+        S_xy_o += (orig[i] * t[i]) * inv_s2;
+    }
+    if (S_xx == 0.0) { free(orig); return; }
+    double slope_u = S_xy_u / S_xx;
+    double slope_o = S_xy_o / S_xx;
+
+    double err_u = 0.0, err_o = 0.0;
+    for (int i = 0; i < n; i++) {
+        if (sigma[i] <= 0.0) continue;
+        double inv_s2 = 1.0 / (sigma[i] * sigma[i]);
+        double ru = slope_u * t[i] - phi[i];
+        double ro = slope_o * t[i] - orig[i];
+        err_u += ru * ru * inv_s2;
+        err_o += ro * ro * inv_s2;
+    }
+    /* If the original (un-corrected) had lower error, restore it. */
+    if (err_o <= err_u) {
+        memcpy(phi, orig, (size_t)n * sizeof(double));
+    }
+    free(orig);
+}
+
 int Parallel_Phase_Fitting_Array(RANGE_DATA_ARRAYS *arrays, FITPRMS_ARRAY *fit_prms) {
     if (!arrays || !fit_prms) return -1;
-    
+
     clock_t start_time = clock();
     int successful_fits = 0;
     int use_parallel = (arrays->num_ranges >= MIN_PARALLEL_RANGES);
-    
+
     printf("  Phase fitting (%s)...\n", use_parallel ? "parallel" : "serial");
-    
+
 #pragma omp parallel for if(use_parallel) reduction(+:successful_fits) schedule(dynamic)
     for (int r = 0; r < arrays->max_ranges; r++) {
         RANGENODE_ARRAY *rng = &arrays->ranges[r];
-        
+
         if (!rng->valid || rng->phases.count < 3) continue;
-        
-        // Prepare phase data for linear fitting
+
         double *x = rng->phases.t;
         double *y = rng->phases.phi;
         double *sigma = rng->phases.sigma;
         int n = rng->phases.count;
-        
-        // Unwrap phases to handle 2π discontinuities
-        for (int i = 1; i < n; i++) {
-            double diff = y[i] - y[i-1];
-            if (diff > M_PI) {
-                y[i] -= 2.0 * M_PI;
-            } else if (diff < -M_PI) {
-                y[i] += 2.0 * M_PI;
-            }
-        }
+
+        /* Multi-pass slope-estimate phase unwrap, matching
+           preprocessing.c:ACF_Phase_Unwrap. The earlier one-pass
+           adjacent-lag unwrap underwrapped phases that wrapped
+           across more than one 2pi between consecutive trusted
+           samples — exactly the case the reference's keep-vs-discard
+           test was designed for. */
+        array_phase_unwrap(y, x, sigma, n);
         
         // Weighted least squares fit: phi = phi_0 + omega*tau
         double sum_w = 0.0, sum_wx = 0.0, sum_wy = 0.0;
@@ -659,11 +787,16 @@ int Fitacf_Array(struct RadarParm *prm, struct RawData *raw, struct FitData *fit
     FITPRMS_ARRAY fit_prms;
     memset(&fit_prms, 0, sizeof(FITPRMS_ARRAY));
     
+    /* Forward-declare the stub so this entry point compiles. The
+       RadarParm path is unused by the harness + rancher backend; the
+       real entry is Fitacf_Array_From_Prms below. */
+    extern int Convert_RadarParm_to_FitPrms(struct RadarParm *prm, struct RawData *raw,
+                                            FITPRMS_ARRAY *fit_prms);
     if (Convert_RadarParm_to_FitPrms(prm, raw, &fit_prms) != 0) {
         fprintf(stderr, "Fitacf_Array: Failed to convert parameters\n");
         return -1;
     }
-    
+
     fit_prms.mode = mode;
     fit_prms.num_threads = num_threads;
     fit_prms.noise_threshold = prm->noise.mean * 2.5;
