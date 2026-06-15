@@ -74,8 +74,8 @@ RUN source .profile.bash && set -e && \
         codebase/superdarn/src.bin/tk/tool/make_grid.2.0 \
         codebase/superdarn/src.bin/tk/tool/map_grd.1.16 \
         ; do \
-        if [ ! -d "${b}/src" ]; then echo "missing: ${b}/src"; exit 1; fi; \
-        (cd "${b}/src" && make); \
+        if [ ! -f "${b}/makefile" ]; then echo "missing: ${b}/makefile"; exit 1; fi; \
+        (cd "${b}" && make); \
     done
 
 # ── Stage 2: runtime ────────────────────────────────────────────────────────
