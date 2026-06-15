@@ -1,18 +1,13 @@
 # Build and push the SuperDARN Workbench webapp images.
 #
-# Produces the three tags the rst-workbench Helm chart expects:
+# Produces:
 #   <DOCKER_USERNAME>/rst-webapp-backend:latest-cpu
-#   <DOCKER_USERNAME>/rst-webapp-backend:latest-cuda
 #   <DOCKER_USERNAME>/rst-webapp-frontend:latest
 #
-# Both backend tags are built from webapp/backend/Dockerfile.cuda (single
-# source of truth, switched via BASE_IMAGE build-arg). Build context is the
-# repo root because Dockerfile.cuda pulls in CUDArst/, pythonv2/, and
-# webapp/backend/ together.
-#
-# Runs on the self-hosted clusteros runner so the heavy CUDA layer build
-# stays inside the cluster network. linux/amd64 only — the nvidia/cuda
-# base has no arm64 variant for the deep-learning runtime.
+# Backend is built from webapp/backend/Dockerfile.rst (context: repo root so
+# the Dockerfile can reach codebase/ for the RST binary build).
+# A CUDA-specific backend variant (latest-cuda) can be added once a
+# Dockerfile.cuda exists under webapp/backend/.
 
 name: Build and Push Webapp Images
 
@@ -31,14 +26,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - tag: latest-cpu
-            base: python:3.11-slim
-          - tag: latest-cuda
-            base: nvidia/cuda:12.6.3-devel-ubuntu22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -52,18 +39,16 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push backend (${{ matrix.tag }})
+      - name: Build and push backend (latest-cpu)
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: webapp/backend/Dockerfile.cuda
+          file: webapp/backend/Dockerfile.rst
           push: true
           platforms: linux/amd64
-          build-args: |
-            BASE_IMAGE=${{ matrix.base }}
-          tags: ${{ secrets.DOCKER_USERNAME }}/rst-webapp-backend:${{ matrix.tag }}
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rst-webapp-backend:${{ matrix.tag }}-cache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rst-webapp-backend:${{ matrix.tag }}-cache,mode=max
+          tags: ${{ secrets.DOCKER_USERNAME }}/rst-webapp-backend:latest-cpu
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rst-webapp-backend:latest-cpu-cache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/rst-webapp-backend:latest-cpu-cache,mode=max
 
   frontend:
     runs-on: ubuntu-latest
