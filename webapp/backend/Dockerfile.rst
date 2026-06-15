@@ -55,9 +55,9 @@ RUN source .profile.bash && set -e && \
         codebase/analysis/src.lib/mpfit/mpfit.1.5 \
         codebase/superdarn/src.lib/tk/fitacf.2.5 \
         codebase/superdarn/src.lib/tk/fitacf_v3.0 \
+        codebase/superdarn/src.lib/tk/lmfit.1.0 \
         codebase/superdarn/src.lib/tk/fitacfex.1.3 \
         codebase/superdarn/src.lib/tk/fitacfex2.1.0 \
-        codebase/superdarn/src.lib/tk/lmfit.2.0 \
         codebase/superdarn/src.lib/tk/grid.1.24 \
         codebase/superdarn/src.lib/tk/grid.1.24_optimized.1 \
         ; do \
