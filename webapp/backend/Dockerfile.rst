@@ -50,8 +50,8 @@ RUN source .profile.bash && set -e && \
         codebase/superdarn/src.lib/tk/raw.1.22 \
         codebase/superdarn/src.lib/tk/scan.1.7 \
         codebase/superdarn/src.lib/tk/cfit.1.19 \
-        codebase/superdarn/src.lib/tk/elevation.1.0 \
         codebase/superdarn/src.lib/tk/fit.1.35 \
+        codebase/superdarn/src.lib/tk/elevation.1.0 \
         codebase/analysis/src.lib/mpfit/mpfit.1.5 \
         codebase/superdarn/src.lib/tk/fitacf.2.5 \
         codebase/superdarn/src.lib/tk/fitacf_v3.0 \
