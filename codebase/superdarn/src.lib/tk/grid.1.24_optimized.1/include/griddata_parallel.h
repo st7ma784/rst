@@ -495,6 +495,10 @@ struct GridIndexParallel *grid_parallel_load_index(int fid,
 struct GridIndexParallel *grid_parallel_fload_index(FILE *fp,
                                                     struct GridPerformanceStats *stats);
 
+/* Memory alignment helpers defined in grid_parallel_utils.c */
+void *grid_aligned_malloc(size_t size, size_t alignment);
+void  grid_aligned_free(void *ptr);
+
 #ifdef __cplusplus
 }
 #endif
