@@ -22,7 +22,7 @@ on:
     paths:
       - 'webapp/**'
       - 'pythonv2/**'
-      - 'CUDArst/**'
+      - 'codebase/**'
       - '.github/workflows/build-webapp.yml'
   workflow_dispatch:
 

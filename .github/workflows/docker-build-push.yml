@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'CUDArst/**'
+      - 'codebase/**'
       - 'pythonv2/**'
       - '.github/workflows/docker-build-push.yml'
       - 'Dockerfile'
